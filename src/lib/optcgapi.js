@@ -2,37 +2,29 @@ const BASE = 'https://optcgapi.com/api'
 const CACHE_KEY = 'optcg_card_cache'
 
 function getCache() {
-  try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY) ?? '{}')
-  } catch {
-    return {}
-  }
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY) ?? '{}') }
+  catch { return {} }
 }
 
 function setCache(cache) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
-  } catch {}
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)) }
+  catch {}
 }
 
 export async function getCard(cardId) {
   const cache = getCache()
   if (cache[cardId]) return cache[cardId]
 
-  // Try sets first, then starter decks
+  // Try sets first, then structure decks
   let res = await fetch(`${BASE}/sets/card/${cardId}/`)
-  if (!res.ok) res = await fetch(`${BASE}/decks/card/${cardId}/`)
+  if (!res.ok) res = await fetch(`${BASE}/structure_decks/card/${cardId}/`)
   if (!res.ok) throw new Error(`Card not found: ${cardId}`)
-  
+
   const data = await res.json()
   const card = data[0]
   cache[cardId] = card
   setCache(cache)
   return card
-}
-
-export async function getCardCached(cardId) {
-  return getCard(cardId)
 }
 
 export async function enrichCards(cards) {
@@ -43,9 +35,8 @@ export async function enrichCards(cards) {
     await Promise.all(
       toFetch.map(async id => {
         try {
-          // Try sets endpoint first, then decks endpoint
           let res = await fetch(`${BASE}/sets/card/${id}/`)
-          if (!res.ok) res = await fetch(`${BASE}/decks/card/${id}/`)
+          if (!res.ok) res = await fetch(`${BASE}/structure_decks/card/${id}/`)
           if (res.ok) {
             const data = await res.json()
             if (data[0]) cache[id] = data[0]
@@ -72,19 +63,19 @@ export async function searchCards(query) {
 }
 
 export async function searchLeaders(query) {
-  // Search both set cards and starter deck cards in parallel
-  const [setsRes, decksRes] = await Promise.all([
+  // Search both set cards and structure deck cards in parallel
+  const [setsRes, structureRes] = await Promise.all([
     fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`),
-    fetch(`${BASE}/decks/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`),
+    fetch(`${BASE}/structure_decks/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`),
   ])
 
-  const [setsData, decksData] = await Promise.all([
+  const [setsData, structureData] = await Promise.all([
     setsRes.ok ? setsRes.json() : [],
-    decksRes.ok ? decksRes.json() : [],
+    structureRes.ok ? structureRes.json() : [],
   ])
 
   // Merge and deduplicate by card_set_id
-  const merged = [...(setsData ?? []), ...(decksData ?? [])]
+  const merged = [...(setsData ?? []), ...(structureData ?? [])]
   const seen = new Set()
   return merged.filter(card => {
     if (seen.has(card.card_set_id)) return false
