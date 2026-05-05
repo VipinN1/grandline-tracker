@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
+import { useState, useEffect, useRef } from 'react'
+import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
+import { supabase } from '../lib/supabase'
 
 function CardPreview({ card, onClose }) {
   if (!card) return null
@@ -232,16 +235,57 @@ function CreatePostModal({ session, onClose, onSubmit }) {
   const [body, setBody] = useState('')
   const [decklistRaw, setDecklistRaw] = useState('')
   const [leaderId, setLeaderId] = useState('')
-  const [leaderName, setLeaderName] = useState('')
+  const [leaderResult, setLeaderResult] = useState(null)
   const [deckName, setDeckName] = useState('')
+  const [parsedCards, setParsedCards] = useState([])
+  const [deckParsed, setDeckParsed] = useState(false)
+  const [enriching, setEnriching] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [leaderQuery, setLeaderQuery] = useState('')
+  const [leaderResults, setLeaderResults] = useState([])
+  const [leaderSearching, setLeaderSearching] = useState(false)
+  const [leaderOpen, setLeaderOpen] = useState(false)
+  const leaderRef = useRef(null)
+  const debounceRef = useRef(null)
 
-  function parseDeck(raw) {
-    return raw.trim().split('\n').reduce((acc, line) => {
+  const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (leaderRef.current && !leaderRef.current.contains(e.target)) setLeaderOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function handleLeaderQuery(e) {
+    const val = e.target.value
+    setLeaderQuery(val)
+    setLeaderOpen(true)
+    clearTimeout(debounceRef.current)
+    if (val.length < 2) { setLeaderResults([]); return }
+    debounceRef.current = setTimeout(async () => {
+      setLeaderSearching(true)
+      try {
+        const data = await searchLeaders(val)
+        setLeaderResults(data.slice(0, 8))
+      } catch { setLeaderResults([]) }
+      setLeaderSearching(false)
+    }, 400)
+  }
+
+  async function handleParseDeck() {
+    const raw = decklistRaw.trim().split('\n').reduce((acc, line) => {
       const match = line.trim().match(/^(\d+)[xX]([A-Z0-9\-]+)$/)
       if (match) acc.push({ count: parseInt(match[1]), id: match[2].toUpperCase(), name: match[2].toUpperCase() })
       return acc
     }, [])
+    if (raw.length === 0) { setParsedCards([]); setDeckParsed(true); return }
+    setEnriching(true)
+    const enriched = await enrichCards(raw)
+    setParsedCards(enriched)
+    setDeckParsed(true)
+    setEnriching(false)
   }
 
   async function handleSubmit() {
@@ -249,18 +293,16 @@ function CreatePostModal({ session, onClose, onSubmit }) {
     setSaving(true)
 
     let decklistId = null
-
-    if (leaderId.trim() && decklistRaw.trim()) {
-      const cards = parseDeck(decklistRaw)
+    if (leaderResult && parsedCards.length > 0) {
       const { data: dl } = await supabase
         .from('decklists')
         .insert({
           user_id: session.user.id,
-          name: deckName || 'My Deck',
-          leader_id: leaderId.trim().toUpperCase(),
-          leader_name: leaderName || leaderId.trim().toUpperCase(),
-          leader_color: 'Red',
-          cards,
+          name: deckName || `${leaderResult.card_name} Deck`,
+          leader_id: leaderResult.card_set_id,
+          leader_name: leaderResult.card_name,
+          leader_color: leaderResult.card_color,
+          cards: parsedCards,
         })
         .select()
         .single()
@@ -283,24 +325,110 @@ function CreatePostModal({ session, onClose, onSubmit }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 600, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 620, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>Create Post</div>
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#6b7a99', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
+
         <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div><label style={labelStyle}>Title</label><input type="text" placeholder="Give your post a title..." value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} /></div>
-          <div><label style={labelStyle}>Body</label><textarea placeholder="Share your thoughts..." value={body} onChange={e => setBody(e.target.value)} style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }} /></div>
+          <div>
+            <label style={labelStyle}>Title</label>
+            <input type="text" placeholder="Give your post a title..." value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Body</label>
+            <textarea placeholder="Share your thoughts, analysis, or tournament report..." value={body} onChange={e => setBody(e.target.value)} style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }} />
+          </div>
+
+          {/* Decklist section */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#3a4560', marginBottom: 14 }}>Attach Decklist (optional)</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-              <div><label style={labelStyle}>Deck Name</label><input type="text" placeholder="e.g. Red Luffy Aggro" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} /></div>
-              <div><label style={labelStyle}>Leader Card ID</label><input type="text" placeholder="e.g. OP01-060" value={leaderId} onChange={e => setLeaderId(e.target.value)} style={inputStyle} /></div>
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={labelStyle}>Deck Name</label>
+              <input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} />
             </div>
-            <div><label style={labelStyle}>Leader Name</label><input type="text" placeholder="e.g. Monkey D. Luffy" value={leaderName} onChange={e => setLeaderName(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} /></div>
-            <div><label style={labelStyle}>Paste Decklist</label><textarea placeholder={'4xOP01-024\n4xOP01-013\n...'} value={decklistRaw} onChange={e => setDecklistRaw(e.target.value)} style={{ ...inputStyle, minHeight: 100, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} /></div>
+
+            {/* Leader search */}
+            <div ref={leaderRef} style={{ position: 'relative', marginBottom: 12 }}>
+              <label style={labelStyle}>Leader Card</label>
+              {leaderResult ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#1c2333', border: '1px solid #3d7fff44', borderRadius: 8, padding: '8px 12px' }}>
+                  <img src={getCardImageUrl(leaderResult.card_set_id)} alt={leaderResult.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.display = 'none' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{leaderResult.card_name}</div>
+                    <div style={{ fontSize: 11, color: COLORS[leaderResult.card_color] ?? '#6b7a99' }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
+                  </div>
+                  <button onClick={() => { setLeaderResult(null); setLeaderQuery('') }} style={{ background: 'none', border: 'none', color: '#6b7a99', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Search by name or ID, e.g. Luffy, OP01-060..."
+                    value={leaderQuery}
+                    onChange={handleLeaderQuery}
+                    onFocus={() => leaderQuery.length >= 2 && setLeaderOpen(true)}
+                    style={inputStyle}
+                  />
+                  {leaderOpen && leaderQuery.length >= 2 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#1c2333', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto' }}>
+                      {leaderSearching ? (
+                        <div style={{ padding: '12px 14px', fontSize: 13, color: '#6b7a99' }}>Searching...</div>
+                      ) : leaderResults.length === 0 ? (
+                        <div style={{ padding: '12px 14px', fontSize: 13, color: '#3a4560' }}>No leaders found</div>
+                      ) : leaderResults.map(card => (
+                        <div key={card.card_set_id} onClick={() => { setLeaderResult(card); setLeaderQuery(''); setLeaderOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                          <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
+                            <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#6b7a99', marginTop: 2 }}>{card.card_color} · {card.card_set_id}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Decklist paste */}
+            <div>
+              <label style={labelStyle}>Paste Decklist</label>
+              <textarea
+                placeholder={'4xOP01-024\n4xOP01-013\n...'}
+                value={decklistRaw}
+                onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }}
+                style={{ ...inputStyle, minHeight: 100, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
+              />
+              <button
+                onClick={handleParseDeck}
+                disabled={!decklistRaw.trim() || enriching}
+                style={{ marginTop: 8, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: decklistRaw.trim() ? 'rgba(255,255,255,0.05)' : 'transparent', color: decklistRaw.trim() ? '#f0f2f5' : '#3a4560', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}
+              >
+                {enriching ? 'Fetching card data...' : 'Preview Decklist'}
+              </button>
+            </div>
+
+            {/* Parsed preview */}
+            {deckParsed && parsedCards.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 8 }}>
+                  {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {parsedCards.flatMap(card =>
+                    Array.from({ length: card.count }, (_, i) => (
+                      <img key={`${card.id}-${i}`} src={getCardImageUrl(card.id)} alt={card.name} title={`${card.name} (${card.id})`} style={{ width: 52, borderRadius: 4, border: `2px solid ${COLORS[card.color] ?? 'rgba(255,255,255,0.08)'}` }} onError={e => { e.target.style.opacity = '0.2' }} />
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
         <div style={{ padding: '14px 24px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
           <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: 11, borderRadius: 8, border: 'none', background: saving ? '#2a4a8a' : '#3d7fff', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
             {saving ? 'Posting...' : 'Post'}
