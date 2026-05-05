@@ -1,6 +1,3 @@
-import { useState, useEffect } from 'react'
-import { getCardImageUrl } from '../lib/optcgapi'
-import { supabase } from '../lib/supabase'
 import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
