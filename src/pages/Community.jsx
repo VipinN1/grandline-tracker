@@ -133,7 +133,7 @@ function PostCard({ post, session }) {
     setLoadingComments(true)
     const { data } = await supabase
       .from('comments')
-      .select('*, profiles(*)')
+      .select('*, profiles!comments_user_id_fkey(*)')
       .eq('post_id', post.id)
       .is('parent_id', null)
       .order('created_at', { ascending: true })
