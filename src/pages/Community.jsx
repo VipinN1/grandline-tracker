@@ -7,7 +7,7 @@ const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a7
 function CardPreview({ card, onClose }) {
   if (!card) return null
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
         <div style={{ textAlign: 'center' }}>
@@ -24,11 +24,12 @@ function ProfileModal({ profile, session, onClose }) {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [friendStatus, setFriendStatus] = useState(null)
+  const [selectedTournament, setSelectedTournament] = useState(null)
 
   useEffect(() => {
     async function load() {
       const [{ data: tData }, { data: fData }] = await Promise.all([
-        supabase.from('tournaments').select('*').eq('user_id', profile.id).order('date', { ascending: false }),
+        supabase.from('tournaments').select('*, decklists(*)').eq('user_id', profile.id).order('date', { ascending: false }),
         supabase.from('friends').select('*').or(`and(user_id.eq.${session.user.id},friend_id.eq.${profile.id}),and(user_id.eq.${profile.id},friend_id.eq.${session.user.id})`)
       ])
       setTournaments(tData ?? [])
@@ -62,54 +63,62 @@ function ProfileModal({ profile, session, onClose }) {
 
   function FriendButton() {
     if (profile.id === session.user.id) return null
-    if (friendStatus === 'accepted') return <button style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Friends ✓</button>
+    if (friendStatus === 'accepted') return <button style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.08)', color: '#34d399', cursor: 'default', fontFamily: 'inherit' }}>Friends ✓</button>
     if (friendStatus === 'pending_sent') return <button disabled style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#6b7a99', cursor: 'default', fontFamily: 'inherit' }}>Request Sent</button>
     if (friendStatus === 'pending_received') return <button onClick={acceptRequest} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit' }}>Accept Request</button>
     return <button onClick={sendFriendRequest} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: '#3d7fff', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Friend</button>
   }
 
+  function pLabel(n) { if (n===1) return '1st'; if (n===2) return '2nd'; if (n===3) return '3rd'; return `${n}th` }
+  function pStyle(n) {
+    if (n===1) return { background: 'rgba(251,191,36,0.12)', color: '#fbbf24' }
+    if (n===2) return { background: 'rgba(148,163,184,0.1)', color: '#94a3b8' }
+    if (n===3) return { background: 'rgba(251,146,60,0.1)', color: '#fb923c' }
+    return { background: 'rgba(255,255,255,0.04)', color: '#3a4560' }
+  }
+
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 520, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 12, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#3d7fff', flexShrink: 0, overflow: 'hidden' }}>
-            {profile.avatar_url ? <img src={profile.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{profile.username}</div>
-            {profile.location && <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 2 }}>{profile.location}</div>}
-          </div>
-          <FriendButton />
-          <button onClick={onClose} style={{ marginLeft: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#6b7a99', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-        </div>
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 520, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-          {[['Win Rate', `${winRate}%`], ['Events', tournaments.length], ['Top 8s', topEights]].map(([label, val]) => (
-            <div key={label} style={{ flex: 1, padding: '12px 16px', borderRight: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
-              <div style={{ fontSize: 10, color: '#6b7a99', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>{label}</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5' }}>{val}</div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+            <div style={{ width: 52, height: 52, borderRadius: 12, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#3d7fff', flexShrink: 0, overflow: 'hidden' }}>
+              {profile.avatar_url ? <img src={profile.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
             </div>
-          ))}
-        </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{profile.username}</div>
+              {profile.location && <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 2 }}>{profile.location}</div>}
+            </div>
+            <FriendButton />
+            <button onClick={onClose} style={{ marginLeft: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#6b7a99', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          </div>
 
-        <div style={{ overflowY: 'auto', padding: 20 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 12 }}>Tournament History</div>
-          {loading ? (
-            <div style={{ fontSize: 13, color: '#6b7a99', textAlign: 'center', padding: 20 }}>Loading...</div>
-          ) : tournaments.length === 0 ? (
-            <div style={{ fontSize: 13, color: '#3a4560', textAlign: 'center', padding: 20 }}>No tournaments logged yet</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {tournaments.map(t => {
-                function pLabel(n) { if (n===1) return '1st'; if (n===2) return '2nd'; if (n===3) return '3rd'; return `${n}th` }
-                function pStyle(n) {
-                  if (n===1) return { background: 'rgba(251,191,36,0.12)', color: '#fbbf24' }
-                  if (n===2) return { background: 'rgba(148,163,184,0.1)', color: '#94a3b8' }
-                  if (n===3) return { background: 'rgba(251,146,60,0.1)', color: '#fb923c' }
-                  return { background: 'rgba(255,255,255,0.04)', color: '#3a4560' }
-                }
-                return (
-                  <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '40px 1fr auto auto', alignItems: 'center', gap: 12, background: '#1c2333', borderRadius: 10, padding: '10px 14px' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+            {[['Win Rate', `${winRate}%`], ['Events', tournaments.length], ['Top 8s', topEights]].map(([label, val]) => (
+              <div key={label} style={{ flex: 1, padding: '12px 16px', borderRight: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: '#6b7a99', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5' }}>{val}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ overflowY: 'auto', padding: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 12 }}>Tournament History — click to view deck</div>
+            {loading ? (
+              <div style={{ fontSize: 13, color: '#6b7a99', textAlign: 'center', padding: 20 }}>Loading...</div>
+            ) : tournaments.length === 0 ? (
+              <div style={{ fontSize: 13, color: '#3a4560', textAlign: 'center', padding: 20 }}>No tournaments logged yet</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {tournaments.map(t => (
+                  <div
+                    key={t.id}
+                    onClick={() => setSelectedTournament(t)}
+                    style={{ display: 'grid', gridTemplateColumns: '40px 1fr auto auto', alignItems: 'center', gap: 12, background: '#1c2333', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.1s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#212d40' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = '#1c2333' }}
+                  >
                     <div style={{ width: 34, height: 34, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, ...pStyle(t.placement) }}>{pLabel(t.placement)}</div>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{t.name}</div>
@@ -125,13 +134,72 @@ function ProfileModal({ profile, session, onClose }) {
                       <span style={{ color: '#f05252' }}>{t.losses}L</span>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {selectedTournament && (
+        <div onClick={() => setSelectedTournament(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 560, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ position: 'relative', height: 120, background: '#1c2333', flexShrink: 0 }}>
+              <img src={getCardImageUrl(selectedTournament.leader_id)} alt={selectedTournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
+              <button onClick={() => setSelectedTournament(null)} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>{selectedTournament.deck_name ?? selectedTournament.name}</div>
+                <div style={{ fontSize: 12, color: '#6b7a99' }}>{selectedTournament.leader_name} · {selectedTournament.leader_id}</div>
+              </div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: COLORS[selectedTournament.leader_color] ?? '#3d7fff' }} />
+            </div>
+
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, ...pStyle(selectedTournament.placement) }}>{pLabel(selectedTournament.placement)}</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selectedTournament.name}</div>
+                <div style={{ fontSize: 11, color: '#6b7a99' }}>{selectedTournament.date} · {selectedTournament.player_count} players</div>
+              </div>
+              <div style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, fontFamily: 'monospace' }}>
+                <span style={{ color: '#34d399' }}>{selectedTournament.wins}W</span>
+                <span style={{ color: '#3a4560', margin: '0 3px' }}>·</span>
+                <span style={{ color: '#f05252' }}>{selectedTournament.losses}L</span>
+              </div>
+            </div>
+
+            <div style={{ overflowY: 'auto', padding: 20 }}>
+              {selectedTournament.decklists?.cards?.length > 0 ? (
+                <>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 10 }}>
+                    Decklist — {selectedTournament.decklists.cards.reduce((s, c) => s + c.count, 0)} cards
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                    {selectedTournament.decklists.cards.flatMap((card, i) =>
+                      Array.from({ length: card.count }, (_, j) => (
+                        <img key={`${i}-${j}`} src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 65, borderRadius: 5, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.opacity = '0.15' }} />
+                      ))
+                    )}
+                  </div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Card List</div>
+                  {selectedTournament.decklists.cards.map(card => (
+                    <div key={card.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 8px', borderRadius: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#3d7fff', fontFamily: 'monospace' }}>{card.count}×</span>
+                        <span style={{ fontSize: 13, color: '#f0f2f5' }}>{card.name ?? card.id}</span>
+                      </div>
+                      <span style={{ fontSize: 11, color: '#3a4560', fontFamily: 'monospace' }}>{card.id}</span>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div style={{ fontSize: 13, color: '#3a4560', textAlign: 'center', padding: '20px 0' }}>No decklist attached.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -317,7 +385,6 @@ function PostCard({ post, session, onProfileClick }) {
   return (
     <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '18px 20px' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        {/* Clickable avatar */}
         <div
           onClick={() => post.profiles && onProfileClick?.(post.profiles)}
           style={{ width: 36, height: 36, borderRadius: 9, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#3d7fff', flexShrink: 0, overflow: 'hidden', cursor: post.profiles ? 'pointer' : 'default' }}
@@ -358,10 +425,7 @@ function PostCard({ post, session, onProfileClick }) {
 
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         <div style={{ width: 28, height: 28, borderRadius: 7, background: '#3d7fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-          {session?.user?.user_metadata?.avatar_url
-            ? <img src={session.user.user_metadata.avatar_url} alt={myInitials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : myInitials
-          }
+          {myInitials}
         </div>
         <input type="text" placeholder="Write a comment..." value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submitComment()} style={{ flex: 1, background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '7px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
         <button onClick={submitComment} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#3d7fff', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Post</button>
