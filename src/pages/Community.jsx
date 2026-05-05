@@ -297,7 +297,7 @@ async function handleSubmit() {
   const { data: post, error } = await supabase
     .from('posts')
     .insert({ user_id: session.user.id, title: title.trim(), body: body.trim(), decklist_id: null })
-    .select('*, profiles(*), decklists(*)')
+    .select('*, profiles!posts_user_id_fkey(*), decklists(*)')
     .single()
 
   console.log('Post result:', post)
@@ -439,7 +439,7 @@ export default function Community({ session }) {
     setLoading(true)
     const { data } = await supabase
       .from('posts')
-      .select('*, profiles(*), decklists(*)')
+      .select('*, profiles!posts_user_id_fkey(*), decklists(*)')
       .order(filter === 'top' ? 'likes' : 'created_at', { ascending: false })
     setPosts(data ?? [])
     setLoading(false)
