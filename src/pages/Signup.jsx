@@ -93,7 +93,7 @@ export default function Signup({ onSwitch }) {
               <label style={labelStyle}>Username</label>
               <input
                 type="text"
-                placeholder="e.g. VipinPlays"
+                placeholder="e.g. OPTCG_Gamer"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 style={inputStyle}
