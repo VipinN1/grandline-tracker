@@ -1,5 +1,6 @@
 const BASE = 'https://optcgapi.com/api'
 const CACHE_KEY = 'optcg_card_cache'
+const ST_CACHE_KEY = 'optcg_st_cards'
 
 function getCache() {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY) ?? '{}') }
@@ -11,23 +12,55 @@ function setCache(cache) {
   catch {}
 }
 
+// Fetch and cache all ST cards once
+async function getSTCards() {
+  try {
+    const cached = localStorage.getItem(ST_CACHE_KEY)
+    if (cached) return JSON.parse(cached)
+
+    const res = await fetch(`${BASE}/allSTCards/`)
+    if (!res.ok) return []
+    const data = await res.json()
+
+    // Also store each card in the main card cache by card_set_id
+    const cardCache = getCache()
+    data.forEach(card => {
+      if (card.card_set_id) cardCache[card.card_set_id] = card
+    })
+    setCache(cardCache)
+    localStorage.setItem(ST_CACHE_KEY, JSON.stringify(data))
+    return data
+  } catch {
+    return []
+  }
+}
+
 export async function getCard(cardId) {
   const cache = getCache()
   if (cache[cardId]) return cache[cardId]
 
-  // Try sets first, then structure decks
+  // Try sets endpoint first
   let res = await fetch(`${BASE}/sets/card/${cardId}/`)
-  if (!res.ok) res = await fetch(`${BASE}/structure_decks/card/${cardId}/`)
-  if (!res.ok) throw new Error(`Card not found: ${cardId}`)
+  if (!res.ok) {
+    // Fall back to checking ST cache
+    const stCards = await getSTCards()
+    const found = stCards.find(c => c.card_set_id === cardId)
+    if (found) return found
+    throw new Error(`Card not found: ${cardId}`)
+  }
 
   const data = await res.json()
   const card = data[0]
-  cache[cardId] = card
-  setCache(cache)
+  const cardCache = getCache()
+  cardCache[cardId] = card
+  setCache(cardCache)
   return card
 }
 
 export async function enrichCards(cards) {
+  // Make sure ST cards are cached first
+  await getSTCards()
+
   const cache = getCache()
   const toFetch = cards.filter(c => !cache[c.id]).map(c => c.id)
 
@@ -35,8 +68,7 @@ export async function enrichCards(cards) {
     await Promise.all(
       toFetch.map(async id => {
         try {
-          let res = await fetch(`${BASE}/sets/card/${id}/`)
-          if (!res.ok) res = await fetch(`${BASE}/structure_decks/card/${id}/`)
+          const res = await fetch(`${BASE}/sets/card/${id}/`)
           if (res.ok) {
             const data = await res.json()
             if (data[0]) cache[id] = data[0]
@@ -56,32 +88,34 @@ export async function enrichCards(cards) {
   }))
 }
 
-export async function searchCards(query) {
-  const res = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}`)
-  if (!res.ok) throw new Error('Search failed')
-  return res.json()
-}
-
 export async function searchLeaders(query) {
-  // Search both set cards and structure deck cards in parallel
-  const [setsRes, structureRes] = await Promise.all([
-    fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`),
-    fetch(`${BASE}/structure_decks/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`),
-  ])
+  const q = query.toLowerCase()
 
-  const [setsData, structureData] = await Promise.all([
-    setsRes.ok ? setsRes.json() : [],
-    structureRes.ok ? structureRes.json() : [],
-  ])
+  // Search set leaders from API
+  const setsRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`)
+  const setsData = setsRes.ok ? await setsRes.json() : []
 
-  // Merge and deduplicate by card_set_id
-  const merged = [...(setsData ?? []), ...(structureData ?? [])]
+  // Search ST leaders from local cache
+  const stCards = await getSTCards()
+  const stLeaders = stCards.filter(card =>
+    card.card_type === 'Leader' &&
+    (card.card_name?.toLowerCase().includes(q) || card.card_set_id?.toLowerCase().includes(q))
+  )
+
+  // Merge and deduplicate
+  const merged = [...(setsData ?? []), ...stLeaders]
   const seen = new Set()
   return merged.filter(card => {
     if (seen.has(card.card_set_id)) return false
     seen.add(card.card_set_id)
     return true
   })
+}
+
+export async function searchCards(query) {
+  const res = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}`)
+  if (!res.ok) throw new Error('Search failed')
+  return res.json()
 }
 
 export function getCardImageUrl(cardId) {
