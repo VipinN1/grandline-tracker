@@ -72,7 +72,21 @@ function CommentBox({ comment, session, depth = 0 }) {
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [liked, setLiked] = useState(false)
-  const [likes, setLikes] = useState(comment.likes ?? 0)
+const [likes, setLikes] = useState(post.likes ?? 0)
+
+useEffect(() => {
+  async function checkLiked() {
+    if (!session) return
+    const { data } = await supabase
+      .from('post_likes')
+      .select('user_id')
+      .eq('post_id', post.id)
+      .eq('user_id', session.user.id)
+      .single()
+    if (data) setLiked(true)
+  }
+  checkLiked()
+}, [post.id, session])
   const [replies, setReplies] = useState(comment.replies ?? [])
 
   const initials = comment.profiles?.username?.slice(0, 2).toUpperCase() ?? '??'
@@ -160,19 +174,22 @@ function PostCard({ post, session }) {
     setCommentText('')
   }
 
-  async function toggleLike() {
-    if (!session) return
-    if (liked) {
-      await supabase.from('post_likes').delete().match({ user_id: session.user.id, post_id: post.id })
-      await supabase.from('posts').update({ likes: likes - 1 }).eq('id', post.id)
-      setLikes(likes - 1)
-    } else {
-      await supabase.from('post_likes').insert({ user_id: session.user.id, post_id: post.id })
+ async function toggleLike() {
+  if (!session) return
+  if (liked) {
+    await supabase.from('post_likes').delete().match({ user_id: session.user.id, post_id: post.id })
+    await supabase.from('posts').update({ likes: likes - 1 }).eq('id', post.id)
+    setLikes(likes - 1)
+    setLiked(false)
+  } else {
+    const { error } = await supabase.from('post_likes').insert({ user_id: session.user.id, post_id: post.id })
+    if (!error) {
       await supabase.from('posts').update({ likes: likes + 1 }).eq('id', post.id)
       setLikes(likes + 1)
+      setLiked(true)
     }
-    setLiked(!liked)
   }
+}
 
   const username = session?.user?.user_metadata?.username ?? 'Me'
   const myInitials = username.slice(0, 2).toUpperCase()
@@ -202,7 +219,7 @@ function PostCard({ post, session }) {
       <div style={{ display: 'flex', gap: 16, marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
         <button onClick={toggleLike} style={{ fontSize: 13, fontWeight: 600, color: liked ? '#f05252' : '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>♥ {likes}</button>
         <button onClick={toggleComments} style={{ fontSize: 13, fontWeight: 600, color: '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
-          💬 {post.comment_count ?? 0} comments
+        💬 {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
         </button>
       </div>
 
