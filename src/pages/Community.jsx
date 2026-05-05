@@ -285,37 +285,28 @@ function CreatePostModal({ session, onClose, onSubmit }) {
     setEnriching(false)
   }
 
-  async function handleSubmit() {
-    if (!title.trim() || !body.trim() || !session) return
-    setSaving(true)
-
-    let decklistId = null
-    if (leaderResult && parsedCards.length > 0) {
-      const { data: dl } = await supabase
-        .from('decklists')
-        .insert({
-          user_id: session.user.id,
-          name: deckName || `${leaderResult.card_name} Deck`,
-          leader_id: leaderResult.card_set_id,
-          leader_name: leaderResult.card_name,
-          leader_color: leaderResult.card_color,
-          cards: parsedCards,
-        })
-        .select()
-        .single()
-      if (dl) decklistId = dl.id
-    }
-
-    const { data: post } = await supabase
-      .from('posts')
-      .insert({ user_id: session.user.id, title: title.trim(), body: body.trim(), decklist_id: decklistId })
-      .select('*, profiles(*), decklists(*)')
-      .single()
-
-    if (post) onSubmit(post)
-    setSaving(false)
-    onClose()
+async function handleSubmit() {
+  if (!title.trim() || !body.trim() || !session) {
+    console.log('Validation failed', { title, body, session })
+    return
   }
+  setSaving(true)
+
+  console.log('Inserting post with user_id:', session.user.id)
+
+  const { data: post, error } = await supabase
+    .from('posts')
+    .insert({ user_id: session.user.id, title: title.trim(), body: body.trim(), decklist_id: null })
+    .select('*, profiles(*), decklists(*)')
+    .single()
+
+  console.log('Post result:', post)
+  console.log('Post error:', error)
+
+  if (post) onSubmit(post)
+  setSaving(false)
+  onClose()
+}
 
   const inputStyle = { width: '100%', background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }
   const labelStyle = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#6b7a99', marginBottom: 6, display: 'block' }
