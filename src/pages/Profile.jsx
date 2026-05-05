@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 
@@ -114,12 +114,76 @@ function TournamentDeckModal({ tournament, onClose }) {
   )
 }
 
+function AvatarUpload({ session, profile, onUpdate }) {
+  const [uploading, setUploading] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const fileRef = useRef(null)
+
+  async function handleUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+
+    const ext = file.name.split('.').pop()
+    const path = `${session.user.id}/avatar.${ext}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true })
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      setUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(path)
+
+    await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', session.user.id)
+
+    onUpdate(publicUrl)
+    setUploading(false)
+  }
+
+  const initials = profile?.username?.slice(0, 2).toUpperCase() ?? 'VP'
+  const avatarUrl = profile?.avatar_url
+
+  return (
+    <div style={{ position: 'relative', flexShrink: 0 }}>
+      <div
+        onClick={() => fileRef.current?.click()}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ width: 64, height: 64, borderRadius: 14, background: avatarUrl ? 'transparent' : '#3d7fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#fff', cursor: 'pointer', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)', position: 'relative' }}
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          initials
+        )}
+        {hovered && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{uploading ? '...' : 'Edit'}</span>
+          </div>
+        )}
+      </div>
+      <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
+    </div>
+  )
+}
+
 export default function Profile({ session }) {
   const [profile, setProfile] = useState(null)
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [activeTab, setActiveTab] = useState('history')
+  const [avatarUrl, setAvatarUrl] = useState(null)
 
   useEffect(() => {
     if (!session) return
@@ -139,6 +203,7 @@ export default function Profile({ session }) {
         .order('date', { ascending: false })
 
       setProfile(profileData)
+      setAvatarUrl(profileData?.avatar_url ?? null)
       setTournaments(tournamentData ?? [])
       setLoading(false)
     }
@@ -160,7 +225,6 @@ export default function Profile({ session }) {
   const bestFinish = tournaments.length > 0 ? Math.min(...tournaments.map(t => t.placement)) : null
 
   const username = profile?.username ?? session?.user?.user_metadata?.username ?? 'Player'
-  const initials = username.slice(0, 2).toUpperCase()
 
   const leaderCounts = tournaments.reduce((acc, t) => {
     if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, color: t.leader_color, count: 0 }
@@ -182,9 +246,11 @@ export default function Profile({ session }) {
 
       {/* Profile header */}
       <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 20 }}>
-        <div style={{ width: 64, height: 64, borderRadius: 14, background: '#3d7fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-          {initials}
-        </div>
+        <AvatarUpload
+          session={session}
+          profile={{ ...profile, avatar_url: avatarUrl }}
+          onUpdate={url => setAvatarUrl(url)}
+        />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>{username}</div>
           <div style={{ fontSize: 13, color: '#6b7a99', marginTop: 3 }}>
