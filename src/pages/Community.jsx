@@ -442,9 +442,7 @@ export default function Community({ session }) {
   const [showCreate, setShowCreate] = useState(false)
   const [filter, setFilter] = useState('latest')
 
-  useEffect(() => {
-    loadPosts()
-  }, [filter])
+  
 
   async function loadPosts() {
     setLoading(true)
@@ -455,6 +453,10 @@ export default function Community({ session }) {
     setPosts(data ?? [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadPosts()
+  }, [filter])
 
  function handleNewPost(post) {
   loadPosts()
@@ -495,7 +497,6 @@ export default function Community({ session }) {
         </div>
       )}
 
-      {showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={handleNewPost} />}
-    </div>
+{showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={() => { setShowCreate(false); loadPosts() }} />}    </div>
   )
 }
