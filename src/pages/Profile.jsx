@@ -138,15 +138,17 @@ function AvatarUpload({ session, profile, onUpdate }) {
     }
 
     const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(path)
+  .from('avatars')
+  .getPublicUrl(path)
+
+const urlWithBust = `${publicUrl}?t=${Date.now()}`
 
     await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', session.user.id)
+  .from('profiles')
+  .update({ avatar_url: urlWithBust })
+  .eq('id', session.user.id)
 
-    onUpdate(publicUrl)
+    onUpdate(urlWithBust)
     setUploading(false)
   }
 
