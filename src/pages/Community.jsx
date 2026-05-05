@@ -131,8 +131,11 @@ function CommentBox({ comment, session, depth = 0 }) {
   return (
     <div style={{ marginLeft: depth > 0 ? 20 : 0, marginTop: depth > 0 ? 8 : 0 }}>
       <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ width: 26, height: 26, borderRadius: 7, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#3d7fff', flexShrink: 0, marginTop: 2 }}>
-          {initials}
+        <div style={{ width: 26, height: 26, borderRadius: 7, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#3d7fff', flexShrink: 0, marginTop: 2, overflow: 'hidden' }}>
+            {comment.profiles?.avatar_url
+              ? <img src={comment.profiles.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : initials
+            }
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ background: '#1c2333', borderRadius: 8, padding: '8px 12px' }}>
@@ -259,8 +262,12 @@ function PostCard({ post, session }) {
   return (
     <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '18px 20px' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 9, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#3d7fff', flexShrink: 0 }}>{initials}</div>
-        <div>
+<div style={{ width: 36, height: 36, borderRadius: 9, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#3d7fff', flexShrink: 0, overflow: 'hidden' }}>
+  {post.profiles?.avatar_url
+    ? <img src={post.profiles.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    : initials
+  }
+</div>        <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{post.profiles?.username ?? 'Unknown'}</div>
           <div style={{ fontSize: 11, color: '#3a4560' }}>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
         </div>
