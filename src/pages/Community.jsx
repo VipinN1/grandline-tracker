@@ -456,9 +456,9 @@ export default function Community({ session }) {
     setLoading(false)
   }
 
-  function handleNewPost(post) {
-    setPosts([post, ...posts])
-  }
+ function handleNewPost(post) {
+  loadPosts()
+}
 
   return (
     <div>
