@@ -23,7 +23,6 @@ function DeckPanel({ decklist }) {
   const [selectedCard, setSelectedCard] = useState(null)
   if (!decklist) return null
   const cards = decklist.cards ?? []
-  const color = '#3d7fff'
 
   return (
     <>
@@ -72,21 +71,7 @@ function CommentBox({ comment, session, depth = 0 }) {
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [liked, setLiked] = useState(false)
-const [likes, setLikes] = useState(post.likes ?? 0)
-
-useEffect(() => {
-  async function checkLiked() {
-    if (!session) return
-    const { data } = await supabase
-      .from('post_likes')
-      .select('user_id')
-      .eq('post_id', post.id)
-      .eq('user_id', session.user.id)
-      .single()
-    if (data) setLiked(true)
-  }
-  checkLiked()
-}, [post.id, session])
+  const [likes, setLikes] = useState(comment.likes ?? 0)
   const [replies, setReplies] = useState(comment.replies ?? [])
 
   const initials = comment.profiles?.username?.slice(0, 2).toUpperCase() ?? '??'
@@ -142,6 +127,23 @@ function PostCard({ post, session }) {
   const [loadingComments, setLoadingComments] = useState(false)
 
   const initials = post.profiles?.username?.slice(0, 2).toUpperCase() ?? '??'
+  const username = session?.user?.user_metadata?.username ?? 'Me'
+  const myInitials = username.slice(0, 2).toUpperCase()
+
+  useEffect(() => {
+    async function checkLiked() {
+      if (!session) return
+      const { data } = await supabase
+        .from('post_likes')
+        .select('user_id')
+        .eq('post_id', post.id)
+        .eq('user_id', session.user.id)
+        .single()
+      if (data) setLiked(true)
+    }
+    checkLiked()
+    loadComments()
+  }, [post.id])
 
   async function loadComments() {
     setLoadingComments(true)
@@ -156,7 +158,6 @@ function PostCard({ post, session }) {
   }
 
   async function toggleComments() {
-    if (!showComments && comments.length === 0) await loadComments()
     setShowComments(!showComments)
   }
 
@@ -174,25 +175,22 @@ function PostCard({ post, session }) {
     setCommentText('')
   }
 
- async function toggleLike() {
-  if (!session) return
-  if (liked) {
-    await supabase.from('post_likes').delete().match({ user_id: session.user.id, post_id: post.id })
-    await supabase.from('posts').update({ likes: likes - 1 }).eq('id', post.id)
-    setLikes(likes - 1)
-    setLiked(false)
-  } else {
-    const { error } = await supabase.from('post_likes').insert({ user_id: session.user.id, post_id: post.id })
-    if (!error) {
-      await supabase.from('posts').update({ likes: likes + 1 }).eq('id', post.id)
-      setLikes(likes + 1)
-      setLiked(true)
+  async function toggleLike() {
+    if (!session) return
+    if (liked) {
+      await supabase.from('post_likes').delete().match({ user_id: session.user.id, post_id: post.id })
+      await supabase.from('posts').update({ likes: likes - 1 }).eq('id', post.id)
+      setLikes(likes - 1)
+      setLiked(false)
+    } else {
+      const { error } = await supabase.from('post_likes').insert({ user_id: session.user.id, post_id: post.id })
+      if (!error) {
+        await supabase.from('posts').update({ likes: likes + 1 }).eq('id', post.id)
+        setLikes(likes + 1)
+        setLiked(true)
+      }
     }
   }
-}
-
-  const username = session?.user?.user_metadata?.username ?? 'Me'
-  const myInitials = username.slice(0, 2).toUpperCase()
 
   return (
     <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '18px 20px' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}>
@@ -219,7 +217,7 @@ function PostCard({ post, session }) {
       <div style={{ display: 'flex', gap: 16, marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
         <button onClick={toggleLike} style={{ fontSize: 13, fontWeight: 600, color: liked ? '#f05252' : '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>♥ {likes}</button>
         <button onClick={toggleComments} style={{ fontSize: 13, fontWeight: 600, color: '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
-        💬 {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+          💬 {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
         </button>
       </div>
 
@@ -248,7 +246,6 @@ function CreatePostModal({ session, onClose, onSubmit }) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [decklistRaw, setDecklistRaw] = useState('')
-  const [leaderId, setLeaderId] = useState('')
   const [leaderResult, setLeaderResult] = useState(null)
   const [deckName, setDeckName] = useState('')
   const [parsedCards, setParsedCards] = useState([])
@@ -302,28 +299,37 @@ function CreatePostModal({ session, onClose, onSubmit }) {
     setEnriching(false)
   }
 
-async function handleSubmit() {
-  if (!title.trim() || !body.trim() || !session) {
-    console.log('Validation failed', { title, body, session })
-    return
+  async function handleSubmit() {
+    if (!title.trim() || !body.trim() || !session) return
+    setSaving(true)
+
+    let decklistId = null
+    if (leaderResult && parsedCards.length > 0) {
+      const { data: dl } = await supabase
+        .from('decklists')
+        .insert({
+          user_id: session.user.id,
+          name: deckName || `${leaderResult.card_name} Deck`,
+          leader_id: leaderResult.card_set_id,
+          leader_name: leaderResult.card_name,
+          leader_color: leaderResult.card_color,
+          cards: parsedCards,
+        })
+        .select()
+        .single()
+      if (dl) decklistId = dl.id
+    }
+
+    const { data: post, error } = await supabase
+      .from('posts')
+      .insert({ user_id: session.user.id, title: title.trim(), body: body.trim(), decklist_id: decklistId })
+      .select('*, profiles!posts_user_id_fkey(*), decklists(*)')
+      .single()
+
+    if (post) onSubmit(post)
+    setSaving(false)
+    onClose()
   }
-  setSaving(true)
-
-  console.log('Inserting post with user_id:', session.user.id)
-
-  const { data: post, error } = await supabase
-    .from('posts')
-    .insert({ user_id: session.user.id, title: title.trim(), body: body.trim(), decklist_id: null })
-    .select('*, profiles!posts_user_id_fkey(*), decklists(*)')
-    .single()
-
-  console.log('Post result:', post)
-  console.log('Post error:', error)
-
-  if (post) onSubmit(post)
-  setSaving(false)
-  onClose()
-}
 
   const inputStyle = { width: '100%', background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }
   const labelStyle = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#6b7a99', marginBottom: 6, display: 'block' }
@@ -346,7 +352,6 @@ async function handleSubmit() {
             <textarea placeholder="Share your thoughts, analysis, or tournament report..." value={body} onChange={e => setBody(e.target.value)} style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }} />
           </div>
 
-          {/* Decklist section */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#3a4560', marginBottom: 14 }}>Attach Decklist (optional)</div>
 
@@ -355,7 +360,6 @@ async function handleSubmit() {
               <input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} />
             </div>
 
-            {/* Leader search */}
             <div ref={leaderRef} style={{ position: 'relative', marginBottom: 12 }}>
               <label style={labelStyle}>Leader Card</label>
               {leaderResult ? (
@@ -369,14 +373,7 @@ async function handleSubmit() {
                 </div>
               ) : (
                 <>
-                  <input
-                    type="text"
-                    placeholder="Search by name or ID, e.g. Luffy, OP01-060..."
-                    value={leaderQuery}
-                    onChange={handleLeaderQuery}
-                    onFocus={() => leaderQuery.length >= 2 && setLeaderOpen(true)}
-                    style={inputStyle}
-                  />
+                  <input type="text" placeholder="Search by name or ID, e.g. Luffy, OP01-060..." value={leaderQuery} onChange={handleLeaderQuery} onFocus={() => leaderQuery.length >= 2 && setLeaderOpen(true)} style={inputStyle} />
                   {leaderOpen && leaderQuery.length >= 2 && (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#1c2333', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto' }}>
                       {leaderSearching ? (
@@ -398,25 +395,14 @@ async function handleSubmit() {
               )}
             </div>
 
-            {/* Decklist paste */}
             <div>
               <label style={labelStyle}>Paste Decklist</label>
-              <textarea
-                placeholder={'4xOP01-024\n4xOP01-013\n...'}
-                value={decklistRaw}
-                onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }}
-                style={{ ...inputStyle, minHeight: 100, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
-              />
-              <button
-                onClick={handleParseDeck}
-                disabled={!decklistRaw.trim() || enriching}
-                style={{ marginTop: 8, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: decklistRaw.trim() ? 'rgba(255,255,255,0.05)' : 'transparent', color: decklistRaw.trim() ? '#f0f2f5' : '#3a4560', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}
-              >
+              <textarea placeholder={'4xOP01-024\n4xOP01-013\n...'} value={decklistRaw} onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }} style={{ ...inputStyle, minHeight: 100, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />
+              <button onClick={handleParseDeck} disabled={!decklistRaw.trim() || enriching} style={{ marginTop: 8, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: decklistRaw.trim() ? 'rgba(255,255,255,0.05)' : 'transparent', color: decklistRaw.trim() ? '#f0f2f5' : '#3a4560', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
                 {enriching ? 'Fetching card data...' : 'Preview Decklist'}
               </button>
             </div>
 
-            {/* Parsed preview */}
             {deckParsed && parsedCards.length > 0 && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 8 }}>
@@ -450,8 +436,6 @@ export default function Community({ session }) {
   const [showCreate, setShowCreate] = useState(false)
   const [filter, setFilter] = useState('latest')
 
-  
-
   async function loadPosts() {
     setLoading(true)
     const { data } = await supabase
@@ -465,10 +449,6 @@ export default function Community({ session }) {
   useEffect(() => {
     loadPosts()
   }, [filter])
-
- function handleNewPost(post) {
-  loadPosts()
-}
 
   return (
     <div>
@@ -505,6 +485,7 @@ export default function Community({ session }) {
         </div>
       )}
 
-{showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={() => { setShowCreate(false); loadPosts() }} />}    </div>
+      {showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={() => { setShowCreate(false); loadPosts() }} />}
+    </div>
   )
 }
