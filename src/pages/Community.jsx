@@ -72,9 +72,52 @@ function CommentBox({ comment, session, depth = 0 }) {
   const [replyText, setReplyText] = useState('')
   const [liked, setLiked] = useState(false)
   const [likes, setLikes] = useState(comment.likes ?? 0)
-  const [replies, setReplies] = useState(comment.replies ?? [])
+  const [replies, setReplies] = useState([])
 
   const initials = comment.profiles?.username?.slice(0, 2).toUpperCase() ?? '??'
+
+  useEffect(() => {
+    async function init() {
+      // Check if user liked this comment
+      if (session) {
+        const { data } = await supabase
+          .from('comment_likes')
+          .select('user_id')
+          .eq('comment_id', comment.id)
+          .eq('user_id', session.user.id)
+          .single()
+        if (data) setLiked(true)
+      }
+
+      // Load replies
+      if (depth === 0) {
+        const { data } = await supabase
+          .from('comments')
+          .select('*, profiles!comments_user_id_fkey(*)')
+          .eq('parent_id', comment.id)
+          .order('created_at', { ascending: true })
+        setReplies(data ?? [])
+      }
+    }
+    init()
+  }, [comment.id])
+
+  async function toggleLike() {
+    if (!session) return
+    if (liked) {
+      await supabase.from('comment_likes').delete().match({ user_id: session.user.id, comment_id: comment.id })
+      await supabase.from('comments').update({ likes: likes - 1 }).eq('id', comment.id)
+      setLikes(likes - 1)
+      setLiked(false)
+    } else {
+      const { error } = await supabase.from('comment_likes').insert({ user_id: session.user.id, comment_id: comment.id })
+      if (!error) {
+        await supabase.from('comments').update({ likes: likes + 1 }).eq('id', comment.id)
+        setLikes(likes + 1)
+        setLiked(true)
+      }
+    }
+  }
 
   async function submitReply() {
     if (!replyText.trim() || !session) return
@@ -100,17 +143,43 @@ function CommentBox({ comment, session, depth = 0 }) {
             <div style={{ fontSize: 13, color: '#b0bac8', lineHeight: 1.6 }}>{comment.body}</div>
           </div>
           <div style={{ display: 'flex', gap: 14, marginTop: 6, paddingLeft: 4 }}>
-            <button onClick={() => { setLiked(!liked); setLikes(liked ? likes - 1 : likes + 1) }} style={{ fontSize: 11, fontWeight: 600, color: liked ? '#f05252' : '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>♥ {likes}</button>
-            {depth === 0 && <button onClick={() => setShowReply(!showReply)} style={{ fontSize: 11, fontWeight: 600, color: '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Reply</button>}
+            <button
+              onClick={toggleLike}
+              style={{ fontSize: 11, fontWeight: 600, color: liked ? '#f05252' : '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+            >
+              ♥ {likes}
+            </button>
+            {depth === 0 && (
+              <button
+                onClick={() => setShowReply(!showReply)}
+                style={{ fontSize: 11, fontWeight: 600, color: '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+              >
+                Reply
+              </button>
+            )}
             <span style={{ fontSize: 11, color: '#3a4560' }}>{new Date(comment.created_at).toLocaleDateString()}</span>
           </div>
           {showReply && (
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <input type="text" placeholder="Write a reply..." value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submitReply()} style={{ flex: 1, background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '7px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-              <button onClick={submitReply} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#3d7fff', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Post</button>
+              <input
+                type="text"
+                placeholder="Write a reply..."
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitReply()}
+                style={{ flex: 1, background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '7px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+              />
+              <button
+                onClick={submitReply}
+                style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#3d7fff', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Post
+              </button>
             </div>
           )}
-          {replies.map(r => <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} />)}
+          {replies.map(r => (
+            <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} />
+          ))}
         </div>
       </div>
     </div>
