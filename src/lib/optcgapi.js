@@ -91,23 +91,30 @@ export async function enrichCards(cards) {
 export async function searchLeaders(query) {
   const q = query.toLowerCase()
 
-  // Search set leaders from API
-  const setsRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`)
+  // Run both in parallel — ST cache fetch and sets API search
+  const [setsRes, stCards] = await Promise.all([
+    fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`),
+    getSTCards(),
+  ])
+
   const setsData = setsRes.ok ? await setsRes.json() : []
 
-  // Search ST leaders from local cache
-  const stCards = await getSTCards()
+  // Search ST leaders locally — check both name AND card_set_id
   const stLeaders = stCards.filter(card =>
-    card.card_type === 'Leader' &&
-    (card.card_name?.toLowerCase().includes(q) || card.card_set_id?.toLowerCase().includes(q))
+    card.card_type === 'Leader' && (
+      card.card_name?.toLowerCase().includes(q) ||
+      card.card_set_id?.toLowerCase().includes(q) ||
+      card.set_name?.toLowerCase().includes(q)
+    )
   )
 
-  // Merge and deduplicate
+  // Merge and deduplicate by card_set_id
   const merged = [...(setsData ?? []), ...stLeaders]
   const seen = new Set()
   return merged.filter(card => {
-    if (seen.has(card.card_set_id)) return false
-    seen.add(card.card_set_id)
+    const key = card.card_set_id
+    if (seen.has(key)) return false
+    seen.add(key)
     return true
   })
 }
