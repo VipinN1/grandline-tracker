@@ -78,7 +78,6 @@ function CommentBox({ comment, session, depth = 0 }) {
 
   useEffect(() => {
     async function init() {
-      // Check if user liked this comment
       if (session) {
         const { data } = await supabase
           .from('comment_likes')
@@ -88,8 +87,6 @@ function CommentBox({ comment, session, depth = 0 }) {
           .single()
         if (data) setLiked(true)
       }
-
-      // Load replies
       if (depth === 0) {
         const { data } = await supabase
           .from('comments')
@@ -126,60 +123,58 @@ function CommentBox({ comment, session, depth = 0 }) {
       .insert({ post_id: comment.post_id, user_id: session.user.id, parent_id: comment.id, body: replyText.trim() })
       .select('*, profiles!comments_user_id_fkey(*)')
       .single()
-    if (data) setReplies([...replies, data])
+    if (data) setReplies(prev => [...prev, data])
     setReplyText('')
     setShowReply(false)
   }
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 32 : 0, marginBottom: 10 }}>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 8, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#3d7fff', flexShrink: 0 }}>
+    <div style={{ marginLeft: depth > 0 ? 20 : 0, marginTop: depth > 0 ? 8 : 0 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ width: 26, height: 26, borderRadius: 7, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#3d7fff', flexShrink: 0, marginTop: 2 }}>
           {initials}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ background: '#1c2333', borderRadius: 10, padding: '10px 14px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', marginBottom: 4 }}>{comment.profiles?.username ?? 'Unknown'}</div>
-            <div style={{ fontSize: 13, color: '#b0bac8', lineHeight: 1.6 }}>{comment.body}</div>
+          <div style={{ background: '#1c2333', borderRadius: 8, padding: '8px 12px' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', marginBottom: 3 }}>{comment.profiles?.username ?? 'Unknown'}</div>
+            <div style={{ fontSize: 13, color: '#b0bac8', lineHeight: 1.5 }}>{comment.body}</div>
           </div>
-          <div style={{ display: 'flex', gap: 14, marginTop: 6, paddingLeft: 4 }}>
-            <button
-              onClick={toggleLike}
-              style={{ fontSize: 11, fontWeight: 600, color: liked ? '#f05252' : '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
-            >
+          <div style={{ display: 'flex', gap: 12, marginTop: 4, paddingLeft: 2, alignItems: 'center' }}>
+            <button onClick={toggleLike} style={{ fontSize: 11, fontWeight: 600, color: liked ? '#f05252' : '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
               ♥ {likes}
             </button>
-            {depth === 0 && (
-              <button
-                onClick={() => setShowReply(!showReply)}
-                style={{ fontSize: 11, fontWeight: 600, color: '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
-              >
-                Reply
+            {depth < 2 && (
+              <button onClick={() => setShowReply(!showReply)} style={{ fontSize: 11, fontWeight: 600, color: showReply ? '#3d7fff' : '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                {showReply ? 'Cancel' : 'Reply'}
               </button>
             )}
             <span style={{ fontSize: 11, color: '#3a4560' }}>{new Date(comment.created_at).toLocaleDateString()}</span>
           </div>
+
           {showReply && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
               <input
                 type="text"
-                placeholder="Write a reply..."
+                placeholder={`Reply to ${comment.profiles?.username ?? 'comment'}...`}
                 value={replyText}
                 onChange={e => setReplyText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submitReply()}
-                style={{ flex: 1, background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '7px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+                autoFocus
+                style={{ flex: 1, background: '#161b27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, padding: '6px 10px', color: '#f0f2f5', fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
               />
-              <button
-                onClick={submitReply}
-                style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#3d7fff', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-              >
+              <button onClick={submitReply} style={{ padding: '6px 12px', borderRadius: 7, border: 'none', background: '#3d7fff', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Post
               </button>
             </div>
           )}
-          {replies.map(r => (
-            <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} />
-          ))}
+
+          {replies.length > 0 && (
+            <div style={{ marginTop: 8, paddingLeft: 4, borderLeft: '2px solid rgba(61,127,255,0.15)' }}>
+              {replies.map(r => (
+                <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
