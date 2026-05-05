@@ -98,12 +98,25 @@ function DeckModal({ deck, onClose }) {
   )
 }
 
-function LeaderCard({ deck, onClick }) {
+function LeaderCard({ deck, onClick, onDelete }) {
   const [errored, setErrored] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const color = COLORS[deck.leader_color] ?? '#3d7fff'
 
+  async function handleDelete(e) {
+    e.stopPropagation()
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      setTimeout(() => setConfirmDelete(false), 3000)
+      return
+    }
+    await onDelete(deck.id)
+  }
+
   return (
-    <div onClick={() => onClick(deck)} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.15s' }}
+    <div
+      onClick={() => onClick(deck)}
+      style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.15s', position: 'relative' }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}
     >
@@ -119,7 +132,20 @@ function LeaderCard({ deck, onClick }) {
         <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.6)', border: `1px solid ${color}44`, borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700, color }}>
           {deck.leader_color}
         </div>
+        <button
+          onClick={handleDelete}
+          style={{
+            position: 'absolute', top: 10, left: 10,
+            background: confirmDelete ? 'rgba(240,82,82,0.9)' : 'rgba(0,0,0,0.6)',
+            border: `1px solid ${confirmDelete ? '#f05252' : 'rgba(255,255,255,0.15)'}`,
+            borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700,
+            color: '#fff', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+          }}
+        >
+          {confirmDelete ? 'Confirm?' : '✕'}
+        </button>
       </div>
+
       <div style={{ padding: '14px 16px' }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', marginBottom: 2 }}>{deck.name}</div>
         <div style={{ fontSize: 12, color: '#6b7a99', marginBottom: 10 }}>{deck.leader_name} · {deck.leader_id}</div>
@@ -139,17 +165,23 @@ export default function Decklists({ session }) {
 
   useEffect(() => {
     if (!session) return
-    async function load() {
-      const { data } = await supabase
-        .from('decklists')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('updated_at', { ascending: false })
-      setDecks(data ?? [])
-      setLoading(false)
-    }
-    load()
+    loadDecks()
   }, [session])
+
+  async function loadDecks() {
+    const { data } = await supabase
+      .from('decklists')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('updated_at', { ascending: false })
+    setDecks(data ?? [])
+    setLoading(false)
+  }
+
+  async function handleDelete(id) {
+    await supabase.from('decklists').delete().eq('id', id)
+    setDecks(prev => prev.filter(d => d.id !== id))
+  }
 
   const filtered = decks.filter(d =>
     d.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -186,7 +218,7 @@ export default function Decklists({ session }) {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {filtered.map(deck => (
-            <LeaderCard key={deck.id} deck={deck} onClick={setSelectedDeck} />
+            <LeaderCard key={deck.id} deck={deck} onClick={setSelectedDeck} onDelete={handleDelete} />
           ))}
         </div>
       )}
