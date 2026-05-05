@@ -82,7 +82,7 @@ function CommentBox({ comment, session, depth = 0 }) {
     const { data } = await supabase
       .from('comments')
       .insert({ post_id: comment.post_id, user_id: session.user.id, parent_id: comment.id, body: replyText.trim() })
-      .select('*, profiles(*)')
+      .select('*, profiles!comments_user_id_fkey(*)')
       .single()
     if (data) setReplies([...replies, data])
     setReplyText('')
@@ -151,7 +151,7 @@ function PostCard({ post, session }) {
     const { data } = await supabase
       .from('comments')
       .insert({ post_id: post.id, user_id: session.user.id, body: commentText.trim() })
-      .select('*, profiles(*)')
+      .select('*, profiles!comments_user_id_fkey(*)')
       .single()
     if (data) {
       setComments([...comments, data])
