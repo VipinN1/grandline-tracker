@@ -44,7 +44,7 @@ export default function Navbar({ session }) {
   return (
     <nav style={{ background: 'rgba(15,17,23,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 1.5rem', height: 52, display: 'flex', alignItems: 'center', gap: 4, position: 'sticky', top: 0, zIndex: 50 }}>
       <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', marginRight: 'auto', letterSpacing: '-0.3px' }}>
-        grand<span style={{ color: '#3d7fff' }}>line</span>
+        Pirate<span style={{ color: '#3d7fff' }}>Tracker</span>
       </div>
       <NavLink to="/dashboard" style={({ isActive }) => tabStyle(isActive)}>Dashboard</NavLink>
       <NavLink to="/log" style={({ isActive }) => tabStyle(isActive)}>Log Result</NavLink>

@@ -82,7 +82,7 @@ export default function Signup({ onSwitch }) {
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: '#f0f2f5', marginBottom: 6 }}>
-            grand<span style={{ color: '#3d7fff' }}>line</span>
+            Pirate<span style={{ color: '#3d7fff' }}>Tracker</span>
           </div>
           <div style={{ fontSize: 13, color: '#6b7a99' }}>Create your account</div>
         </div>
