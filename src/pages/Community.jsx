@@ -274,20 +274,22 @@ function CommentBox({ comment, session, depth = 0 }) {
     init()
   }, [comment.id])
 
-  async function toggleLike() {
-    if (!session) return
-    if (liked) {
-      await supabase.from('comment_likes').delete().match({ user_id: session.user.id, comment_id: comment.id })
-      await supabase.from('comments').update({ likes: likes - 1 }).eq('id', comment.id)
-      setLikes(likes - 1); setLiked(false)
-    } else {
-      const { error } = await supabase.from('comment_likes').insert({ user_id: session.user.id, comment_id: comment.id })
-      if (!error) {
-        await supabase.from('comments').update({ likes: likes + 1 }).eq('id', comment.id)
-        setLikes(likes + 1); setLiked(true)
-      }
+async function toggleLike() {
+  if (!session) return
+  if (liked) {
+    await supabase.from('comment_likes').delete().match({ user_id: session.user.id, comment_id: comment.id })
+    await supabase.rpc('decrement_comment_likes', { comment_id: comment.id })
+    setLikes(prev => prev - 1)
+    setLiked(false)
+  } else {
+    const { error } = await supabase.from('comment_likes').insert({ user_id: session.user.id, comment_id: comment.id })
+    if (!error) {
+      await supabase.rpc('increment_comment_likes', { comment_id: comment.id })
+      setLikes(prev => prev + 1)
+      setLiked(true)
     }
   }
+}
 
   async function submitReply() {
     if (!replyText.trim() || !session) return
