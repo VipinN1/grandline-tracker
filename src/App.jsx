@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
+import { useWindowSize } from './hooks/useWindowSize'
 import Navbar from './components/Navbar'
 import Dashboard from './pages/Dashboard'
 import LogResult from './pages/LogResult'
@@ -15,6 +16,7 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showSignup, setShowSignup] = useState(false)
+  const { isMobile } = useWindowSize()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -47,7 +49,7 @@ export default function App() {
     <BrowserRouter>
       <div style={{ minHeight: '100vh', background: '#0f1117', color: '#f0f2f5', fontFamily: 'DM Sans, system-ui, sans-serif' }}>
         <Navbar session={session} />
-        <main style={{ maxWidth: 960, margin: '0 auto', padding: '1.5rem 1.5rem' }}>
+        <main style={{ maxWidth: 960, margin: '0 auto', padding: isMobile ? '1rem' : '1.5rem' }}>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard session={session} />} />

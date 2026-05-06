@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const COLORS = {
   Red: '#f05252',
@@ -9,12 +10,6 @@ const COLORS = {
   Purple: '#a78bfa',
   Yellow: '#fbbf24',
   Black: '#94a3b8',
-}
-
-function wrColor(wr) {
-  if (wr >= 65) return '#34d399'
-  if (wr >= 50) return '#6b7a99'
-  return '#f05252'
 }
 
 function placementLabel(n) {
@@ -43,11 +38,11 @@ function Avatar({ profile, size = 44, radius = 10 }) {
   )
 }
 
-function ProfileModal({ profile, session, onClose, onFriendAction }) {
+function ProfileModal({ profile, session, onClose, onFriendAction, isMobile }) {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedTournament, setSelectedTournament] = useState(null)
-  const [friendStatus, setFriendStatus] = useState(null) // null, 'pending_sent', 'pending_received', 'accepted'
+  const [friendStatus, setFriendStatus] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -56,7 +51,6 @@ function ProfileModal({ profile, session, onClose, onFriendAction }) {
         supabase.from('friends').select('*').or(`and(user_id.eq.${session.user.id},friend_id.eq.${profile.id}),and(user_id.eq.${profile.id},friend_id.eq.${session.user.id})`)
       ])
       setTournaments(tData ?? [])
-
       if (fData && fData.length > 0) {
         const rel = fData[0]
         if (rel.status === 'accepted') setFriendStatus('accepted')
@@ -105,14 +99,25 @@ function ProfileModal({ profile, session, onClose, onFriendAction }) {
     )
   }
 
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 580, maxHeight: '88vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+  const modalBox = {
+    background: '#161b27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: isMobile ? '16px 16px 0 0' : 16,
+    width: isMobile ? '100%' : 580,
+    maxHeight: isMobile ? '95vh' : '88vh',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
+  }
 
-        {/* Header */}
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+      <div onClick={e => e.stopPropagation()} style={modalBox}>
+
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
           <Avatar profile={profile} size={52} radius={12} />
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{profile.username}</div>
             {profile.location && <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 2 }}>{profile.location}</div>}
           </div>
@@ -120,17 +125,15 @@ function ProfileModal({ profile, session, onClose, onFriendAction }) {
           <button onClick={onClose} style={{ marginLeft: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#6b7a99', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
-        {/* Stats */}
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
           {[['Win Rate', `${winRate}%`], ['Events', tournaments.length], ['Top 8s', topEights]].map(([label, val]) => (
             <div key={label} style={{ flex: 1, padding: '12px 16px', borderRight: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
               <div style={{ fontSize: 10, color: '#6b7a99', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>{label}</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: label === 'Win Rate' ? wrColor(winRate) : '#f0f2f5' }}>{val}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5' }}>{val}</div>
             </div>
           ))}
         </div>
 
-        {/* Tournament history */}
         <div style={{ overflowY: 'auto', padding: 20 }}>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 12 }}>
             Tournament History — click to view deck
@@ -142,7 +145,7 @@ function ProfileModal({ profile, session, onClose, onFriendAction }) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {tournaments.map(t => (
-                <div key={t.id} onClick={() => setSelectedTournament(t)} style={{ display: 'grid', gridTemplateColumns: '40px 1fr auto auto', alignItems: 'center', gap: 12, background: '#1c2333', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.1s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#212d40' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = '#1c2333' }}>
+                <div key={t.id} onClick={() => setSelectedTournament(t)} style={{ display: 'grid', gridTemplateColumns: isMobile ? '34px 1fr auto' : '40px 1fr auto auto', alignItems: 'center', gap: 12, background: '#1c2333', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.1s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#212d40' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = '#1c2333' }}>
                   <div style={{ width: 34, height: 34, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, ...placementStyle(t.placement) }}>
                     {placementLabel(t.placement)}
                   </div>
@@ -150,10 +153,12 @@ function ProfileModal({ profile, session, onClose, onFriendAction }) {
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{t.name}</div>
                     <div style={{ fontSize: 11, color: '#6b7a99', marginTop: 1 }}>{t.date} · {t.player_count} players</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <img src={getCardImageUrl(t.leader_id)} alt={t.leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.display = 'none' }} />
-                    <div style={{ fontSize: 11, color: COLORS[t.leader_color] ?? '#6b7a99' }}>{t.leader_name}</div>
-                  </div>
+                  {!isMobile && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <img src={getCardImageUrl(t.leader_id)} alt={t.leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.display = 'none' }} />
+                      <div style={{ fontSize: 11, color: COLORS[t.leader_color] ?? '#6b7a99' }}>{t.leader_name}</div>
+                    </div>
+                  )}
                   <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                     <span style={{ color: '#34d399' }}>{t.wins}W</span>
                     <span style={{ color: '#3a4560', margin: '0 3px' }}>·</span>
@@ -167,8 +172,8 @@ function ProfileModal({ profile, session, onClose, onFriendAction }) {
       </div>
 
       {selectedTournament && (
-        <div onClick={() => setSelectedTournament(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 400, padding: 24 }}>
+        <div onClick={() => setSelectedTournament(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 400, maxHeight: isMobile ? '90vh' : '80vh', overflow: 'auto', padding: 24, animation: isMobile ? 'slideUp 0.25s ease-out' : undefined }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', marginBottom: 4 }}>{selectedTournament.name}</div>
             <div style={{ fontSize: 12, color: '#6b7a99', marginBottom: 16 }}>{selectedTournament.leader_name} · {selectedTournament.leader_id}</div>
             {selectedTournament.decklists?.cards?.length > 0 ? (
@@ -200,6 +205,7 @@ export default function Friends({ session }) {
   const [addError, setAddError] = useState('')
   const [addSuccess, setAddSuccess] = useState('')
   const [activeTab, setActiveTab] = useState('friends')
+  const { isMobile } = useWindowSize()
 
   useEffect(() => {
     if (!session) return
@@ -238,7 +244,6 @@ export default function Friends({ session }) {
 
   async function acceptRequest(request) {
     await supabase.from('friends').update({ status: 'accepted' }).eq('id', request.id)
-    // Also create reverse relationship
     await supabase.from('friends').insert({ user_id: session.user.id, friend_id: request.user_id, status: 'accepted' })
     loadAll()
   }
@@ -262,9 +267,9 @@ export default function Friends({ session }) {
 
       {/* Add friend bar */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input type="text" placeholder="Search friends..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, maxWidth: 200, background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-        <input type="text" placeholder="Add by username..." value={addUsername} onChange={e => setAddUsername(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddFriend()} style={{ flex: 1, maxWidth: 200, background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-        <button onClick={handleAddFriend} style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: '#3d7fff', color: '#fff', fontFamily: 'inherit' }}>Send Request</button>
+        <input type="text" placeholder="Search friends..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 120, background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+        <input type="text" placeholder="Add by username..." value={addUsername} onChange={e => setAddUsername(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddFriend()} style={{ flex: 1, minWidth: 120, background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+        <button onClick={handleAddFriend} style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: '#3d7fff', color: '#fff', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>Send Request</button>
         {addError && <div style={{ fontSize: 12, color: '#f05252', width: '100%' }}>{addError}</div>}
         {addSuccess && <div style={{ fontSize: 12, color: '#34d399', width: '100%' }}>{addSuccess}</div>}
       </div>
@@ -289,7 +294,7 @@ export default function Friends({ session }) {
             <div style={{ fontSize: 13 }}>Add friends by their username to see their tournament history</div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
             {filtered.map(f => (
               <div key={f.id} onClick={() => setSelectedProfile(f.profiles)} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 18, cursor: 'pointer', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -322,7 +327,7 @@ export default function Friends({ session }) {
                   {req.profiles?.location && <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 2 }}>{req.profiles.location}</div>}
                   <div style={{ fontSize: 11, color: '#3a4560', marginTop: 2 }}>Sent {new Date(req.created_at).toLocaleDateString()}</div>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <button onClick={() => acceptRequest(req)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit' }}>Accept</button>
                   <button onClick={() => declineRequest(req)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#6b7a99', cursor: 'pointer', fontFamily: 'inherit' }}>Decline</button>
                 </div>
@@ -338,6 +343,7 @@ export default function Friends({ session }) {
           session={session}
           onClose={() => setSelectedProfile(null)}
           onFriendAction={loadAll}
+          isMobile={isMobile}
         />
       )}
     </div>

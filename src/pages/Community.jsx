@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -9,7 +10,7 @@ function CardPreview({ card, onClose }) {
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
+        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>{card.name}</div>
           <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
@@ -20,7 +21,7 @@ function CardPreview({ card, onClose }) {
   )
 }
 
-function ProfileModal({ profile, session, onClose }) {
+function ProfileModal({ profile, session, onClose, isMobile }) {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [friendStatus, setFriendStatus] = useState(null)
@@ -77,16 +78,28 @@ function ProfileModal({ profile, session, onClose }) {
     return { background: 'rgba(255,255,255,0.04)', color: '#3a4560' }
   }
 
+  const modalBox = {
+    background: '#161b27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: isMobile ? '16px 16px 0 0' : 16,
+    width: isMobile ? '100%' : 520,
+    maxHeight: isMobile ? '95vh' : '85vh',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
+  }
+
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 520, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+        <div onClick={e => e.stopPropagation()} style={modalBox}>
 
           <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
             <div style={{ width: 52, height: 52, borderRadius: 12, background: '#3d7fff22', border: '1px solid #3d7fff44', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#3d7fff', flexShrink: 0, overflow: 'hidden' }}>
               {profile.avatar_url ? <img src={profile.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{profile.username}</div>
               {profile.location && <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 2 }}>{profile.location}</div>}
             </div>
@@ -115,7 +128,7 @@ function ProfileModal({ profile, session, onClose }) {
                   <div
                     key={t.id}
                     onClick={() => setSelectedTournament(t)}
-                    style={{ display: 'grid', gridTemplateColumns: '40px 1fr auto auto', alignItems: 'center', gap: 12, background: '#1c2333', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.1s' }}
+                    style={{ display: 'grid', gridTemplateColumns: isMobile ? '34px 1fr auto' : '40px 1fr auto auto', alignItems: 'center', gap: 12, background: '#1c2333', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.1s' }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#212d40' }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = '#1c2333' }}
                   >
@@ -124,10 +137,12 @@ function ProfileModal({ profile, session, onClose }) {
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{t.name}</div>
                       <div style={{ fontSize: 11, color: '#6b7a99', marginTop: 1 }}>{t.date} · {t.player_count} players</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <img src={getCardImageUrl(t.leader_id)} alt={t.leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
-                      <div style={{ fontSize: 11, color: COLORS[t.leader_color] ?? '#6b7a99' }}>{t.leader_name}</div>
-                    </div>
+                    {!isMobile && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <img src={getCardImageUrl(t.leader_id)} alt={t.leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
+                        <div style={{ fontSize: 11, color: COLORS[t.leader_color] ?? '#6b7a99' }}>{t.leader_name}</div>
+                      </div>
+                    )}
                     <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                       <span style={{ color: '#34d399' }}>{t.wins}W</span>
                       <span style={{ color: '#3a4560', margin: '0 3px' }}>·</span>
@@ -142,8 +157,8 @@ function ProfileModal({ profile, session, onClose }) {
       </div>
 
       {selectedTournament && (
-        <div onClick={() => setSelectedTournament(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 560, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div onClick={() => setSelectedTournament(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: isMobile ? 'slideUp 0.25s ease-out' : undefined }}>
             <div style={{ position: 'relative', height: 120, background: '#1c2333', flexShrink: 0 }}>
               <img src={getCardImageUrl(selectedTournament.leader_id)} alt={selectedTournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
@@ -177,7 +192,7 @@ function ProfileModal({ profile, session, onClose }) {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
                     {selectedTournament.decklists.cards.flatMap((card, i) =>
                       Array.from({ length: card.count }, (_, j) => (
-                        <img key={`${i}-${j}`} src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 65, borderRadius: 5, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.opacity = '0.15' }} />
+                        <img key={`${i}-${j}`} src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 54 : 65, borderRadius: 5, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.opacity = '0.15' }} />
                       ))
                     )}
                   </div>
@@ -274,22 +289,22 @@ function CommentBox({ comment, session, depth = 0 }) {
     init()
   }, [comment.id])
 
-async function toggleLike() {
-  if (!session) return
-  if (liked) {
-    await supabase.from('comment_likes').delete().match({ user_id: session.user.id, comment_id: comment.id })
-    await supabase.rpc('decrement_comment_likes', { comment_id: comment.id })
-    setLikes(prev => prev - 1)
-    setLiked(false)
-  } else {
-    const { error } = await supabase.from('comment_likes').insert({ user_id: session.user.id, comment_id: comment.id })
-    if (!error) {
-      await supabase.rpc('increment_comment_likes', { comment_id: comment.id })
-      setLikes(prev => prev + 1)
-      setLiked(true)
+  async function toggleLike() {
+    if (!session) return
+    if (liked) {
+      await supabase.from('comment_likes').delete().match({ user_id: session.user.id, comment_id: comment.id })
+      await supabase.rpc('decrement_comment_likes', { comment_id: comment.id })
+      setLikes(prev => prev - 1)
+      setLiked(false)
+    } else {
+      const { error } = await supabase.from('comment_likes').insert({ user_id: session.user.id, comment_id: comment.id })
+      if (!error) {
+        await supabase.rpc('increment_comment_likes', { comment_id: comment.id })
+        setLikes(prev => prev + 1)
+        setLiked(true)
+      }
     }
   }
-}
 
   async function submitReply() {
     if (!replyText.trim() || !session) return
@@ -448,7 +463,7 @@ function PostCard({ post, session, onProfileClick }) {
   )
 }
 
-function CreatePostModal({ session, onClose, onSubmit }) {
+function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [decklistRaw, setDecklistRaw] = useState('')
@@ -514,9 +529,21 @@ function CreatePostModal({ session, onClose, onSubmit }) {
   const inputStyle = { width: '100%', background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }
   const labelStyle = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#6b7a99', marginBottom: 6, display: 'block' }
 
+  const modalBox = {
+    background: '#161b27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: isMobile ? '16px 16px 0 0' : 16,
+    width: isMobile ? '100%' : 620,
+    maxHeight: isMobile ? '95vh' : '90vh',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
+  }
+
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 620, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+      <div onClick={e => e.stopPropagation()} style={modalBox}>
         <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>Create Post</div>
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#6b7a99', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
@@ -595,6 +622,7 @@ export default function Community({ session }) {
   const [showCreate, setShowCreate] = useState(false)
   const [filter, setFilter] = useState('latest')
   const [selectedProfile, setSelectedProfile] = useState(null)
+  const { isMobile } = useWindowSize()
 
   async function loadPosts() {
     setLoading(true)
@@ -636,8 +664,8 @@ export default function Community({ session }) {
         </div>
       )}
 
-      {showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={() => { setShowCreate(false); loadPosts() }} />}
-      {selectedProfile && session && <ProfileModal profile={selectedProfile} session={session} onClose={() => setSelectedProfile(null)} />}
+      {showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={() => { setShowCreate(false); loadPosts() }} isMobile={isMobile} />}
+      {selectedProfile && session && <ProfileModal profile={selectedProfile} session={session} onClose={() => setSelectedProfile(null)} isMobile={isMobile} />}
     </div>
   )
 }

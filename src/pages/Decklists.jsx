@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const COLORS = {
   Red: '#f05252',
@@ -16,7 +17,7 @@ function CardPreview({ card, onClose }) {
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
+        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>{card.name}</div>
           <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
@@ -27,7 +28,7 @@ function CardPreview({ card, onClose }) {
   )
 }
 
-function DeckModal({ deck, onClose }) {
+function DeckModal({ deck, onClose, isMobile }) {
   const [selectedCard, setSelectedCard] = useState(null)
   if (!deck) return null
   const color = COLORS[deck.leader_color] ?? '#3d7fff'
@@ -37,10 +38,22 @@ function DeckModal({ deck, onClose }) {
   const stages = cards.filter(c => c.type === 'Stage')
   const others = cards.filter(c => !['Character', 'Event', 'Stage'].includes(c.type))
 
+  const modalBox = {
+    background: '#161b27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: isMobile ? '16px 16px 0 0' : 16,
+    width: isMobile ? '100%' : 700,
+    maxHeight: isMobile ? '95vh' : '90vh',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
+  }
+
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 700, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+        <div onClick={e => e.stopPropagation()} style={modalBox}>
           <div style={{ position: 'relative', height: 120, background: '#1c2333', flexShrink: 0 }}>
             <img src={getCardImageUrl(deck.leader_id)} alt={deck.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
@@ -60,7 +73,7 @@ function DeckModal({ deck, onClose }) {
               {cards.flatMap(card =>
                 Array.from({ length: card.count }, (_, i) => (
                   <div key={`${card.id}-${i}`} onClick={() => setSelectedCard(card)} style={{ cursor: 'pointer', borderRadius: 6, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                    <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 70, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
+                    <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 56 : 70, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
                   </div>
                 ))
               )}
@@ -162,6 +175,7 @@ export default function Decklists({ session }) {
   const [loading, setLoading] = useState(true)
   const [selectedDeck, setSelectedDeck] = useState(null)
   const [search, setSearch] = useState('')
+  const { isMobile } = useWindowSize()
 
   useEffect(() => {
     if (!session) return
@@ -204,9 +218,9 @@ export default function Decklists({ session }) {
         <div style={{ fontSize: 13, color: '#6b7a99' }}>Your saved competitive builds</div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: '1.5rem', alignItems: 'center' }}>
-        <input type="text" placeholder="Search by leader or name..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, maxWidth: 300, background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-        <button style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: '#3d7fff', color: '#fff', fontFamily: 'inherit' }}>+ New Decklist</button>
+      <div style={{ display: 'flex', gap: 10, marginBottom: '1.5rem', alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+        <input type="text" placeholder="Search by leader or name..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 0, background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+        <button style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: '#3d7fff', color: '#fff', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>+ New Decklist</button>
       </div>
 
       {decks.length === 0 ? (
@@ -216,14 +230,14 @@ export default function Decklists({ session }) {
           <div style={{ fontSize: 13 }}>Save a decklist when logging a tournament result</div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
           {filtered.map(deck => (
             <LeaderCard key={deck.id} deck={deck} onClick={setSelectedDeck} onDelete={handleDelete} />
           ))}
         </div>
       )}
 
-      {selectedDeck && <DeckModal deck={selectedDeck} onClose={() => setSelectedDeck(null)} />}
+      {selectedDeck && <DeckModal deck={selectedDeck} onClose={() => setSelectedDeck(null)} isMobile={isMobile} />}
     </div>
   )
 }

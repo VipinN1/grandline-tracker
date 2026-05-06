@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
+import { useWindowSize } from '../hooks/useWindowSize'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
@@ -75,7 +76,7 @@ function CardPreview({ card, onClose }) {
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
+        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>{card.name}</div>
           <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
@@ -86,16 +87,28 @@ function CardPreview({ card, onClose }) {
   )
 }
 
-function TournamentDeckModal({ tournament, onClose }) {
+function TournamentDeckModal({ tournament, onClose, isMobile }) {
   const [selectedCard, setSelectedCard] = useState(null)
   if (!tournament) return null
   const color = COLORS[tournament.leader_color] ?? '#3d7fff'
   const cards = tournament.decklists?.cards ?? []
 
+  const modalBox = {
+    background: '#161b27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: isMobile ? '16px 16px 0 0' : 16,
+    width: isMobile ? '100%' : 560,
+    maxHeight: isMobile ? '95vh' : '85vh',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
+  }
+
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, width: 560, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+        <div onClick={e => e.stopPropagation()} style={modalBox}>
           <div style={{ position: 'relative', height: 120, background: '#1c2333', flexShrink: 0 }}>
             <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
@@ -130,7 +143,7 @@ function TournamentDeckModal({ tournament, onClose }) {
                   {cards.flatMap(card =>
                     Array.from({ length: card.count }, (_, i) => (
                       <div key={`${card.id}-${i}`} onClick={() => setSelectedCard(card)} style={{ cursor: 'pointer', borderRadius: 6, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 72, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
+                        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 58 : 72, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
                       </div>
                     ))
                   )}
@@ -177,6 +190,7 @@ export default function Dashboard({ session }) {
   const [loading, setLoading] = useState(true)
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [showAllLeaders, setShowAllLeaders] = useState(false)
+  const { isMobile } = useWindowSize()
 
   useEffect(() => {
     if (!session) return
@@ -226,7 +240,6 @@ export default function Dashboard({ session }) {
   )
 
   const displayedLeaders = showAllLeaders ? leaderUsage : leaderUsage.slice(0, TOP_LEADERS_LIMIT)
-
   const recentResults = tournaments.slice(0, 5)
 
   if (loading) {
@@ -245,18 +258,18 @@ export default function Dashboard({ session }) {
         <div style={{ fontSize: 13, color: '#6b7a99' }}>Your competitive performance at a glance</div>
       </div>
 
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
+      {/* Stat cards — 2×2 on mobile, 4×1 on desktop */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
         {[
           { label: 'Win Rate', value: totalEvents > 0 ? `${winRate}%` : '—', sub: null },
-          { label: 'Tournaments', value: totalEvents, sub: `${topEights} top 8 finishes` },
+          { label: 'Tournaments', value: totalEvents, sub: `${topEights} top 8` },
           { label: 'Best Finish', value: bestFinish ? placementLabel(bestFinish) : '—', sub: null },
           { label: 'Record', value: totalEvents > 0 ? `${totalWins}–${totalLosses}` : '—', sub: null },
         ].map(s => (
-          <div key={s.label} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 16 }}>
+          <div key={s.label} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: isMobile ? '12px 14px' : 16 }}>
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6b7a99', marginBottom: 8 }}>{s.label}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-1px', lineHeight: 1 }}>{s.value}</div>
-            {s.sub && <div style={{ fontSize: 12, color: '#3a4560', marginTop: 5 }}>{s.sub}</div>}
+            <div style={{ fontSize: isMobile ? 22 : 28, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-1px', lineHeight: 1 }}>{s.value}</div>
+            {s.sub && <div style={{ fontSize: 11, color: '#3a4560', marginTop: 5 }}>{s.sub}</div>}
           </div>
         ))}
       </div>
@@ -270,8 +283,8 @@ export default function Dashboard({ session }) {
         </div>
       ) : (
         <>
-          {/* Charts row 1 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          {/* Charts row — 1 column on mobile, 2 on desktop */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <ChartCard title="Placement Trend">
               {placementOverTime.length < 2 ? <EmptyChart message="Need at least 2 events" /> : (
                 <ResponsiveContainer width="100%" height={180}>
@@ -373,24 +386,26 @@ export default function Dashboard({ session }) {
               <div
                 key={r.id}
                 onClick={() => setSelectedTournament(r)}
-                style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '12px 16px', display: 'grid', gridTemplateColumns: '44px 1fr auto auto', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'all 0.1s' }}
+                style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: isMobile ? '10px 12px' : '12px 16px', display: 'grid', gridTemplateColumns: isMobile ? '36px 1fr auto' : '44px 1fr auto auto', alignItems: 'center', gap: isMobile ? 10 : 16, cursor: 'pointer', transition: 'all 0.1s' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.background = '#1c2333' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = '#161b27' }}
               >
-                <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0, ...placementStyle(r.placement) }}>
+                <div style={{ width: isMobile ? 30 : 36, height: isMobile ? 30 : 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? 11 : 13, fontWeight: 700, flexShrink: 0, ...placementStyle(r.placement) }}>
                   {placementLabel(r.placement)}
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{r.name}</div>
-                  <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 1 }}>{r.date} · {r.player_count} players · {r.location}</div>
+                  <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#f0f2f5' }}>{r.name}</div>
+                  <div style={{ fontSize: 11, color: '#6b7a99', marginTop: 1 }}>{r.date} · {r.player_count} players{!isMobile && r.location ? ` · ${r.location}` : ''}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 12px 6px 8px' }}>
-                  <LeaderMini leaderId={r.leader_id} color={r.leader_color} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5' }}>{r.leader_name}</div>
-                    <div style={{ fontSize: 11, color: COLORS[r.leader_color] ?? '#6b7a99' }}>{r.leader_color} · {r.leader_id}</div>
+                {!isMobile && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 12px 6px 8px' }}>
+                    <LeaderMini leaderId={r.leader_id} color={r.leader_color} />
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5' }}>{r.leader_name}</div>
+                      <div style={{ fontSize: 11, color: COLORS[r.leader_color] ?? '#6b7a99' }}>{r.leader_color} · {r.leader_id}</div>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
                   <span style={{ color: '#34d399' }}>{r.wins}W</span>
                   <span style={{ color: '#3a4560', margin: '0 3px' }}>·</span>
@@ -403,7 +418,7 @@ export default function Dashboard({ session }) {
       )}
 
       {selectedTournament && (
-        <TournamentDeckModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} />
+        <TournamentDeckModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} isMobile={isMobile} />
       )}
     </div>
   )

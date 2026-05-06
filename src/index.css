@@ -20,3 +20,8 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}

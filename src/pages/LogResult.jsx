@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const inputStyle = {
   width: '100%',
@@ -202,6 +203,7 @@ function LeaderSearch({ onSelect }) {
 
 export default function LogResult({ session }) {
   const navigate = useNavigate()
+  const { isMobile } = useWindowSize()
 
   const [tournamentName, setTournamentName] = useState('')
   const [date, setDate] = useState('')
@@ -325,7 +327,7 @@ export default function LogResult({ session }) {
         <div style={{ fontSize: 13, color: '#6b7a99' }}>Add a locals or major event to your history</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: 16, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Tournament Info */}
@@ -425,7 +427,7 @@ export default function LogResult({ session }) {
         </div>
 
         {/* RIGHT — leader search */}
-        <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, position: 'sticky', top: 70 }}>
+        <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, position: isMobile ? 'static' : 'sticky', top: 70 }}>
           <div style={sectionTitle}>Leader Card</div>
 
           {leaderResult ? (
