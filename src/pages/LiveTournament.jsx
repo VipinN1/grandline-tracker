@@ -467,12 +467,25 @@ function ActiveTournament({ tournament, session, onFinish }) {
             <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{tournament.name}</div>
             <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 2 }}>{tournament.leader_name} · {tournament.deck_name}</div>
           </div>
-          <button
-            onClick={() => setShowFinishConfirm(true)}
-            style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-          >
-            Finish
-          </button>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                    onClick={async () => {
+                    if (!confirm('Cancel this tournament? All round data will be deleted.')) return
+                    await supabase.from('live_rounds').delete().eq('tournament_id', tournament.id)
+                    await supabase.from('live_tournaments').delete().eq('id', tournament.id)
+                    onFinish()
+                    }}
+                    style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#6b7a99', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={() => setShowFinishConfirm(true)}
+                    style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                    Finish
+                </button>
+                </div>
         </div>
 
         {/* Live stats */}
