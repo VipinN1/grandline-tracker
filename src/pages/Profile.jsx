@@ -44,6 +44,7 @@ function CardPreview({ card, onClose }) {
 
 function TournamentDeckModal({ tournament, onClose, isMobile }) {
   const [selectedCard, setSelectedCard] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   if (!tournament) return null
   const color = COLORS[tournament.leader_color] ?? '#3d7fff'
   const cards = tournament.decklists?.cards ?? []
@@ -60,6 +61,22 @@ function TournamentDeckModal({ tournament, onClose, isMobile }) {
     animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
   }
 
+  const handleDelete = async () => {
+    if (!window.confirm('Remove this tournament log?')) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from('tournaments')        
+      .delete()
+      .eq('id', tournament.id);   
+    setDeleting(false);
+    if (error) {
+      console.error('Delete failed:', error);
+      alert('Failed to delete. Please try again.');
+    } else {
+      onClose(); 
+    }
+  }
+
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
@@ -68,6 +85,7 @@ function TournamentDeckModal({ tournament, onClose, isMobile }) {
             <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
             <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            <button onClick={handleDelete} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.15)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#6b7a99' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{deleting ? 'Deleting…' : 'Delete Log'}</button>
             <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>{tournament.deck_name ?? 'Untitled Deck'}</div>
               <div style={{ fontSize: 12, color: '#6b7a99' }}>{tournament.leader_name} · {tournament.leader_id}</div>
