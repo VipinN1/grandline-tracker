@@ -25,6 +25,7 @@ const NAV_LINKS = [
   { to: '/decklists', label: 'Decklists' },
   { to: '/friends', label: 'Friends' },
   { to: '/profile', label: 'Profile' },
+  { to: '/live', label: '● Live' },
   { to: '/community', label: 'Community' },
 ]
 

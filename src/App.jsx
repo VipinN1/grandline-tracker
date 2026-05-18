@@ -10,6 +10,7 @@ import Friends from './pages/Friends'
 import Profile from './pages/Profile'
 import Community from './pages/Community'
 import Login from './pages/Login'
+import LiveTournament from './pages/LiveTournament'
 import Signup from './pages/Signup'
 
 export default function App() {
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="/decklists" element={<Decklists session={session} />} />
             <Route path="/friends" element={<Friends session={session} />} />
             <Route path="/profile" element={<Profile session={session} />} />
+            <Route path="/live" element={<LiveTournament session={session} />} />
             <Route path="/community" element={<Community session={session} />} />
           </Routes>
         </main>
