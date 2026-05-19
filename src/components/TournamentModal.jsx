@@ -30,6 +30,7 @@ function pStyle(n) {
 export default function TournamentModal({ tournament, onClose, zIndex = 200, isMobile = false, onDelete }) {
   const [selectedCard, setSelectedCard] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   if (!tournament) return null
 
   const color = COLORS[tournament.leader_color] ?? '#3d7fff'
@@ -54,8 +55,12 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
     flexDirection: 'column',
   }
 
-  async function handleDelete() {
-    if (!window.confirm('Delete this tournament log?')) return
+  function handleDelete() {
+    setShowConfirm(true)
+  }
+
+  async function confirmDelete() {
+    setShowConfirm(false)
     setDeleting(true)
     const { supabase } = await import('../lib/supabase')
     await supabase.from('tournament_rounds').delete().eq('tournament_id', tournament.id)
@@ -192,6 +197,26 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
         </div>
       </div>
       {selectedCard && <CardPreview card={selectedCard} onClose={() => setSelectedCard(null)} />}
+
+      {showConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: zIndex + 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(240,82,82,0.25)', borderRadius: 14, padding: '28px 24px', maxWidth: 360, width: '100%', textAlign: 'center' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(240,82,82,0.12)', border: '1px solid rgba(240,82,82,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, margin: '0 auto 16px' }}>🗑️</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 8 }}>Delete Tournament?</div>
+            <div style={{ fontSize: 13, color: '#6b7a99', lineHeight: 1.6, marginBottom: 24 }}>
+              This will permanently remove <span style={{ color: '#f0f2f5', fontWeight: 600 }}>{tournament.name}</span> and all associated round data. This cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowConfirm(false)} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#6b7a99', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+              <button onClick={confirmDelete} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
