@@ -64,6 +64,67 @@ function CustomPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent })
   )
 }
 
+function DonutChart({ leaders, total, size = 150, outerR = 68, innerR = 40, gapDeg = 2 }) {
+  const cx = size / 2, cy = size / 2
+  const gapRad = (gapDeg * Math.PI) / 180
+  const defs = [], paths = [], labels = []
+  let cumAngle = -Math.PI / 2  // start at 12 o'clock
+
+  leaders.forEach((l, i) => {
+    const frac = l.count / total
+    const sliceAngle = frac * 2 * Math.PI
+    const drawAngle = Math.max(0, sliceAngle - gapRad)
+    const sa = cumAngle + gapRad / 2
+    const ea = sa + drawAngle
+    const mid = sa + drawAngle / 2
+    cumAngle += sliceAngle
+
+    const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
+
+    if (cols.length > 1) {
+      const x1 = (cx - outerR * Math.sin(mid)).toFixed(2)
+      const y1 = (cy + outerR * Math.cos(mid)).toFixed(2)
+      const x2 = (cx + outerR * Math.sin(mid)).toFixed(2)
+      const y2 = (cy - outerR * Math.cos(mid)).toFixed(2)
+      defs.push(
+        <linearGradient key={i} id={`dg-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={cols[0]} />
+          <stop offset="100%" stopColor={cols[1]} />
+        </linearGradient>
+      )
+    }
+
+    const fill = cols.length > 1 ? `url(#dg-${i})` : cols[0]
+    const large = drawAngle > Math.PI ? 1 : 0
+    const f = (n) => n.toFixed(2)
+    const d = [
+      `M ${f(cx + outerR * Math.cos(sa))} ${f(cy + outerR * Math.sin(sa))}`,
+      `A ${outerR} ${outerR} 0 ${large} 1 ${f(cx + outerR * Math.cos(ea))} ${f(cy + outerR * Math.sin(ea))}`,
+      `L ${f(cx + innerR * Math.cos(ea))} ${f(cy + innerR * Math.sin(ea))}`,
+      `A ${innerR} ${innerR} 0 ${large} 0 ${f(cx + innerR * Math.cos(sa))} ${f(cy + innerR * Math.sin(sa))}`,
+      'Z',
+    ].join(' ')
+    paths.push(<path key={i} d={d} fill={fill} />)
+
+    if (frac >= 0.08) {
+      const lr = innerR + (outerR - innerR) * 0.5
+      labels.push(
+        <text key={i} x={(cx + lr * Math.cos(mid)).toFixed(1)} y={(cy + lr * Math.sin(mid)).toFixed(1)} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
+          {`${Math.round(frac * 100)}%`}
+        </text>
+      )
+    }
+  })
+
+  return (
+    <svg width={size} height={size}>
+      <defs>{defs}</defs>
+      {paths}
+      {labels}
+    </svg>
+  )
+}
+
 function EmptyChart({ message }) {
   return (
     <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3d2d6e', fontSize: 13 }}>
@@ -225,44 +286,13 @@ export default function Dashboard({ session }) {
               {leaderUsage.length === 0 ? <EmptyChart message="No data yet" /> : (() => {
                 const pl = leaderUsage.slice(0, 6)
                 const pieTotal = pl.reduce((s, l) => s + l.count, 0)
-                const CX = 70, CY = 70, R = 68
-                // Compute per-slice SVG gradients (Recharts pie: 0° = 3 o'clock, clockwise)
-                let cumPct = 0
-                const gradDefs = pl.map((l, i) => {
-                  const pct = l.count / pieTotal
-                  const midRad = (cumPct + pct / 2) * 2 * Math.PI
-                  cumPct += pct
-                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
-                  if (cols.length < 2) return null
-                  // Gradient sweeps perpendicular to the radial at midpoint angle
-                  const x1 = +(CX - R * Math.sin(midRad)).toFixed(2)
-                  const y1 = +(CY + R * Math.cos(midRad)).toFixed(2)
-                  const x2 = +(CX + R * Math.sin(midRad)).toFixed(2)
-                  const y2 = +(CY - R * Math.cos(midRad)).toFixed(2)
-                  return (
-                    <linearGradient key={i} id={`plg-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor={cols[0]} />
-                      <stop offset="100%" stopColor={cols[1]} />
-                    </linearGradient>
-                  )
-                })
-                const getFill = (l, i) => {
-                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
-                  return cols.length > 1 ? `url(#plg-${i})` : cols[0]
-                }
                 const getDotBg = l => {
                   const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
                   return cols.length > 1 ? `linear-gradient(135deg, ${cols[0]}, ${cols[1]})` : cols[0]
                 }
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <PieChart width={150} height={150}>
-                      <defs>{gradDefs}</defs>
-                      <Pie data={pl} cx={CX} cy={CY} innerRadius={40} outerRadius={R} paddingAngle={3} dataKey="count" labelLine={false} label={<CustomPieLabel />}>
-                        {pl.map((entry, i) => <Cell key={i} fill={getFill(entry, i)} />)}
-                      </Pie>
-                      <Tooltip {...tooltipStyle} formatter={(v, n, p) => [`${v} events (${Math.round(v / pieTotal * 100)}%)`, p.payload.fullName.replace(/\s*\([^)]*\)$/, '').trim()]} />
-                    </PieChart>
+                    <DonutChart leaders={pl} total={pieTotal} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
                       {pl.map((l, i) => (
                         <div key={l.fullName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
