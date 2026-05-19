@@ -3,6 +3,20 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 
+const LOGO_STYLE = {
+  fontSize: 15,
+  fontWeight: 700,
+  letterSpacing: '-0.3px',
+  background: 'linear-gradient(90deg, #a78bfa, #ec4899, #f59e0b, #a78bfa)',
+  backgroundSize: '300% 300%',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+  animation: 'holoShimmer 4s ease infinite',
+  cursor: 'default',
+  userSelect: 'none',
+}
+
 function tabStyle(isActive) {
   return {
     fontSize: 13,
@@ -10,12 +24,31 @@ function tabStyle(isActive) {
     padding: '5px 12px',
     borderRadius: 6,
     cursor: 'pointer',
-    border: 'none',
-    background: isActive ? 'rgba(61,127,255,0.12)' : 'transparent',
-    color: isActive ? '#5b8fff' : '#6b7a99',
+    border: isActive ? '1px solid rgba(139,92,246,0.3)' : '1px solid transparent',
+    background: isActive ? 'rgba(139,92,246,0.12)' : 'transparent',
+    color: isActive ? '#a78bfa' : '#7c6fa0',
     fontFamily: 'inherit',
     textDecoration: 'none',
-    transition: 'all 0.1s',
+    transition: 'all 0.15s',
+  }
+}
+
+function liveTabStyle(isActive) {
+  return {
+    fontSize: 13,
+    fontWeight: 600,
+    padding: '5px 12px',
+    borderRadius: 20,
+    cursor: 'pointer',
+    border: isActive ? '1px solid rgba(52,211,153,0.4)' : '1px solid rgba(52,211,153,0.2)',
+    background: isActive ? 'rgba(52,211,153,0.12)' : 'rgba(52,211,153,0.06)',
+    color: '#34d399',
+    fontFamily: 'inherit',
+    textDecoration: 'none',
+    transition: 'all 0.15s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
   }
 }
 
@@ -25,7 +58,6 @@ const NAV_LINKS = [
   { to: '/decklists', label: 'Decklists' },
   { to: '/friends', label: 'Friends' },
   { to: '/profile', label: 'Profile' },
-  { to: '/live', label: '● Live' },
   { to: '/community', label: 'Community' },
 ]
 
@@ -55,7 +87,7 @@ export default function Navbar({ session }) {
   }
 
   const avatarEl = (
-    <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#3d7fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.15)' }}>
+    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden', border: '1.5px solid rgba(139,92,246,0.4)' }}>
       {avatarUrl
         ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : initials
@@ -65,10 +97,8 @@ export default function Navbar({ session }) {
 
   return (
     <>
-      <nav style={{ background: 'rgba(15,17,23,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 1.5rem', height: 52, display: 'flex', alignItems: 'center', gap: 4, position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>
-          Pirate<span style={{ color: '#3d7fff' }}>Tracker</span>
-        </div>
+      <nav style={{ background: 'rgba(12,8,20,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(139,92,246,0.12)', padding: '0 1.5rem', height: 52, display: 'flex', alignItems: 'center', gap: 4, position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={LOGO_STYLE}>PirateTracker</div>
 
         {isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
@@ -87,10 +117,14 @@ export default function Navbar({ session }) {
               {NAV_LINKS.map(link => (
                 <NavLink key={link.to} to={link.to} style={({ isActive }) => tabStyle(isActive)}>{link.label}</NavLink>
               ))}
+              <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
+                Live
+              </NavLink>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
               {avatarEl}
-              <button onClick={handleSignOut} style={{ fontSize: 12, fontWeight: 600, color: '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+              <button onClick={handleSignOut} style={{ fontSize: 12, fontWeight: 600, color: '#4a5068', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                 Sign out
               </button>
             </div>
@@ -99,7 +133,7 @@ export default function Navbar({ session }) {
       </nav>
 
       {isMobile && menuOpen && (
-        <div style={{ position: 'fixed', top: 52, left: 0, right: 0, bottom: 0, background: '#0f1117', zIndex: 49, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: 52, left: 0, right: 0, bottom: 0, background: '#0c0814', zIndex: 49, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
           {NAV_LINKS.map(link => (
             <NavLink
               key={link.to}
@@ -109,17 +143,36 @@ export default function Navbar({ session }) {
                 fontSize: 16,
                 fontWeight: 600,
                 padding: '16px 24px',
-                color: isActive ? '#5b8fff' : '#f0f2f5',
+                color: isActive ? '#a78bfa' : '#f0f2f5',
                 textDecoration: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                background: isActive ? 'rgba(61,127,255,0.08)' : 'transparent',
+                borderBottom: '1px solid rgba(139,92,246,0.08)',
+                background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
                 display: 'block',
               })}
             >
               {link.label}
             </NavLink>
           ))}
-          <div style={{ padding: '16px 24px', marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <NavLink
+            to="/live"
+            onClick={() => setMenuOpen(false)}
+            style={({ isActive }) => ({
+              fontSize: 16,
+              fontWeight: 600,
+              padding: '16px 24px',
+              color: '#34d399',
+              textDecoration: 'none',
+              borderBottom: '1px solid rgba(139,92,246,0.08)',
+              background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            })}
+          >
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite' }} />
+            Live
+          </NavLink>
+          <div style={{ padding: '16px 24px', marginTop: 'auto', borderTop: '1px solid rgba(139,92,246,0.08)' }}>
             <button onClick={handleSignOut} style={{ fontSize: 15, fontWeight: 600, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
               Sign out
             </button>

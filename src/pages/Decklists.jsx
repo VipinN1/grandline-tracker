@@ -20,7 +20,7 @@ function CardPreview({ card, onClose }) {
         <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>{card.name}</div>
-          <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
+          <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
         </div>
         <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#f0f2f5', fontSize: 13, fontWeight: 600, padding: '7px 24px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
       </div>
@@ -31,7 +31,7 @@ function CardPreview({ card, onClose }) {
 function DeckModal({ deck, onClose, isMobile }) {
   const [selectedCard, setSelectedCard] = useState(null)
   if (!deck) return null
-  const color = COLORS[deck.leader_color] ?? '#3d7fff'
+  const color = COLORS[deck.leader_color] ?? '#8b5cf6'
   const cards = deck.cards ?? []
   const characters = cards.filter(c => c.type === 'Character')
   const events = cards.filter(c => c.type === 'Event')
@@ -39,7 +39,7 @@ function DeckModal({ deck, onClose, isMobile }) {
   const others = cards.filter(c => !['Character', 'Event', 'Stage'].includes(c.type))
 
   const modalBox = {
-    background: '#161b27',
+    background: 'rgba(139,92,246,0.05)',
     border: '1px solid rgba(255,255,255,0.12)',
     borderRadius: isMobile ? '16px 16px 0 0' : 16,
     width: isMobile ? '100%' : 700,
@@ -54,19 +54,19 @@ function DeckModal({ deck, onClose, isMobile }) {
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
         <div onClick={e => e.stopPropagation()} style={modalBox}>
-          <div style={{ position: 'relative', height: 120, background: '#1c2333', flexShrink: 0 }}>
+          <div style={{ position: 'relative', height: 120, background: 'rgba(255,255,255,0.03)', flexShrink: 0 }}>
             <img src={getCardImageUrl(deck.leader_id)} alt={deck.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(139,92,246,0.05) 100%)' }} />
             <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>{deck.name}</div>
-              <div style={{ fontSize: 12, color: '#6b7a99' }}>{deck.leader_name} · {deck.leader_id}</div>
+              <div style={{ fontSize: 12, color: '#7c6fa0' }}>{deck.leader_name} · {deck.leader_id}</div>
             </div>
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: color }} />
           </div>
 
           <div style={{ overflowY: 'auto', padding: 20 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 10 }}>
               All Cards ({cards.reduce((s, c) => s + c.count, 0)}) — click to enlarge
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
@@ -82,16 +82,16 @@ function DeckModal({ deck, onClose, isMobile }) {
             {[['Characters', characters], ['Events', events], ['Stages', stages], ['Other', others]].map(([label, group]) =>
               group.length > 0 ? (
                 <div key={label} style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 6, paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 6, paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     {label} ({group.reduce((s, c) => s + c.count, 0)})
                   </div>
                   {group.map(card => (
                     <div key={card.id} onClick={() => setSelectedCard(card)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 8px', borderRadius: 6, cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#3d7fff', fontFamily: 'monospace', minWidth: 20 }}>{card.count}×</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6', fontFamily: 'monospace', minWidth: 20 }}>{card.count}×</span>
                         <span style={{ fontSize: 13, color: '#f0f2f5' }}>{card.name ?? card.id}</span>
                       </div>
-                      <span style={{ fontSize: 11, color: '#3a4560', fontFamily: 'monospace' }}>{card.id}</span>
+                      <span style={{ fontSize: 11, color: '#3d2d6e', fontFamily: 'monospace' }}>{card.id}</span>
                     </div>
                   ))}
                 </div>
@@ -114,7 +114,7 @@ function DeckModal({ deck, onClose, isMobile }) {
 function LeaderCard({ deck, onClick, onDelete }) {
   const [errored, setErrored] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const color = COLORS[deck.leader_color] ?? '#3d7fff'
+  const color = COLORS[deck.leader_color] ?? '#8b5cf6'
 
   async function handleDelete(e) {
     e.stopPropagation()
@@ -129,11 +129,11 @@ function LeaderCard({ deck, onClick, onDelete }) {
   return (
     <div
       onClick={() => onClick(deck)}
-      style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.15s', position: 'relative' }}
+      style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.15s', position: 'relative' }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}
     >
-      <div style={{ position: 'relative', height: 160, background: '#1c2333', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: 160, background: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
         {!errored ? (
           <img src={getCardImageUrl(deck.leader_id)} alt={deck.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={() => setErrored(true)} />
         ) : (
@@ -161,8 +161,8 @@ function LeaderCard({ deck, onClick, onDelete }) {
 
       <div style={{ padding: '14px 16px' }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', marginBottom: 2 }}>{deck.name}</div>
-        <div style={{ fontSize: 12, color: '#6b7a99', marginBottom: 10 }}>{deck.leader_name} · {deck.leader_id}</div>
-        <div style={{ fontSize: 11, color: '#3a4560' }}>
+        <div style={{ fontSize: 12, color: '#7c6fa0', marginBottom: 10 }}>{deck.leader_name} · {deck.leader_id}</div>
+        <div style={{ fontSize: 11, color: '#3d2d6e' }}>
           Updated {new Date(deck.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </div>
       </div>
@@ -205,7 +205,7 @@ export default function Decklists({ session }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <div style={{ fontSize: 13, color: '#6b7a99' }}>Loading decklists...</div>
+        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Loading decklists...</div>
       </div>
     )
   }
@@ -213,20 +213,20 @@ export default function Decklists({ session }) {
   return (
     <div>
       <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d7fff', marginBottom: 4 }}>Builds</div>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Builds</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Decklists</div>
-        <div style={{ fontSize: 13, color: '#6b7a99' }}>Your saved competitive builds</div>
+        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Your saved competitive builds</div>
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: '1.5rem', alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-        <input type="text" placeholder="Search by leader or name..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 0, background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-        <button style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: '#3d7fff', color: '#fff', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>+ New Decklist</button>
+        <input type="text" placeholder="Search by leader or name..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 0, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+        <button style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>+ New Decklist</button>
       </div>
 
       {decks.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 20px', color: '#3a4560' }}>
+        <div style={{ textAlign: 'center', padding: '80px 20px', color: '#3d2d6e' }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>🃏</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7a99', marginBottom: 6 }}>No decklists saved yet</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No decklists saved yet</div>
           <div style={{ fontSize: 13 }}>Save a decklist when logging a tournament result</div>
         </div>
       ) : (

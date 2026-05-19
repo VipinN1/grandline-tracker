@@ -9,13 +9,13 @@ export default function CardImage({ cardId, alt, className = '', style = {} }) {
       <div
         className={className}
         style={{
-          background: '#1c2333',
+          background: 'rgba(255,255,255,0.03)',
           border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: 8,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#3a4560',
+          color: '#3d2d6e',
           fontSize: 11,
           fontWeight: 600,
           ...style,

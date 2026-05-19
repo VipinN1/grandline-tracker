@@ -1,26 +1,32 @@
-@import "tailwindcss";
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { overflow-x: hidden; max-width: 100vw; }
 body {
-  margin: 0;
-  padding: 0;
-  background: #0f1117;
-  color: #f0f2f5;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #0c0814;
+  color: #e8eaf0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+input, textarea, select, button { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
 
-input, textarea, select, button {
-  font-family: inherit;
+@keyframes cardFloat {
+  0%   { transform: translateY(0px) rotate(var(--rot)); }
+  50%  { transform: translateY(-18px) rotate(calc(var(--rot) + 3deg)); }
+  100% { transform: translateY(0px) rotate(var(--rot)); }
 }
-
-a {
-  color: inherit;
-  text-decoration: none;
+@keyframes holoShimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
-
+@keyframes orbPulse {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50%       { opacity: 0.18; transform: scale(1.05); }
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }

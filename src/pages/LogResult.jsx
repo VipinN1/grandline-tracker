@@ -6,18 +6,18 @@ import { useNavigate } from 'react-router-dom'
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
 const inputStyle = {
-  width: '100%', background: '#1c2333', border: '1px solid rgba(255,255,255,0.07)',
+  width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit',
 }
 
 const labelStyle = {
   fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px',
-  color: '#6b7a99', marginBottom: 6, display: 'block',
+  color: '#7c6fa0', marginBottom: 6, display: 'block',
 }
 
 const sectionTitle = {
   fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px',
-  color: '#3a4560', marginBottom: 12, paddingBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.05)',
+  color: '#3d2d6e', marginBottom: 12, paddingBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.05)',
 }
 
 function parseDecklistText(raw) {
@@ -52,34 +52,34 @@ function SearchableSelect({ label, placeholder, items, selected, onSelect, onCre
     <div ref={ref} style={{ position: 'relative' }}>
       <label style={labelStyle}>{label}</label>
       {selected ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c2333', border: '1px solid #3d7fff44', borderRadius: 8, padding: '9px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected[displayKey]}</div>
-            {sublabel && selected[sublabel] && <div style={{ fontSize: 11, color: '#6b7a99', marginTop: 2 }}>{selected[sublabel]}</div>}
+            {sublabel && selected[sublabel] && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>{selected[sublabel]}</div>}
           </div>
-          <button onClick={handleClear} style={{ background: 'none', border: 'none', color: '#6b7a99', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+          <button onClick={handleClear} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
         </div>
       ) : (
         <>
           <input type="text" placeholder={placeholder} value={query} onChange={e => { setQuery(e.target.value); setOpen(true) }} onFocus={() => setOpen(true)} style={inputStyle} />
           {open && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#1c2333', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
               {filtered.length > 0 && (
                 <div style={{ maxHeight: 200, overflowY: 'auto' }}>
                   {filtered.map(item => (
                     <div key={item.id} onClick={() => handleSelect(item)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{item[displayKey]}</div>
-                      {sublabel && item[sublabel] && <div style={{ fontSize: 11, color: '#6b7a99', marginTop: 2 }}>{item[sublabel]}</div>}
+                      {sublabel && item[sublabel] && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>{item[sublabel]}</div>}
                     </div>
                   ))}
                 </div>
               )}
               {query.trim() && onCreateNew && (
-                <div onClick={() => { onCreateNew(query.trim()); setQuery(''); setOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', color: '#3d7fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(61,127,255,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <div onClick={() => { onCreateNew(query.trim()); setQuery(''); setOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', color: '#8b5cf6', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ fontSize: 16 }}>+</span> {createLabel} "{query.trim()}"
                 </div>
               )}
-              {filtered.length === 0 && !query.trim() && <div style={{ padding: '10px 14px', fontSize: 13, color: '#3a4560' }}>Type to search or create new</div>}
+              {filtered.length === 0 && !query.trim() && <div style={{ padding: '10px 14px', fontSize: 13, color: '#3d2d6e' }}>Type to search or create new</div>}
             </div>
           )}
         </>
@@ -121,13 +121,13 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
     return (
       <div>
         {label && <label style={labelStyle}>{label}</label>}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#1c2333', border: '1px solid #3d7fff44', borderRadius: 8, padding: '8px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '8px 12px' }}>
           <img src={getCardImageUrl(selected.card_set_id)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected.card_name}</div>
-            <div style={{ fontSize: 11, color: COLORS[selected.card_color] ?? '#6b7a99' }}>{selected.card_color} · {selected.card_set_id}</div>
+            <div style={{ fontSize: 11, color: COLORS[selected.card_color] ?? '#7c6fa0' }}>{selected.card_color} · {selected.card_set_id}</div>
           </div>
-          <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#6b7a99', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+          <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
         </div>
       </div>
     )
@@ -138,15 +138,15 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
       {label && <label style={labelStyle}>{label}</label>}
       <input type="text" placeholder={placeholder ?? 'Search leader...'} value={query} onChange={handleChange} onFocus={() => query.length >= 2 && setOpen(true)} style={inputStyle} />
       {open && query.length >= 2 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#1c2333', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 280, overflowY: 'auto' }}>
-          {searching ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#6b7a99' }}>Searching...</div>
-            : results.length === 0 ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#3a4560' }}>No leaders found</div>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 280, overflowY: 'auto' }}>
+          {searching ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
+            : results.length === 0 ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#3d2d6e' }}>No leaders found</div>
             : results.map(card => (
               <div key={card.card_set_id} onClick={() => { onSelect(card); setQuery(''); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                  <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#6b7a99', marginTop: 2 }}>{card.card_color} · {card.card_set_id}</div>
+                  <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#7c6fa0', marginTop: 2 }}>{card.card_color} · {card.card_set_id}</div>
                 </div>
               </div>
             ))
@@ -166,7 +166,7 @@ function ToggleGroup({ label, value, onChange, options }) {
           <button
             key={String(opt.value)}
             onClick={() => onChange(value === opt.value ? null : opt.value)}
-            style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: `1px solid ${value === opt.value ? opt.color : 'rgba(255,255,255,0.07)'}`, background: value === opt.value ? opt.color + '22' : '#1c2333', color: value === opt.value ? opt.color : '#6b7a99', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
+            style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: `1px solid ${value === opt.value ? opt.color : 'rgba(255,255,255,0.07)'}`, background: value === opt.value ? opt.color + '22' : 'rgba(255,255,255,0.03)', color: value === opt.value ? opt.color : '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
           >
             {opt.label}
           </button>
@@ -178,10 +178,10 @@ function ToggleGroup({ label, value, onChange, options }) {
 
 function RoundRow({ round, index, onChange, onRemove }) {
   return (
-    <div style={{ background: '#1c2333', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.05)' }}>
+    <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.05)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>Round {index + 1}</div>
-        <button onClick={() => onRemove(index)} style={{ background: 'none', border: 'none', color: '#3a4560', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+        <button onClick={() => onRemove(index)} style={{ background: 'none', border: 'none', color: '#3d2d6e', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -372,23 +372,23 @@ export default function LogResult({ session }) {
   return (
     <div>
       <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d7fff', marginBottom: 4 }}>Record</div>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Record</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Log Tournament Result</div>
-        <div style={{ fontSize: 13, color: '#6b7a99' }}>Add a locals or major event to your history</div>
+        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Add a locals or major event to your history</div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Tournament Info */}
-          <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
             <div style={sectionTitle}>Tournament Info</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <SearchableSelect label="Store / Venue" placeholder="Search or create a store..." items={storesForDisplay} selected={selectedStore} onSelect={setSelectedStore} onCreateNew={createStore} createLabel="Create store" sublabel="sublabel" />
               <SearchableSelect label="Tournament Series" placeholder="Search or create a series..." items={series} selected={selectedSeries} onSelect={setSelectedSeries} onCreateNew={createSeries} createLabel="Create series" />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={labelStyle}>Tournament Name <span style={{ color: '#3a4560', fontWeight: 400 }}>(if no series)</span></label>
+                  <label style={labelStyle}>Tournament Name <span style={{ color: '#3d2d6e', fontWeight: 400 }}>(if no series)</span></label>
                   <input type="text" placeholder="e.g. One-off event" value={selectedSeries ? selectedSeries.name : tournamentName} onChange={e => setTournamentName(e.target.value)} disabled={!!selectedSeries} style={{ ...inputStyle, opacity: selectedSeries ? 0.5 : 1 }} />
                 </div>
                 <div>
@@ -410,11 +410,11 @@ export default function LogResult({ session }) {
           </div>
 
           {/* Rounds */}
-          <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div style={sectionTitle}>Rounds</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ fontSize: 13, fontFamily: 'monospace', color: '#6b7a99' }}>
+                <div style={{ fontSize: 13, fontFamily: 'monospace', color: '#7c6fa0' }}>
                   <span style={{ color: '#34d399', fontWeight: 700 }}>{wins}W</span>
                   {' · '}
                   <span style={{ color: '#f05252', fontWeight: 700 }}>{losses}L</span>
@@ -430,16 +430,16 @@ export default function LogResult({ session }) {
 
             <button
               onClick={addRound}
-              style={{ marginTop: 12, width: '100%', padding: '10px', borderRadius: 8, border: '1px dashed rgba(255,255,255,0.12)', background: 'transparent', color: '#6b7a99', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(61,127,255,0.4)'; e.currentTarget.style.color = '#3d7fff' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#6b7a99' }}
+              style={{ marginTop: 12, width: '100%', padding: '10px', borderRadius: 8, border: '1px dashed rgba(255,255,255,0.12)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.color = '#8b5cf6' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#7c6fa0' }}
             >
               + Add Round
             </button>
           </div>
 
           {/* Decklist */}
-          <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
             <div style={sectionTitle}>Decklist</div>
             <div style={{ marginBottom: 12 }}>
               <label style={labelStyle}>Deck Name</label>
@@ -447,13 +447,13 @@ export default function LogResult({ session }) {
             </div>
             <label style={labelStyle}>Paste your decklist</label>
             <textarea value={decklistRaw} onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }} placeholder={'1xOP15-002\n4xOP15-053\n...'} style={{ ...inputStyle, minHeight: 140, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />
-            <button onClick={handleParseDeck} disabled={!decklistRaw.trim() || enriching} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: decklistRaw.trim() ? 'rgba(255,255,255,0.05)' : 'transparent', color: decklistRaw.trim() ? '#f0f2f5' : '#3a4560', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+            <button onClick={handleParseDeck} disabled={!decklistRaw.trim() || enriching} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: decklistRaw.trim() ? 'rgba(255,255,255,0.05)' : 'transparent', color: decklistRaw.trim() ? '#f0f2f5' : '#3d2d6e', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
               {enriching ? 'Fetching card data...' : 'Preview Decklist'}
             </button>
 
             {deckParsed && parsedCards.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 10 }}>
                   {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
@@ -467,11 +467,11 @@ export default function LogResult({ session }) {
                   {parsedCards.map(card => (
                     <div key={card.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderRadius: 6, fontSize: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[card.color] ?? '#3a4560', flexShrink: 0 }} />
-                        <span style={{ fontWeight: 700, color: '#3d7fff', fontFamily: 'monospace' }}>{card.count}×</span>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[card.color] ?? '#3d2d6e', flexShrink: 0 }} />
+                        <span style={{ fontWeight: 700, color: '#8b5cf6', fontFamily: 'monospace' }}>{card.count}×</span>
                         <span style={{ color: '#f0f2f5' }}>{card.name !== card.id ? card.name : card.id}</span>
                       </div>
-                      <span style={{ color: '#3a4560', fontFamily: 'monospace', fontSize: 11 }}>{card.id}</span>
+                      <span style={{ color: '#3d2d6e', fontFamily: 'monospace', fontSize: 11 }}>{card.id}</span>
                     </div>
                   ))}
                 </div>
@@ -483,7 +483,7 @@ export default function LogResult({ session }) {
           </div>
 
           {/* Notes */}
-          <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
             <div style={sectionTitle}>Notes</div>
             <textarea placeholder="Tournament notes, meta observations..." value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} />
           </div>
@@ -492,22 +492,22 @@ export default function LogResult({ session }) {
             <div style={{ fontSize: 13, color: '#f05252', background: 'rgba(240,82,82,0.08)', border: '1px solid rgba(240,82,82,0.2)', borderRadius: 8, padding: '10px 14px' }}>{error}</div>
           )}
 
-          <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: saving ? '#2a4a8a' : '#3d7fff', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: saving ? '#5b21b6' : '#8b5cf6', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
             {saving ? 'Saving...' : 'Save Result'}
           </button>
         </div>
 
         {/* RIGHT — leader lookup */}
-        <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, position: 'sticky', top: 70 }}>
+        <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, position: 'sticky', top: 70 }}>
           <div style={sectionTitle}>Your Leader Card</div>
 
           {leaderResult ? (
             <div>
               <img src={leaderResult.card_image ?? getCardImageUrl(leaderResult.card_set_id)} alt={leaderResult.card_name} style={{ width: '100%', borderRadius: 10, marginBottom: 12, border: '1px solid rgba(255,255,255,0.08)' }} />
               <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{leaderResult.card_name}</div>
-              <div style={{ fontSize: 12, color: COLORS[leaderResult.card_color] ?? '#6b7a99', marginTop: 3 }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
-              <div style={{ fontSize: 11, color: '#3a4560', marginTop: 6 }}>Power: {leaderResult.card_power} · Life: {leaderResult.life}</div>
-              <button onClick={() => setLeaderResult(null)} style={{ marginTop: 10, fontSize: 11, color: '#6b7a99', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>← Change leader</button>
+              <div style={{ fontSize: 12, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 3 }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
+              <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 6 }}>Power: {leaderResult.card_power} · Life: {leaderResult.life}</div>
+              <button onClick={() => setLeaderResult(null)} style={{ marginTop: 10, fontSize: 11, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>← Change leader</button>
             </div>
           ) : (
             <LeaderSearchInput
