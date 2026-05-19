@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
+import TournamentModal from '../components/TournamentModal'
 
 const COLORS = {
   Red: '#f05252',
@@ -26,124 +27,6 @@ function placementStyle(n) {
   return { background: 'rgba(255,255,255,0.04)', color: '#3a4560' }
 }
 
-function CardPreview({ card, onClose }) {
-  if (!card) return null
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)' }} />
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>{card.name}</div>
-          <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
-        </div>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#f0f2f5', fontSize: 13, fontWeight: 600, padding: '7px 24px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
-      </div>
-    </div>
-  )
-}
-
-function TournamentDeckModal({ tournament, onClose, isMobile }) {
-  const [selectedCard, setSelectedCard] = useState(null)
-  const [deleting, setDeleting] = useState(false)
-  if (!tournament) return null
-  const color = COLORS[tournament.leader_color] ?? '#3d7fff'
-  const cards = tournament.decklists?.cards ?? []
-
-  const modalBox = {
-    background: '#161b27',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: isMobile ? '16px 16px 0 0' : 16,
-    width: isMobile ? '100%' : 560,
-    maxHeight: isMobile ? '95vh' : '85vh',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
-  }
-
-  const handleDelete = async () => {
-    if (!window.confirm('Remove this tournament log?')) return;
-    setDeleting(true);
-    const { error } = await supabase
-      .from('tournaments')        
-      .delete()
-      .eq('id', tournament.id);   
-    setDeleting(false);
-    if (error) {
-      console.error('Delete failed:', error);
-      alert('Failed to delete. Please try again.');
-    } else {
-      onClose(); 
-    }
-  }
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-        <div onClick={e => e.stopPropagation()} style={modalBox}>
-          <div style={{ position: 'relative', height: 120, background: '#1c2333', flexShrink: 0 }}>
-            <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
-            <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-            <button onClick={handleDelete} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.15)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#6b7a99' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{deleting ? 'Deleting…' : 'Delete Log'}</button>
-            <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>{tournament.deck_name ?? 'Untitled Deck'}</div>
-              <div style={{ fontSize: 12, color: '#6b7a99' }}>{tournament.leader_name} · {tournament.leader_id}</div>
-            </div>
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: color }} />
-          </div>
-
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0, ...placementStyle(tournament.placement) }}>
-              {placementLabel(tournament.placement)}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{tournament.name}</div>
-              <div style={{ fontSize: 11, color: '#6b7a99' }}>{tournament.date} · {tournament.player_count} players</div>
-            </div>
-            <div style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, fontFamily: 'monospace' }}>
-              <span style={{ color: '#34d399' }}>{tournament.wins}W</span>
-              <span style={{ color: '#3a4560', margin: '0 3px' }}>·</span>
-              <span style={{ color: '#f05252' }}>{tournament.losses}L</span>
-            </div>
-          </div>
-
-          <div style={{ overflowY: 'auto', padding: 20 }}>
-            {cards.length > 0 ? (
-              <>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 10 }}>
-                  Decklist — {cards.reduce((s, c) => s + c.count, 0)} cards · click to enlarge
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 20 }}>
-                  {cards.flatMap(card =>
-                    Array.from({ length: card.count }, (_, i) => (
-                      <div key={`${card.id}-${i}`} onClick={() => setSelectedCard(card)} style={{ cursor: 'pointer', borderRadius: 6, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 56 : 72, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Card List</div>
-                {cards.map(card => (
-                  <div key={card.id} onClick={() => setSelectedCard(card)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', borderRadius: 6, cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#3d7fff', fontFamily: 'monospace', minWidth: 20 }}>{card.count}×</span>
-                      <span style={{ fontSize: 13, color: '#f0f2f5' }}>{card.name ?? card.id}</span>
-                    </div>
-                    <span style={{ fontSize: 11, color: '#3a4560', fontFamily: 'monospace' }}>{card.id}</span>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <div style={{ fontSize: 13, color: '#3a4560', textAlign: 'center', padding: '20px 0' }}>No decklist attached to this tournament.</div>
-            )}
-          </div>
-        </div>
-      </div>
-      {selectedCard && <CardPreview card={selectedCard} onClose={() => setSelectedCard(null)} />}
-    </>
-  )
-}
 
 function AvatarUpload({ session, profile, onUpdate }) {
   const [uploading, setUploading] = useState(false)
@@ -224,7 +107,7 @@ export default function Profile({ session }) {
     async function load() {
       setLoading(true)
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-      const { data: tournamentData } = await supabase.from('tournaments').select('*, decklists(*)').eq('user_id', session.user.id).order('date', { ascending: false })
+      const { data: tournamentData } = await supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*)').eq('user_id', session.user.id).order('date', { ascending: false })
       setProfile(profileData)
       setAvatarUrl(profileData?.avatar_url ?? null)
       setTournaments(tournamentData ?? [])
@@ -416,7 +299,7 @@ export default function Profile({ session }) {
       )}
 
       {selectedTournament && (
-        <TournamentDeckModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} isMobile={isMobile} />
+        <TournamentModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} isMobile={isMobile} onDelete={() => { setTournaments(prev => prev.filter(t => t.id !== selectedTournament.id)); setSelectedTournament(null) }} />
       )}
     </div>
   )

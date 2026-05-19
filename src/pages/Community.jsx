@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
+import TournamentModal from '../components/TournamentModal'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -30,7 +31,7 @@ function ProfileModal({ profile, session, onClose, isMobile }) {
   useEffect(() => {
     async function load() {
       const [{ data: tData }, { data: fData }] = await Promise.all([
-        supabase.from('tournaments').select('*, decklists(*)').eq('user_id', profile.id).order('date', { ascending: false }),
+        supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*)').eq('user_id', profile.id).order('date', { ascending: false }),
         supabase.from('friends').select('*').or(`and(user_id.eq.${session.user.id},friend_id.eq.${profile.id}),and(user_id.eq.${profile.id},friend_id.eq.${session.user.id})`)
       ])
       setTournaments(tData ?? [])
@@ -157,62 +158,7 @@ function ProfileModal({ profile, session, onClose, isMobile }) {
       </div>
 
       {selectedTournament && (
-        <div onClick={() => setSelectedTournament(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: isMobile ? 'slideUp 0.25s ease-out' : undefined }}>
-            <div style={{ position: 'relative', height: 120, background: '#1c2333', flexShrink: 0 }}>
-              <img src={getCardImageUrl(selectedTournament.leader_id)} alt={selectedTournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, #161b27 100%)' }} />
-              <button onClick={() => setSelectedTournament(null)} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-              <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>{selectedTournament.deck_name ?? selectedTournament.name}</div>
-                <div style={{ fontSize: 12, color: '#6b7a99' }}>{selectedTournament.leader_name} · {selectedTournament.leader_id}</div>
-              </div>
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: COLORS[selectedTournament.leader_color] ?? '#3d7fff' }} />
-            </div>
-
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, ...pStyle(selectedTournament.placement) }}>{pLabel(selectedTournament.placement)}</div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selectedTournament.name}</div>
-                <div style={{ fontSize: 11, color: '#6b7a99' }}>{selectedTournament.date} · {selectedTournament.player_count} players</div>
-              </div>
-              <div style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, fontFamily: 'monospace' }}>
-                <span style={{ color: '#34d399' }}>{selectedTournament.wins}W</span>
-                <span style={{ color: '#3a4560', margin: '0 3px' }}>·</span>
-                <span style={{ color: '#f05252' }}>{selectedTournament.losses}L</span>
-              </div>
-            </div>
-
-            <div style={{ overflowY: 'auto', padding: 20 }}>
-              {selectedTournament.decklists?.cards?.length > 0 ? (
-                <>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 10 }}>
-                    Decklist — {selectedTournament.decklists.cards.reduce((s, c) => s + c.count, 0)} cards
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-                    {selectedTournament.decklists.cards.flatMap((card, i) =>
-                      Array.from({ length: card.count }, (_, j) => (
-                        <img key={`${i}-${j}`} src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 54 : 65, borderRadius: 5, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.opacity = '0.15' }} />
-                      ))
-                    )}
-                  </div>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3a4560', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Card List</div>
-                  {selectedTournament.decklists.cards.map(card => (
-                    <div key={card.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 8px', borderRadius: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#3d7fff', fontFamily: 'monospace' }}>{card.count}×</span>
-                        <span style={{ fontSize: 13, color: '#f0f2f5' }}>{card.name ?? card.id}</span>
-                      </div>
-                      <span style={{ fontSize: 11, color: '#3a4560', fontFamily: 'monospace' }}>{card.id}</span>
-                    </div>
-                  ))}
-                </>
-              ) : (
-                <div style={{ fontSize: 13, color: '#3a4560', textAlign: 'center', padding: '20px 0' }}>No decklist attached.</div>
-              )}
-            </div>
-          </div>
-        </div>
+        <TournamentModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} zIndex={300} isMobile={isMobile} onDelete={false} />
       )}
     </>
   )

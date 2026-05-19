@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
+import TournamentModal from '../components/TournamentModal'
 
 const COLORS = {
   Red: '#f05252',
@@ -47,7 +48,7 @@ function ProfileModal({ profile, session, onClose, onFriendAction, isMobile }) {
   useEffect(() => {
     async function load() {
       const [{ data: tData }, { data: fData }] = await Promise.all([
-        supabase.from('tournaments').select('*, decklists(*)').eq('user_id', profile.id).order('date', { ascending: false }),
+        supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*)').eq('user_id', profile.id).order('date', { ascending: false }),
         supabase.from('friends').select('*').or(`and(user_id.eq.${session.user.id},friend_id.eq.${profile.id}),and(user_id.eq.${profile.id},friend_id.eq.${session.user.id})`)
       ])
       setTournaments(tData ?? [])
@@ -172,24 +173,7 @@ function ProfileModal({ profile, session, onClose, onFriendAction, isMobile }) {
       </div>
 
       {selectedTournament && (
-        <div onClick={() => setSelectedTournament(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.12)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 400, maxHeight: isMobile ? '90vh' : '80vh', overflow: 'auto', padding: 24, animation: isMobile ? 'slideUp 0.25s ease-out' : undefined }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', marginBottom: 4 }}>{selectedTournament.name}</div>
-            <div style={{ fontSize: 12, color: '#6b7a99', marginBottom: 16 }}>{selectedTournament.leader_name} · {selectedTournament.leader_id}</div>
-            {selectedTournament.decklists?.cards?.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {selectedTournament.decklists.cards.flatMap((card, i) =>
-                  Array.from({ length: card.count }, (_, j) => (
-                    <img key={`${i}-${j}`} src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 60, borderRadius: 5, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.opacity = '0.15' }} />
-                  ))
-                )}
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: '#3a4560' }}>No decklist attached.</div>
-            )}
-            <button onClick={() => setSelectedTournament(null)} style={{ marginTop: 16, width: '100%', padding: 9, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
-          </div>
-        </div>
+        <TournamentModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} zIndex={200} isMobile={isMobile} onDelete={false} />
       )}
     </div>
   )
