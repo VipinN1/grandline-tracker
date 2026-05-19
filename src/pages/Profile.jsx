@@ -101,29 +101,6 @@ export default function Profile({ session }) {
   const [activeTab, setActiveTab] = useState('history')
   const [avatarUrl, setAvatarUrl] = useState(null)
   const { isMobile } = useWindowSize()
-  
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [usernameInput, setUsernameInput] = useState(username);
-  const [savingUsername, setSavingUsername] = useState(false);
-
-  const handleUsernameSubmit = async () => {
-    if (!usernameInput.trim() || usernameInput === username) {
-      setEditingUsername(false);
-      return;
-    }
-    setSavingUsername(true);
-    const { error } = await supabase
-      .from('profiles')                        
-      .update({ username: usernameInput })  
-      .eq('id', session.user.id);
-    setSavingUsername(false);
-    if (error) {
-      alert('Failed to update username.');
-    } else {
-      setUsername(usernameInput);
-      setEditingUsername(false);
-    }
-  };
 
   useEffect(() => {
     if (!session) return
@@ -181,8 +158,7 @@ export default function Profile({ session }) {
             onUpdate={url => setAvatarUrl(url)}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* <div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>{username}</div> */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{editingUsername ? (<input autoFocus value={usernameInput} onChange={e => setUsernameInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleUsernameSubmit(); if (e.key === 'Escape') setEditingUsername(false); }} onBlur={handleUsernameSubmit} disabled={savingUsername} style={{ fontSize: isMobile ? 17 : 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(61,127,255,0.4)', borderRadius: 8, padding: '2px 10px', outline: 'none', width: 180 }} />) : (<div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>{username}</div>)}{!editingUsername && (<button onClick={() => { setUsernameInput(username); setEditingUsername(true); }} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(61,127,255,0.1)', color: '#3d7fff', border: '1px solid rgba(61,127,255,0.2)', cursor: 'pointer' }}>Change Username</button>)}</div>
+            <div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>{username}</div>
             <div style={{ fontSize: 12, color: '#6b7a99', marginTop: 3 }}>
               {profile?.location && `${profile.location} · `}
               {memberSince && `Since ${memberSince}`}
