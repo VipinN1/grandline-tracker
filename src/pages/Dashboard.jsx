@@ -125,7 +125,7 @@ export default function Dashboard({ session }) {
 
   const leaderUsage = Object.values(
     tournaments.reduce((acc, t) => {
-      if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, fullName: t.leader_name, color: COLORS[t.leader_color] ?? '#8b5cf6', count: 0, wins: 0, losses: 0 }
+      if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, fullName: t.leader_name, leaderColor: t.leader_color, color: COLORS[t.leader_color] ?? '#8b5cf6', count: 0, wins: 0, losses: 0 }
       acc[t.leader_id].count++
       acc[t.leader_id].wins += t.wins
       acc[t.leader_id].losses += t.losses
@@ -222,26 +222,60 @@ export default function Dashboard({ session }) {
             </ChartCard>
 
             <ChartCard title="Leader Usage">
-              {leaderUsage.length === 0 ? <EmptyChart message="No data yet" /> : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <PieChart width={150} height={150}>
-                    <Pie data={leaderUsage.slice(0, 6)} cx={70} cy={70} innerRadius={40} outerRadius={68} paddingAngle={3} dataKey="count" labelLine={false} label={<CustomPieLabel />}>
-                      {leaderUsage.slice(0, 6).map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip {...tooltipStyle} formatter={(v, n, p) => [`${v} events (${Math.round(v / totalEvents * 100)}%)`, p.payload.fullName.replace(/\s*\([^)]*\)$/, '').trim()]} />
-                  </PieChart>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    {leaderUsage.slice(0, 6).map(l => (
-                      <div key={l.fullName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, flexShrink: 0 }} />
-                        <div style={{ fontSize: 12, color: '#f0f2f5', fontWeight: 600, flex: 1 }}>{l.fullName.replace(/\s*\([^)]*\)$/, '').trim()}</div>
-                        <div style={{ fontSize: 12, color: '#7c6fa0' }}>{l.count}</div>
-                        <div style={{ fontSize: 11, color: '#3d2d6e', minWidth: 34, textAlign: 'right' }}>{Math.round(l.count / totalEvents * 100)}%</div>
-                      </div>
-                    ))}
+              {leaderUsage.length === 0 ? <EmptyChart message="No data yet" /> : (() => {
+                const pl = leaderUsage.slice(0, 6)
+                const pieTotal = pl.reduce((s, l) => s + l.count, 0)
+                const CX = 70, CY = 70, R = 68
+                // Compute per-slice SVG gradients (Recharts pie: 0° = 3 o'clock, clockwise)
+                let cumPct = 0
+                const gradDefs = pl.map((l, i) => {
+                  const pct = l.count / pieTotal
+                  const midRad = (cumPct + pct / 2) * 2 * Math.PI
+                  cumPct += pct
+                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
+                  if (cols.length < 2) return null
+                  // Gradient sweeps perpendicular to the radial at midpoint angle
+                  const x1 = +(CX - R * Math.sin(midRad)).toFixed(2)
+                  const y1 = +(CY + R * Math.cos(midRad)).toFixed(2)
+                  const x2 = +(CX + R * Math.sin(midRad)).toFixed(2)
+                  const y2 = +(CY - R * Math.cos(midRad)).toFixed(2)
+                  return (
+                    <linearGradient key={i} id={`plg-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor={cols[0]} />
+                      <stop offset="100%" stopColor={cols[1]} />
+                    </linearGradient>
+                  )
+                })
+                const getFill = (l, i) => {
+                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
+                  return cols.length > 1 ? `url(#plg-${i})` : cols[0]
+                }
+                const getDotBg = l => {
+                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
+                  return cols.length > 1 ? `linear-gradient(135deg, ${cols[0]}, ${cols[1]})` : cols[0]
+                }
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <PieChart width={150} height={150}>
+                      <defs>{gradDefs}</defs>
+                      <Pie data={pl} cx={CX} cy={CY} innerRadius={40} outerRadius={R} paddingAngle={3} dataKey="count" labelLine={false} label={<CustomPieLabel />}>
+                        {pl.map((entry, i) => <Cell key={i} fill={getFill(entry, i)} />)}
+                      </Pie>
+                      <Tooltip {...tooltipStyle} formatter={(v, n, p) => [`${v} events (${Math.round(v / pieTotal * 100)}%)`, p.payload.fullName.replace(/\s*\([^)]*\)$/, '').trim()]} />
+                    </PieChart>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      {pl.map((l, i) => (
+                        <div key={l.fullName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: getDotBg(l), flexShrink: 0 }} />
+                          <div style={{ fontSize: 12, color: '#f0f2f5', fontWeight: 600, flex: 1 }}>{l.fullName.replace(/\s*\([^)]*\)$/, '').trim()}</div>
+                          <div style={{ fontSize: 12, color: '#7c6fa0' }}>{l.count}</div>
+                          <div style={{ fontSize: 11, color: '#3d2d6e', minWidth: 34, textAlign: 'right' }}>{Math.round(l.count / pieTotal * 100)}%</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
             </ChartCard>
           </div>
 
