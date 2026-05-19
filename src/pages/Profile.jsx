@@ -187,7 +187,7 @@ export default function Profile({ session }) {
           { label: 'Tournaments', value: tournaments.length },
           { label: 'Top 8s', value: topEights },
           { label: 'Best Finish', value: bestFinish ? placementLabel(bestFinish) : '—' },
-          { label: 'Fav. Leader', value: Object.values(leaderCounts).sort((a, b) => b.count - a.count)[0]?.name.split(' ').slice(-1)[0] ?? '—' },
+          { label: 'Fav. Leader', value: Object.values(leaderCounts).sort((a, b) => b.count - a.count)[0]?.name.replace(/\s*\([^)]*\)$/, '').trim().split(' ').slice(-1)[0] ?? '—' },
         ].map(s => (
           <div key={s.label} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: isMobile ? '12px 14px' : '14px 16px' }}>
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#7c6fa0', marginBottom: 6 }}>{s.label}</div>

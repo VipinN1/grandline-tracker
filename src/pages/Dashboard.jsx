@@ -221,22 +221,22 @@ export default function Dashboard({ session }) {
               )}
             </ChartCard>
 
-            <ChartCard title="Color Usage">
-              {colorUsage.length === 0 ? <EmptyChart message="No data yet" /> : (
+            <ChartCard title="Leader Usage">
+              {leaderUsage.length === 0 ? <EmptyChart message="No data yet" /> : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <PieChart width={150} height={150}>
-                    <Pie data={colorUsage} cx={70} cy={70} innerRadius={40} outerRadius={68} paddingAngle={3} dataKey="value" labelLine={false} label={<CustomPieLabel />}>
-                      {colorUsage.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    <Pie data={leaderUsage.slice(0, 6)} cx={70} cy={70} innerRadius={40} outerRadius={68} paddingAngle={3} dataKey="count" labelLine={false} label={<CustomPieLabel />}>
+                      {leaderUsage.slice(0, 6).map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
-                    <Tooltip {...tooltipStyle} formatter={(v, n, p) => [`${v} events (${Math.round(v / totalEvents * 100)}%)`, p.payload.name]} />
+                    <Tooltip {...tooltipStyle} formatter={(v, n, p) => [`${v} events (${Math.round(v / totalEvents * 100)}%)`, p.payload.fullName.replace(/\s*\([^)]*\)$/, '').trim()]} />
                   </PieChart>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    {colorUsage.map(c => (
-                      <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                        <div style={{ fontSize: 12, color: '#f0f2f5', fontWeight: 600, flex: 1 }}>{c.name}</div>
-                        <div style={{ fontSize: 12, color: '#7c6fa0' }}>{c.value}</div>
-                        <div style={{ fontSize: 11, color: '#3d2d6e', minWidth: 34, textAlign: 'right' }}>{Math.round(c.value / totalEvents * 100)}%</div>
+                    {leaderUsage.slice(0, 6).map(l => (
+                      <div key={l.fullName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, flexShrink: 0 }} />
+                        <div style={{ fontSize: 12, color: '#f0f2f5', fontWeight: 600, flex: 1 }}>{l.fullName.replace(/\s*\([^)]*\)$/, '').trim()}</div>
+                        <div style={{ fontSize: 12, color: '#7c6fa0' }}>{l.count}</div>
+                        <div style={{ fontSize: 11, color: '#3d2d6e', minWidth: 34, textAlign: 'right' }}>{Math.round(l.count / totalEvents * 100)}%</div>
                       </div>
                     ))}
                   </div>

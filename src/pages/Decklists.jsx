@@ -142,9 +142,6 @@ function LeaderCard({ deck, onClick, onDelete }) {
           </div>
         )}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: color }} />
-        <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.6)', border: `1px solid ${color}44`, borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700, color }}>
-          {deck.leader_color}
-        </div>
         <button
           onClick={handleDelete}
           style={{
