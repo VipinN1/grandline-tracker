@@ -80,24 +80,38 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
     try {
       const { default: html2canvas } = await import('html2canvas')
 
-      // Preload all images so html2canvas finds them cached
+      // Fetch every card image as a data URL up-front.
+      // This avoids the CORS cache-contamination problem where the visible
+      // modal <img> tags (no crossOrigin attr) cache the images without CORS
+      // headers, causing html2canvas to see tainted canvases even with useCORS.
       const imageUrls = [
         getCardImageUrl(tournament.leader_id),
         ...rounds.filter(r => r.opponent_leader_id).map(r => getCardImageUrl(r.opponent_leader_id)),
       ].filter(Boolean)
-      await Promise.allSettled(imageUrls.map(url => new Promise(resolve => {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.onload = resolve
-        img.onerror = resolve
-        img.src = url
-      })))
+
+      const dataUrls = {}
+      await Promise.allSettled(imageUrls.map(async url => {
+        try {
+          const res = await fetch(url, { mode: 'cors' })
+          const blob = await res.blob()
+          await new Promise(resolve => {
+            const reader = new FileReader()
+            reader.onload = e => { dataUrls[url] = e.target.result; resolve() }
+            reader.readAsDataURL(blob)
+          })
+        } catch { /* image stays missing in the export */ }
+      }))
 
       const canvas = await html2canvas(cardRef.current, {
         useCORS: true,
         scale: 2,
         backgroundColor: null,
         logging: false,
+        onclone: (_doc, el) => {
+          el.querySelectorAll('img').forEach(img => {
+            if (dataUrls[img.src]) img.src = dataUrls[img.src]
+          })
+        },
       })
 
       const link = document.createElement('a')
