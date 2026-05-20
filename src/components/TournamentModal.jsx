@@ -252,7 +252,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
               {exporting ? 'Saving…' : '↓ Export'}
             </button>
             {onDelete !== false && (
-              <button onClick={handleDelete} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.15)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              <button onClick={handleDelete} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.5)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                 {deleting ? 'Deleting…' : 'Delete Log'}
               </button>
             )}
