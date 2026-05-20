@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
+import TournamentShareCard from './TournamentShareCard'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -27,36 +28,13 @@ function pStyle(n) {
   return { background: 'rgba(255,255,255,0.04)', color: '#3d2d6e' }
 }
 
-function loadImg(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = src
-  })
-}
-
-function fillRoundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath()
-  ctx.moveTo(x + r, y)
-  ctx.lineTo(x + w - r, y)
-  ctx.arcTo(x + w, y, x + w, y + r, r)
-  ctx.lineTo(x + w, y + h - r)
-  ctx.arcTo(x + w, y + h, x + w - r, y + h, r)
-  ctx.lineTo(x + r, y + h)
-  ctx.arcTo(x, y + h, x, y + h - r, r)
-  ctx.lineTo(x, y + r)
-  ctx.arcTo(x, y, x + r, y, r)
-  ctx.closePath()
-  ctx.fill()
-}
 
 export default function TournamentModal({ tournament, onClose, zIndex = 200, isMobile = false, onDelete }) {
   const [selectedCard, setSelectedCard] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const cardRef = useRef(null)
   if (!tournament) return null
 
   const color = COLORS[tournament.leader_color] ?? '#8b5cf6'
@@ -97,144 +75,38 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
   }
 
   async function handleExport() {
+    if (!cardRef.current) return
     setExporting(true)
-    const W = 820, H = 460
-    const canvas = document.createElement('canvas')
-    canvas.width = W; canvas.height = H
-    const ctx = canvas.getContext('2d')
-    const FONT = '"Space Grotesk", system-ui, sans-serif'
-    const MONO = '"Space Mono", "Courier New", monospace'
-
-    // Background
-    ctx.fillStyle = '#0c0814'
-    ctx.fillRect(0, 0, W, H)
-    const orb = ctx.createRadialGradient(W, 0, 0, W, 0, 320)
-    orb.addColorStop(0, 'rgba(124,58,237,0.2)')
-    orb.addColorStop(1, 'rgba(124,58,237,0)')
-    ctx.fillStyle = orb; ctx.fillRect(0, 0, W, H)
-
-    // Leader image (left column, full height)
-    const imgW = 210
     try {
-      const img = await loadImg(getCardImageUrl(tournament.leader_id))
-      ctx.save()
-      ctx.beginPath(); ctx.rect(0, 0, imgW, H); ctx.clip()
-      ctx.drawImage(img, 0, 0, imgW, H)
-      ctx.restore()
-    } catch {
-      ctx.fillStyle = color + '22'
-      ctx.fillRect(0, 0, imgW, H)
-      ctx.fillStyle = color; ctx.font = `bold 12px ${FONT}`
-      ctx.textAlign = 'center'; ctx.fillText(tournament.leader_name, imgW / 2, H / 2)
-      ctx.textAlign = 'left'
-    }
-    // Right-fade the image into the background
-    const fade = ctx.createLinearGradient(imgW - 80, 0, imgW, 0)
-    fade.addColorStop(0, 'rgba(12,8,20,0)'); fade.addColorStop(1, 'rgba(12,8,20,1)')
-    ctx.fillStyle = fade; ctx.fillRect(imgW - 80, 0, 80, H)
-    // Color accent strip
-    ctx.fillStyle = color; ctx.fillRect(0, H - 4, imgW, 4)
+      const { default: html2canvas } = await import('html2canvas')
 
-    // Content area
-    const cx = imgW + 20, pad = 20
-    let y = 30
+      // Preload all images so html2canvas finds them cached
+      const imageUrls = [
+        getCardImageUrl(tournament.leader_id),
+        ...rounds.filter(r => r.opponent_leader_id).map(r => getCardImageUrl(r.opponent_leader_id)),
+      ].filter(Boolean)
+      await Promise.allSettled(imageUrls.map(url => new Promise(resolve => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = resolve
+        img.onerror = resolve
+        img.src = url
+      })))
 
-    function t(str, x, yy, font, fill) { ctx.font = font; ctx.fillStyle = fill; ctx.fillText(str, x, yy) }
-
-    t('TOURNAMENT RESULT', cx, y, `600 10px ${FONT}`, '#8b5cf6'); y += 22
-
-    // Tournament name (truncate if needed)
-    ctx.font = `bold 22px ${FONT}`; ctx.fillStyle = '#f0f2f5'
-    let name = tournament.name
-    while (ctx.measureText(name).width > W - cx - pad - 4 && name.length > 3) name = name.slice(0, -1)
-    if (name !== tournament.name) name += '…'
-    ctx.fillText(name, cx, y); y += 24
-
-    t(`${tournament.date}  ·  ${tournament.player_count} players`, cx, y, `13px ${FONT}`, '#7c6fa0'); y += 18
-
-    // Divider
-    ctx.strokeStyle = 'rgba(139,92,246,0.25)'; ctx.lineWidth = 1
-    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(W - pad, y); ctx.stroke(); y += 18
-
-    // Placement badge
-    const pc = { 1: '#fbbf24', 2: '#94a3b8', 3: '#fb923c' }[tournament.placement] ?? '#7c6fa0'
-    ctx.fillStyle = pc + '22'; fillRoundRect(ctx, cx, y, 44, 34, 8)
-    ctx.fillStyle = pc; ctx.font = `bold 14px ${FONT}`
-    ctx.textAlign = 'center'; ctx.fillText(pLabel(tournament.placement), cx + 22, y + 22); ctx.textAlign = 'left'
-
-    // W/L Record
-    const wr = tournament.wins + tournament.losses > 0
-      ? Math.round(tournament.wins / (tournament.wins + tournament.losses) * 100) : 0
-    ctx.font = `bold 21px ${MONO}`
-    ctx.fillStyle = '#34d399'; const wTxt = `${tournament.wins}W`
-    ctx.fillText(wTxt, cx + 54, y + 21)
-    const wW = ctx.measureText(wTxt).width
-    ctx.fillStyle = '#3d2d6e'; ctx.fillText(' – ', cx + 54 + wW, y + 21)
-    const sepW = ctx.measureText(' – ').width
-    ctx.fillStyle = '#f05252'; ctx.fillText(`${tournament.losses}L`, cx + 54 + wW + sepW, y + 21)
-    t(`${wr}% win rate`, cx + 54, y + 35, `12px ${FONT}`, '#7c6fa0'); y += 52
-
-    // Divider
-    ctx.strokeStyle = 'rgba(139,92,246,0.25)'
-    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(W - pad, y); ctx.stroke(); y += 16
-
-    if (rounds.length > 0) {
-      // Mini stat row
-      const stats = [
-        { label: '1ST WIN RATE', val: wentFirstTotal > 0 ? `${Math.round(wentFirstWins/wentFirstTotal*100)}%` : '—', sub: `${wentFirstWins}/${wentFirstTotal}` },
-        { label: '2ND WIN RATE', val: wentSecondTotal > 0 ? `${Math.round(wentSecondWins/wentSecondTotal*100)}%` : '—', sub: `${wentSecondWins}/${wentSecondTotal}` },
-        { label: 'DICE WIN RATE', val: diceWon > 0 ? `${Math.round(diceWins/diceWon*100)}%` : '—', sub: `${diceWins}/${diceWon}` },
-      ]
-      const sw = (W - cx - pad) / 3
-      stats.forEach((s, i) => {
-        const sx = cx + i * sw
-        t(s.label, sx, y, `600 9px ${FONT}`, '#3d2d6e')
-        t(s.val, sx, y + 18, `bold 17px ${FONT}`, '#f0f2f5')
-        t(s.sub, sx, y + 31, `11px ${FONT}`, '#7c6fa0')
-      }); y += 44
-
-      ctx.strokeStyle = 'rgba(139,92,246,0.25)'
-      ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(W - pad, y); ctx.stroke(); y += 12
-
-      t('ROUND BY ROUND', cx, y, `600 9px ${FONT}`, '#3d2d6e'); y += 14
-
-      // Rounds in 2 columns
-      const colW = Math.floor((W - cx - pad - 10) / 2)
-      const rowH = 24
-      rounds.forEach((r, i) => {
-        const col = i % 2, row = Math.floor(i / 2)
-        const rx = cx + col * (colW + 10), ry = y + row * rowH
-        if (ry + rowH > H - 28) return
-
-        ctx.fillStyle = 'rgba(255,255,255,0.025)'; fillRoundRect(ctx, rx, ry, colW, rowH - 2, 4)
-
-        // Round label
-        t(`R${r.round_number}`, rx + 7, ry + 15, `600 10px ${FONT}`, '#7c6fa0')
-
-        // Opponent name (truncate to fit)
-        const oppRaw = r.opponent_leader_name ? r.opponent_leader_name.replace(/\s*\([^)]*\)$/, '').trim() : 'Unknown'
-        ctx.font = `12px ${FONT}`; ctx.fillStyle = COLORS[r.opponent_leader_color] ?? '#7c6fa0'
-        let opp = oppRaw
-        while (ctx.measureText(opp).width > colW - 52 && opp.length > 2) opp = opp.slice(0, -1)
-        if (opp !== oppRaw) opp += '…'
-        ctx.fillText(opp, rx + 28, ry + 15)
-
-        // Result
-        ctx.font = `bold 12px ${FONT}`; ctx.fillStyle = r.result === 'win' ? '#34d399' : '#f05252'
-        ctx.textAlign = 'right'; ctx.fillText(r.result === 'win' ? 'W' : 'L', rx + colW - 7, ry + 15)
-        ctx.textAlign = 'left'
+      const canvas = await html2canvas(cardRef.current, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: null,
+        logging: false,
       })
+
+      const link = document.createElement('a')
+      link.download = `${tournament.name.replace(/[^a-z0-9]/gi, '_')}_result.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (err) {
+      console.error('Export failed:', err)
     }
-
-    // Watermark
-    ctx.font = `600 11px ${FONT}`; ctx.fillStyle = 'rgba(139,92,246,0.45)'
-    ctx.textAlign = 'right'; ctx.fillText('☠ PirateTracker', W - pad, H - 12); ctx.textAlign = 'left'
-
-    // Download
-    const link = document.createElement('a')
-    link.download = `${tournament.name.replace(/[^a-z0-9]/gi, '_')}.png`
-    link.href = canvas.toDataURL('image/png')
-    link.click()
     setExporting(false)
   }
 
@@ -249,7 +121,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(139,92,246,0.05) 100%)' }} />
             <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             <button onClick={() => { handleExport() }} disabled={exporting} style={{ position: 'absolute', top: 12, right: 50, background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 6, color: exporting ? '#7c6fa0' : '#a78bfa', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: exporting ? 'default' : 'pointer', letterSpacing: '0.3px', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-              {exporting ? 'Saving…' : '↓ Export'}
+              {exporting ? 'Saving…' : '↗ Share'}
             </button>
             {onDelete !== false && (
               <button onClick={handleDelete} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.5)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
@@ -368,6 +240,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
         </div>
       </div>
       {selectedCard && <CardPreview card={selectedCard} onClose={() => setSelectedCard(null)} />}
+      <TournamentShareCard ref={cardRef} tournament={tournament} />
 
       {showConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: zIndex + 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
