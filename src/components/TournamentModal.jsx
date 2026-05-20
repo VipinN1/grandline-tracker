@@ -80,39 +80,58 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
     try {
       const { default: html2canvas } = await import('html2canvas')
 
-      // Fetch every card image as a data URL up-front.
-      // This avoids the CORS cache-contamination problem where the visible
-      // modal <img> tags (no crossOrigin attr) cache the images without CORS
-      // headers, causing html2canvas to see tainted canvases even with useCORS.
+      // Convert each card image to a data URL using Image()+crossOrigin+cache-buster.
+      // This is the same pattern the original canvas export used and is the only
+      // approach that reliably bypasses the browser's non-CORS cache (which gets
+      // poisoned by the modal's plain <img> tags that load without crossOrigin).
       const imageUrls = [
         getCardImageUrl(tournament.leader_id),
         ...rounds.filter(r => r.opponent_leader_id).map(r => getCardImageUrl(r.opponent_leader_id)),
       ].filter(Boolean)
 
       const dataUrls = {}
-      await Promise.allSettled(imageUrls.map(async url => {
-        try {
-          const res = await fetch(url, { mode: 'cors' })
-          const blob = await res.blob()
-          await new Promise(resolve => {
-            const reader = new FileReader()
-            reader.onload = e => { dataUrls[url] = e.target.result; resolve() }
-            reader.readAsDataURL(blob)
-          })
-        } catch { /* image stays missing in the export */ }
+      await Promise.allSettled(imageUrls.map(url => new Promise(resolve => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          try {
+            const c = document.createElement('canvas')
+            c.width = img.naturalWidth
+            c.height = img.naturalHeight
+            c.getContext('2d').drawImage(img, 0, 0)
+            dataUrls[url] = c.toDataURL('image/jpeg', 0.92)
+          } catch { /* tainted — skip this image */ }
+          resolve()
+        }
+        img.onerror = resolve
+        // ?t= busts any non-CORS cached entry while keeping the dataUrls key clean
+        img.src = url + '?t=' + Date.now()
+      })))
+
+      // Swap the hidden card's img srcs to data URLs so html2canvas sees no
+      // cross-origin URLs at all.  Use getAttribute to get the raw attribute
+      // string — same value getCardImageUrl() produced, so the map lookup works.
+      const imgs = Array.from(cardRef.current.querySelectorAll('img'))
+      const origSrcs = imgs.map(img => img.getAttribute('src'))
+
+      await Promise.all(imgs.map((img, i) => {
+        const dataUrl = dataUrls[origSrcs[i]]
+        if (!dataUrl) return Promise.resolve()
+        return new Promise(resolve => {
+          img.addEventListener('load', resolve, { once: true })
+          img.addEventListener('error', resolve, { once: true })
+          img.src = dataUrl
+        })
       }))
 
       const canvas = await html2canvas(cardRef.current, {
-        useCORS: true,
         scale: 2,
         backgroundColor: null,
         logging: false,
-        onclone: (_doc, el) => {
-          el.querySelectorAll('img').forEach(img => {
-            if (dataUrls[img.src]) img.src = dataUrls[img.src]
-          })
-        },
       })
+
+      // Restore original srcs on the hidden card
+      imgs.forEach((img, i) => { img.src = origSrcs[i] })
 
       const link = document.createElement('a')
       link.download = `${tournament.name.replace(/[^a-z0-9]/gi, '_')}_result.png`
