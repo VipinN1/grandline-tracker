@@ -48,7 +48,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
     return (
       <div>
         {label && <label style={labelStyle}>{label}</label>}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '8px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '8px 12px' }}>
           <img src={getCardImageUrl(selected.card_set_id)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected.card_name}</div>
@@ -65,7 +65,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
       {label && <label style={labelStyle}>{label}</label>}
       <input type="text" placeholder={placeholder ?? 'Search leader...'} value={query} onChange={handleChange} onFocus={() => query.length >= 2 && setOpen(true)} style={inputStyle} />
       {open && query.length >= 2 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 280, overflowY: 'auto' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 280, overflowY: 'auto' }}>
           {searching ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
             : results.length === 0 ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#3d2d6e' }}>No leaders found</div>
             : results.map(card => (
@@ -167,7 +167,7 @@ function SetupScreen({ session, onStart }) {
         <div ref={storeRef} style={{ position: 'relative' }}>
           <label style={labelStyle}>Store / Venue</label>
           {selectedStore ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selectedStore.name}</div>
               <button onClick={() => setSelectedStore(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
             </div>
@@ -175,7 +175,7 @@ function SetupScreen({ session, onStart }) {
             <>
               <input type="text" placeholder="Search store..." value={storeQuery} onChange={e => { setStoreQuery(e.target.value); setStoreOpen(true) }} onFocus={() => setStoreOpen(true)} style={inputStyle} />
               {storeOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
                   {filteredStores.map(s => (
                     <div key={s.id} onClick={() => { setSelectedStore(s); setStoreQuery(''); setStoreOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#f0f2f5', borderBottom: '1px solid rgba(255,255,255,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       {s.name} {s.city && <span style={{ color: '#7c6fa0' }}>· {s.city}</span>}
@@ -192,7 +192,7 @@ function SetupScreen({ session, onStart }) {
         <div ref={seriesRef} style={{ position: 'relative' }}>
           <label style={labelStyle}>Tournament Series</label>
           {selectedSeries ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selectedSeries.name}</div>
               <button onClick={() => setSelectedSeries(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
             </div>
@@ -200,7 +200,7 @@ function SetupScreen({ session, onStart }) {
             <>
               <input type="text" placeholder="Search series..." value={seriesQuery} onChange={e => { setSeriesQuery(e.target.value); setSeriesOpen(true) }} onFocus={() => setSeriesOpen(true)} style={inputStyle} />
               {seriesOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
                   {filteredSeries.map(s => (
                     <div key={s.id} onClick={() => { setSelectedSeries(s); setSeriesQuery(''); setSeriesOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#f0f2f5', borderBottom: '1px solid rgba(255,255,255,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       {s.name}
