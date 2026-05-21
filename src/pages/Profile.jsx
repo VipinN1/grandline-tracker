@@ -3,6 +3,7 @@ import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import TournamentModal from '../components/TournamentModal'
+import EditProfileModal from '../components/EditProfileModal'
 
 const COLORS = {
   Red: '#f05252',
@@ -101,6 +102,8 @@ export default function Profile({ session }) {
   const [activeTab, setActiveTab] = useState('history')
   const [avatarUrl, setAvatarUrl] = useState(null)
   const { isMobile } = useWindowSize()
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [username, setUsername] = useState(profile?.username ?? session?.user?.user_metadata?.username ?? 'Player')
 
   useEffect(() => {
     if (!session) return
@@ -129,7 +132,7 @@ export default function Profile({ session }) {
   const winRate = totalWins + totalLosses > 0 ? Math.round((totalWins / (totalWins + totalLosses)) * 100) : 0
   const topEights = tournaments.filter(t => t.placement <= 8).length
   const bestFinish = tournaments.length > 0 ? Math.min(...tournaments.map(t => t.placement)) : null
-  const username = profile?.username ?? session?.user?.user_metadata?.username ?? 'Player'
+  {/*const username = profile?.username ?? session?.user?.user_metadata?.username ?? 'Player'*/}
 
   const leaderCounts = tournaments.reduce((acc, t) => {
     if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, color: t.leader_color, count: 0 }
@@ -151,14 +154,13 @@ export default function Profile({ session }) {
 
       {/* Profile header — row on desktop, column on mobile */}
       <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: isMobile ? 16 : 24, marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 14 : 20, flexDirection: isMobile ? 'row' : 'row' }}>
-          <AvatarUpload
-            session={session}
-            profile={{ ...profile, avatar_url: avatarUrl }}
-            onUpdate={url => setAvatarUrl(url)}
-          />
+        <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 14 : 20, flexDirection: 'row' }}>
+          <AvatarUpload session={session} profile={{ ...profile, avatar_url: avatarUrl }} onUpdate={url => setAvatarUrl(url)} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>{username}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px' }}>{username}</div>
+              <div style={{ fontSize: isMobile ? 11 : 12, color: '#7c6fa0' }}>Pronouns: <span style={{ color: '#a78bfa' }}>{profile?.pronouns ?? '—'}</span></div>
+            </div>
             <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 3 }}>
               {profile?.location && `${profile.location} · `}
               {memberSince && `Since ${memberSince}`}
@@ -167,9 +169,9 @@ export default function Profile({ session }) {
               {bestFinish === 1 && <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>1st Place</span>}
               <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)' }}>{tournaments.length} Events</span>
               {topEights > 0 && <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.2)' }}>Top 8 ×{topEights}</span>}
-              {/* Win rate badge on mobile instead of separate block */}
               {isMobile && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', color: '#f0f2f5', border: '1px solid rgba(255,255,255,0.1)' }}>{winRate}% WR</span>}
             </div>
+            <button onClick={() => setEditingProfile(true)} style={{ marginTop: 10, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer', fontFamily: 'inherit' }}>Edit Profile</button>
           </div>
           {!isMobile && (
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -178,6 +180,12 @@ export default function Profile({ session }) {
               <div style={{ fontSize: 13, color: '#3d2d6e', marginTop: 2, fontFamily: 'monospace' }}>{totalWins}W · {totalLosses}L</div>
             </div>
           )}
+        </div>
+
+        {/* Bio box */}
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#7c6fa0', marginBottom: 6 }}>Bio</div>
+          <div style={{ fontSize: 13, color: profile?.bio ? '#f0f2f5' : '#3d2d6e', lineHeight: 1.6 }}>{profile?.bio ?? 'No bio yet. Click Edit Profile to add one.'}</div>
         </div>
       </div>
 
@@ -297,7 +305,17 @@ export default function Profile({ session }) {
           })}
         </div>
       )}
-
+      {editingProfile && (
+        <EditProfileModal
+          profile={profile}
+          session={session}
+          onClose={() => setEditingProfile(false)}
+          onSave={({ username: newUsername, bio: newBio, pronouns: newPronouns }) => {
+            setUsername(newUsername)
+            setProfile(prev => ({ ...prev, bio: newBio, pronouns: newPronouns }))
+          }}
+        />
+      )}
       {selectedTournament && (
         <TournamentModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} isMobile={isMobile} onDelete={() => { setTournaments(prev => prev.filter(t => t.id !== selectedTournament.id)); setSelectedTournament(null) }} />
       )}
