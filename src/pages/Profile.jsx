@@ -174,7 +174,7 @@ export default function Profile({ session }) {
               {topEights > 0 && <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.2)' }}>Top 8 ×{topEights}</span>}
               {isMobile && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', color: '#f0f2f5', border: '1px solid rgba(255,255,255,0.1)' }}>{winRate}% WR</span>}
             </div>
-            <button onClick={() => setEditingProfile(true)} style={{ marginTop: 10, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(71, 47, 126, 0.32)', color: '#a18ecf', border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer', fontFamily: 'inherit' }}>Edit Profile</button>
+            <button onClick={() => setEditingProfile(true)} style={{ marginTop: 10, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer', fontFamily: 'inherit' }}>Edit Profile</button>
           </div>
           {!isMobile && (
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -315,7 +315,7 @@ export default function Profile({ session }) {
           onClose={() => setEditingProfile(false)}
           onSave={({ username: newUsername, bio: newBio, pronouns: newPronouns }) => {
             setUsername(newUsername)
-            setProfile(prev => ({ ...prev, bio: newBio, pronouns: newPronouns }))
+            setProfile(prev => ({ ...prev, username: newUsername, bio: newBio, pronouns: newPronouns }))
           }}
         />
       )}
