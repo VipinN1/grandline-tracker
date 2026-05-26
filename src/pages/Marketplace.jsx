@@ -408,6 +408,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   const [filterType, setFilterType] = useState('')
   const [filterSource, setFilterSource] = useState('')
   const [filterAltArt, setFilterAltArt] = useState('')
+  const [filterCost, setFilterCost] = useState(null)
   const debounceRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -628,6 +629,16 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                               )
                             })}
                           </div>
+                          {/* Cost */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                            <button onClick={() => setFilterCost(null)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterCost === null ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterCost === null ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterCost === null ? '#a78bfa' : '#7c6fa0' }}>All Costs</button>
+                            {[0,1,2,3,4,5,6,7,8,9,10].map(n => {
+                              const isActive = filterCost === n
+                              return (
+                                <button key={n} onClick={() => setFilterCost(isActive ? null : n)} style={{ padding: '4px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{n}</button>
+                              )
+                            })}
+                          </div>
                         </div>
                         <input type="text" placeholder="e.g. Monkey D. Luffy or OP14-120" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
                         {dropdownOpen && cardQuery.length >= 2 && (
@@ -657,6 +668,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                   if (!id.toUpperCase().startsWith(filterSource)) return false
                                 }
                                 if (filterAltArt && getAltArtType(card) !== filterAltArt) return false
+                                if (filterCost !== null && String(card.card_cost ?? '') !== String(filterCost)) return false
                                 return true
                               })
                               if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>

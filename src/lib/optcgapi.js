@@ -91,8 +91,15 @@ async function getSetCards(setId) {
     if (cached) return cached
 
     const res = await fetch(`${BASE}/sets/${setId}/`)
-    if (!res.ok) return []
-    const data = await res.json()
+    let data = res.ok ? await res.json() : []
+
+    // EB04 was released split across OP14 and OP15 — no standalone API endpoint exists
+    if (setId === 'EB04' && data.length === 0) {
+      const [op14, op15] = await Promise.all([getSetCards('OP14'), getSetCards('OP15')])
+      data = [...op14, ...op15].filter(c => c.card_set_id?.toUpperCase().startsWith('EB04'))
+    }
+
+    if (data.length === 0) return []
 
     const cardCache = getCache()
     data.forEach(card => {
