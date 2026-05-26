@@ -404,6 +404,9 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   const [manualColor, setManualColor] = useState('')
   const [manualType, setManualType] = useState('')
   const [manualSetName, setManualSetName] = useState('')
+  const [filterColor, setFilterColor] = useState('')
+  const [filterType, setFilterType] = useState('')
+  const [filterSource, setFilterSource] = useState('')
   const debounceRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -571,27 +574,86 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                       </div>
                     ) : (
                       <>
-                        <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
+                        {/* Filter pills */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 8 }}>
+                          {/* Color */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {[['', 'All'], ['Red', 'Red'], ['Blue', 'Blue'], ['Green', 'Green'], ['Purple', 'Purple'], ['Yellow', 'Yellow'], ['Black', 'Black']].map(([val, label]) => {
+                              const isActive = filterColor === val
+                              const c = COLORS[val]
+                              return (
+                                <button key={val || 'fc-all'} onClick={() => setFilterColor(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive && c ? `1px solid ${c}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && c ? `${c}26` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && c ? c : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                              )
+                            })}
+                          </div>
+                          {/* Type */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {[['', 'All Types'], ['Leader', 'Leader'], ['Character', 'Character'], ['Event', 'Event'], ['Stage', 'Stage']].map(([val, label]) => {
+                              const isActive = filterType === val
+                              return (
+                                <button key={val || 'ft-all'} onClick={() => setFilterType(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                              )
+                            })}
+                          </div>
+                          {/* Source */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {[['', 'All Sources'], ['Sets', 'Booster Sets'], ['ST', 'Starter Decks'], ['Promos', 'Promos']].map(([val, label]) => {
+                              const isActive = filterSource === val
+                              return (
+                                <button key={val || 'fs-all'} onClick={() => setFilterSource(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <input type="text" placeholder="e.g. Monkey D. Luffy or OP14-120" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
                         {dropdownOpen && cardQuery.length >= 2 && (
                           <div style={{ maxHeight: 360, overflowY: 'auto', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, marginTop: 6, background: 'rgba(12,8,20,0.98)' }}>
-                            {cardSearching ? <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
-                              : cardResults.length === 0 ? <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
-                              : cardResults.map(card => (
-                                <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                  <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
-                                  <div>
-                                    <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                                    <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>
-                                      {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
-                                      {card.card_color && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
-                                      {card.card_type && <span>{card.card_type}</span>}
-                                      {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
-                                      <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
-                                      {card.set_name && <><span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span><span>{card.set_name}</span></>}
+                            {cardSearching ? (
+                              <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
+                            ) : (() => {
+                              const filtered = cardResults.filter(card => {
+                                if (filterColor && card.card_color !== filterColor) return false
+                                if (filterType && card.card_type !== filterType) return false
+                                const id = card.card_set_id ?? ''
+                                if (filterSource === 'Sets' && (/^ST/i.test(id) || /^P-/i.test(id))) return false
+                                if (filterSource === 'ST' && !/^ST/i.test(id)) return false
+                                if (filterSource === 'Promos' && !/^P-/i.test(id)) return false
+                                return true
+                              })
+                              if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
+                              return filtered.map(card => {
+                                const cid = card.card_set_id ?? ''
+                                const isPromo = /^P-/i.test(cid)
+                                const isST = /^ST/i.test(cid)
+                                const isAltArt = /\((SP|SEC|L|ALT|Manga|Premium|PARALLEL)\)/i.test(card.card_name ?? '')
+                                const badge = isPromo
+                                  ? { label: 'PROMO', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.3)' }
+                                  : isST
+                                  ? { label: 'ST', color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' }
+                                  : isAltArt
+                                  ? { label: 'ALT', color: '#34d399', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.3)' }
+                                  : null
+                                return (
+                                  <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
+                                        <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</span>
+                                        {badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 4, background: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, letterSpacing: '0.5px', flexShrink: 0 }}>{badge.label}</span>}
+                                      </div>
+                                      <div style={{ fontSize: 12, color: '#7c6fa0' }}>
+                                        {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
+                                        {card.card_color && card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                                        {card.card_type && <span>{card.card_type}</span>}
+                                        {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                                        <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
+                                        {card.set_name && <><span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span><span>{card.set_name}</span></>}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })
+                            })()}
                           </div>
                         )}
                       </>
