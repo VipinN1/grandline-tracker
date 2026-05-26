@@ -610,7 +610,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                               style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
                             >
                               <option value="">Booster Sets</option>
-                              {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','EB01','EB02','EB03','PRB01','PRB02'].map(s => (
+                              {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','EB01','EB02','EB03','EB04','PRB01','PRB02'].map(s => (
                                 <option key={s} value={s}>{s}</option>
                               ))}
                             </select>
