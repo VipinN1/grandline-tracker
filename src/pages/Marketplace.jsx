@@ -404,7 +404,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   const [manualColor, setManualColor] = useState('')
   const [manualType, setManualType] = useState('')
   const [manualSetName, setManualSetName] = useState('')
-  const [filterColor, setFilterColor] = useState('')
+  const [filterColor, setFilterColor] = useState([])
   const [filterType, setFilterType] = useState('')
   const [filterSource, setFilterSource] = useState('')
   const debounceRef = useRef(null)
@@ -576,15 +576,20 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                       <>
                         {/* Filter pills */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 8 }}>
-                          {/* Color */}
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {/* Color — toggle up to 2 for dual-color cards */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
                             {[['', 'All'], ['Red', 'Red'], ['Blue', 'Blue'], ['Green', 'Green'], ['Purple', 'Purple'], ['Yellow', 'Yellow'], ['Black', 'Black']].map(([val, label]) => {
-                              const isActive = filterColor === val
+                              const isActive = val === '' ? filterColor.length === 0 : filterColor.includes(val)
                               const c = COLORS[val]
+                              const atMax = filterColor.length >= 2 && !isActive && val !== ''
                               return (
-                                <button key={val || 'fc-all'} onClick={() => setFilterColor(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive && c ? `1px solid ${c}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && c ? `${c}26` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && c ? c : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                                <button key={val || 'fc-all'} onClick={() => {
+                                  if (val === '') { setFilterColor([]); return }
+                                  setFilterColor(prev => prev.includes(val) ? prev.filter(x => x !== val) : prev.length < 2 ? [...prev, val] : prev)
+                                }} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: atMax ? 'default' : 'pointer', fontFamily: 'inherit', opacity: atMax ? 0.35 : 1, border: isActive && c ? `1px solid ${c}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && c ? `${c}26` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && c ? c : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
                               )
                             })}
+                            {filterColor.length > 0 && <span style={{ fontSize: 10, color: '#3d2d6e', alignSelf: 'center', marginLeft: 2 }}>up to 2</span>}
                           </div>
                           {/* Type */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -596,13 +601,20 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                             })}
                           </div>
                           {/* Source */}
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                            {[['', 'All Sources'], ['Sets', 'Booster Sets'], ['ST', 'Starter Decks'], ['Promos', 'Promos']].map(([val, label]) => {
-                              const isActive = filterSource === val
-                              return (
-                                <button key={val || 'fs-all'} onClick={() => setFilterSource(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
-                              )
-                            })}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                            <button onClick={() => setFilterSource('')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === '' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === '' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === '' ? '#a78bfa' : '#7c6fa0' }}>All</button>
+                            <select
+                              value={['', 'ST', 'Promos'].includes(filterSource) ? '' : filterSource}
+                              onChange={e => setFilterSource(e.target.value)}
+                              style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
+                            >
+                              <option value="">Booster Sets</option>
+                              {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','EB01','EB02','EB03'].map(s => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                            <button onClick={() => setFilterSource('ST')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'ST' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'ST' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'ST' ? '#a78bfa' : '#7c6fa0' }}>Starter Decks</button>
+                            <button onClick={() => setFilterSource('Promos')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'Promos' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'Promos' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'Promos' ? '#a78bfa' : '#7c6fa0' }}>Promos</button>
                           </div>
                         </div>
                         <input type="text" placeholder="e.g. Monkey D. Luffy or OP14-120" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
@@ -612,12 +624,14 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                               <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
                             ) : (() => {
                               const filtered = cardResults.filter(card => {
-                                if (filterColor && card.card_color !== filterColor) return false
+                                if (filterColor.length > 0 && !filterColor.includes(card.card_color)) return false
                                 if (filterType && card.card_type !== filterType) return false
                                 const id = card.card_set_id ?? ''
-                                if (filterSource === 'Sets' && (/^ST/i.test(id) || /^P-/i.test(id))) return false
                                 if (filterSource === 'ST' && !/^ST/i.test(id)) return false
                                 if (filterSource === 'Promos' && !/^P-/i.test(id)) return false
+                                if (filterSource && filterSource !== 'ST' && filterSource !== 'Promos') {
+                                  if (!id.toUpperCase().startsWith(filterSource)) return false
+                                }
                                 return true
                               })
                               if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
