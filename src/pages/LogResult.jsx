@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import SelectDecklistModal from '../components/SelectDecklistModal'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -254,6 +256,11 @@ export default function LogResult({ session }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const [attachedDecklist, setAttachedDecklist] = useState(null)
+  const [selectingDecklist, setSelectingDecklist] = useState(false)
+
+  const { isMobile } = useWindowSize()
+
   useEffect(() => { loadStoresAndSeries() }, [])
 
   async function loadStoresAndSeries() {
@@ -309,8 +316,8 @@ export default function LogResult({ session }) {
 
     setSaving(true)
 
-    let decklistId = null
-    if (parsedCards.length > 0) {
+    let decklistId = attachedDecklist?.id ?? null
+    if (!attachedDecklist && parsedCards.length > 0) {
       const { data: dl, error: dlError } = await supabase.from('decklists').insert({
         user_id: session.user.id,
         name: deckName || `${leaderResult.card_name} Deck`,
@@ -441,44 +448,72 @@ export default function LogResult({ session }) {
           {/* Decklist */}
           <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
             <div style={sectionTitle}>Decklist</div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Deck Name</label>
-              <input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} />
-            </div>
-            <label style={labelStyle}>Paste your decklist</label>
-            <textarea value={decklistRaw} onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }} placeholder={'1xOP15-002\n4xOP15-053\n...'} style={{ ...inputStyle, minHeight: 140, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />
-            <button onClick={handleParseDeck} disabled={!decklistRaw.trim() || enriching} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: decklistRaw.trim() ? 'rgba(255,255,255,0.05)' : 'transparent', color: decklistRaw.trim() ? '#f0f2f5' : '#3d2d6e', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
-              {enriching ? 'Fetching card data...' : 'Preview Decklist'}
-            </button>
 
-            {deckParsed && parsedCards.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 10 }}>
-                  {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed
+            {attachedDecklist ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 10, padding: '12px 14px' }}>
+                <img src={getCardImageUrl(attachedDecklist.leader_id)} alt={attachedDecklist.leader_name} style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, border: `1px solid ${COLORS[attachedDecklist.leader_color] ?? 'rgba(255,255,255,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{attachedDecklist.name}</div>
+                  <div style={{ fontSize: 11, color: COLORS[attachedDecklist.leader_color] ?? '#7c6fa0', marginTop: 2 }}>{attachedDecklist.leader_name} · {attachedDecklist.leader_id}</div>
+                  <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 2 }}>{attachedDecklist.cards?.reduce((s, c) => s + c.count, 0) ?? 0} cards</div>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                  {parsedCards.flatMap(card =>
-                    Array.from({ length: card.count }, (_, i) => (
-                      <img key={`${card.id}-${i}`} src={getCardImageUrl(card.id)} alt={card.name} title={`${card.name} (${card.id})`} style={{ width: 62, borderRadius: 5, border: `2px solid ${COLORS[card.color] ?? 'rgba(255,255,255,0.08)'}` }} onError={e => { e.target.style.opacity = '0.2' }} />
-                    ))
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {parsedCards.map(card => (
-                    <div key={card.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderRadius: 6, fontSize: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[card.color] ?? '#3d2d6e', flexShrink: 0 }} />
-                        <span style={{ fontWeight: 700, color: '#8b5cf6', fontFamily: 'monospace' }}>{card.count}×</span>
-                        <span style={{ color: '#f0f2f5' }}>{card.name !== card.id ? card.name : card.id}</span>
-                      </div>
-                      <span style={{ color: '#3d2d6e', fontFamily: 'monospace', fontSize: 11 }}>{card.id}</span>
-                    </div>
-                  ))}
-                </div>
+                <button onClick={() => setAttachedDecklist(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
               </div>
-            )}
-            {deckParsed && parsedCards.length === 0 && (
-              <div style={{ marginTop: 12, fontSize: 13, color: '#f05252' }}>Could not parse any cards. Use format: 4xOP01-024</div>
+            ) : (
+              <>
+                {/* Attach from account */}
+                <button onClick={() => setSelectingDecklist(true)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 14 }}>
+                  Attach Decklist From Account
+                </button>
+
+                {/* Divider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#3d2d6e' }}>or</div>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
+                </div>
+
+                {/* Manual paste */}
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Deck Name</label>
+                  <input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} />
+                </div>
+                <label style={labelStyle}>Paste your decklist</label>
+                <textarea value={decklistRaw} onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }} placeholder={'1xOP15-002\n4xOP15-053\n...'} style={{ ...inputStyle, minHeight: 140, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />
+                <button onClick={handleParseDeck} disabled={!decklistRaw.trim() || enriching} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: decklistRaw.trim() ? 'rgba(255,255,255,0.05)' : 'transparent', color: decklistRaw.trim() ? '#f0f2f5' : '#3d2d6e', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+                  {enriching ? 'Fetching card data...' : 'Preview Decklist'}
+                </button>
+
+                {deckParsed && parsedCards.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 10 }}>
+                      {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                      {parsedCards.flatMap(card =>
+                        Array.from({ length: card.count }, (_, i) => (
+                          <img key={`${card.id}-${i}`} src={getCardImageUrl(card.id)} alt={card.name} title={`${card.name} (${card.id})`} style={{ width: 62, borderRadius: 5, border: `2px solid ${COLORS[card.color] ?? 'rgba(255,255,255,0.08)'}` }} onError={e => { e.target.style.opacity = '0.2' }} />
+                        ))
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {parsedCards.map(card => (
+                        <div key={card.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderRadius: 6, fontSize: 12 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[card.color] ?? '#3d2d6e', flexShrink: 0 }} />
+                            <span style={{ fontWeight: 700, color: '#8b5cf6', fontFamily: 'monospace' }}>{card.count}×</span>
+                            <span style={{ color: '#f0f2f5' }}>{card.name !== card.id ? card.name : card.id}</span>
+                          </div>
+                          <span style={{ color: '#3d2d6e', fontFamily: 'monospace', fontSize: 11 }}>{card.id}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {deckParsed && parsedCards.length === 0 && (
+                  <div style={{ marginTop: 12, fontSize: 13, color: '#f05252' }}>Could not parse any cards. Use format: 4xOP01-024</div>
+                )}
+              </>
             )}
           </div>
 
@@ -519,6 +554,14 @@ export default function LogResult({ session }) {
           )}
         </div>
       </div>
+      {selectingDecklist && (
+        <SelectDecklistModal
+          session={session}
+          isMobile={isMobile}
+          onClose={() => setSelectingDecklist(false)}
+          onSelect={deck => { setAttachedDecklist(deck); setDecklistRaw(''); setParsedCards([]) }}
+        />
+      )}
     </div>
   )
 }
