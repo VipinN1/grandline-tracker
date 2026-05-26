@@ -492,7 +492,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: step === 1 && !manualMode ? 'visible' : 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>New Listing</div>
@@ -501,7 +501,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ overflowY: step === 1 && !manualMode ? 'visible' : 'auto', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {step === 1 ? (
             <>
               {manualMode ? (
@@ -571,17 +571,17 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                       </div>
                     ) : (
                       <>
-                        <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%' }} />
+                        <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
                         {dropdownOpen && cardQuery.length >= 2 && (
-                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.98)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 280, overflowY: 'auto' }}>
+                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.98)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 400, overflowY: 'auto' }}>
                             {cardSearching ? <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
                               : cardResults.length === 0 ? <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
                               : cardResults.map(card => (
-                                <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                  <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                                <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                  <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                                   <div>
-                                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                                    <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>
+                                    <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
+                                    <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>
                                       {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
                                       {card.card_color && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
                                       {card.card_type && <span>{card.card_type}</span>}
