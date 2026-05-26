@@ -432,7 +432,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   }
 
   function handlePhotoChange(e) {
-    const file = e.target.files[0]
+    const file = e.target.files?.[0]
     if (!file) return
     setPhotoFile(file)
     const reader = new FileReader()
@@ -448,15 +448,18 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
     setError('')
     let photo_url = null
     if (photoFile) {
-      try {
-        const ext = photoFile.name.split('.').pop() || 'jpg'
-        const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-        const { data: up, error: upErr } = await supabase.storage.from('card-photos').upload(`${session.user.id}/${uid}.${ext}`, photoFile, { contentType: photoFile.type })
-        if (!upErr && up) {
-          const { data: urlData } = supabase.storage.from('card-photos').getPublicUrl(up.path)
-          photo_url = urlData?.publicUrl ?? null
-        }
-      } catch {}
+      const ext = photoFile.name.split('.').pop() || 'jpg'
+      const uploadPath = `${session.user.id}/${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('card-photos')
+        .upload(uploadPath, photoFile, { cacheControl: '3600', upsert: false, contentType: photoFile.type })
+      if (uploadError) {
+        setSaving(false)
+        setError('Photo upload failed: ' + uploadError.message)
+        return
+      }
+      const { data: urlData } = supabase.storage.from('card-photos').getPublicUrl(uploadPath)
+      photo_url = urlData?.publicUrl ?? null
     }
     const cardId = manualMode ? (manualCardId.trim() || `CUSTOM-${Date.now()}`) : selectedCard.card_set_id
     const cardName = manualMode ? manualName.trim() : selectedCard.card_name
