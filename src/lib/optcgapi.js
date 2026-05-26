@@ -99,6 +99,15 @@ async function getSetCards(setId) {
       data = [...op14, ...op15].filter(c => c.card_set_id?.toUpperCase().startsWith('EB04'))
     }
 
+    // Some sets use a hyphenated endpoint format (e.g. EB03 → EB-03); try that if primary returned nothing
+    if (data.length === 0) {
+      const m = setId.match(/^([A-Z]+)(\d+)$/i)
+      if (m) {
+        const res2 = await fetch(`${BASE}/sets/${m[1].toUpperCase()}-${m[2]}/`)
+        if (res2.ok) data = (await res2.json()) ?? []
+      }
+    }
+
     if (data.length === 0) return []
 
     const cardCache = getCache()
