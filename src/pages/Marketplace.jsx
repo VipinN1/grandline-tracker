@@ -492,7 +492,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: step === 1 && !manualMode ? 'visible' : 'hidden' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>New Listing</div>
@@ -501,7 +501,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
-        <div style={{ overflowY: step === 1 && !manualMode ? 'visible' : 'auto', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ overflowY: 'auto', maxHeight: 'calc(90vh - 140px)', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {step === 1 ? (
             <>
               {manualMode ? (
@@ -556,7 +556,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
               ) : (
                 <>
                   <div style={{ fontSize: 13, color: '#7c6fa0' }}>Search for the card you want to sell.</div>
-                  <div ref={dropdownRef} style={{ position: 'relative' }}>
+                  <div ref={dropdownRef}>
                     <label style={LABEL}>Card Name or ID *</label>
                     {selectedCard ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '10px 12px' }}>
@@ -573,7 +573,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                       <>
                         <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
                         {dropdownOpen && cardQuery.length >= 2 && (
-                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.98)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 400, overflowY: 'auto' }}>
+                          <div style={{ maxHeight: 360, overflowY: 'auto', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, marginTop: 6, background: 'rgba(12,8,20,0.98)' }}>
                             {cardSearching ? <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
                               : cardResults.length === 0 ? <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
                               : cardResults.map(card => (
