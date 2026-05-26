@@ -407,6 +407,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   const [filterColor, setFilterColor] = useState([])
   const [filterType, setFilterType] = useState('')
   const [filterSource, setFilterSource] = useState('')
+  const [filterAltArt, setFilterAltArt] = useState('')
   const debounceRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -609,12 +610,23 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                               style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
                             >
                               <option value="">Booster Sets</option>
-                              {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','EB01','EB02','EB03'].map(s => (
+                              {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','EB01','EB02','EB03','PRB01','PRB02'].map(s => (
                                 <option key={s} value={s}>{s}</option>
                               ))}
                             </select>
                             <button onClick={() => setFilterSource('ST')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'ST' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'ST' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'ST' ? '#a78bfa' : '#7c6fa0' }}>Starter Decks</button>
                             <button onClick={() => setFilterSource('Promos')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'Promos' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'Promos' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'Promos' ? '#a78bfa' : '#7c6fa0' }}>Promos</button>
+                          </div>
+                          {/* Alt Art */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
+                              const isActive = filterAltArt === val
+                              const altColors = { parallel: '#e879f9', sp: '#34d399', manga: '#38bdf8', tr: '#f97316' }
+                              const ac = altColors[val]
+                              return (
+                                <button key={val || 'fa-all'} onClick={() => setFilterAltArt(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive && ac ? `1px solid ${ac}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && ac ? `${ac}22` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && ac ? ac : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                              )
+                            })}
                           </div>
                         </div>
                         <input type="text" placeholder="e.g. Monkey D. Luffy or OP14-120" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
@@ -623,6 +635,15 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                             {cardSearching ? (
                               <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
                             ) : (() => {
+                              function getAltArtType(card) {
+                                const name = (card.card_name ?? '').toLowerCase()
+                                const rarity = (card.card_rarity ?? '').toLowerCase()
+                                if (/\bsp\b/.test(name) || rarity === 'sp') return 'sp'
+                                if (/\btr\b/.test(name) || rarity === 'tr') return 'tr'
+                                if (/\bmanga\b/.test(name) || rarity === 'manga') return 'manga'
+                                if (/parallel|alt[\s_]art|alternate[\s_]art/.test(name) || rarity === 'parallel' || rarity === 'p') return 'parallel'
+                                return null
+                              }
                               const filtered = cardResults.filter(card => {
                                 if (filterColor.length > 0 && !filterColor.includes(card.card_color)) return false
                                 if (filterType && card.card_type !== filterType) return false
@@ -632,20 +653,26 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                 if (filterSource && filterSource !== 'ST' && filterSource !== 'Promos') {
                                   if (!id.toUpperCase().startsWith(filterSource)) return false
                                 }
+                                if (filterAltArt && getAltArtType(card) !== filterAltArt) return false
                                 return true
                               })
                               if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
+                              const ALT_BADGES = {
+                                sp:       { label: 'SP',       color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)' },
+                                tr:       { label: 'TR',       color: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.3)' },
+                                manga:    { label: 'MANGA',    color: '#38bdf8', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.3)' },
+                                parallel: { label: 'PARALLEL', color: '#e879f9', bg: 'rgba(232,121,249,0.12)',border: 'rgba(232,121,249,0.3)' },
+                              }
                               return filtered.map(card => {
                                 const cid = card.card_set_id ?? ''
                                 const isPromo = /^P-/i.test(cid)
                                 const isST = /^ST/i.test(cid)
-                                const isAltArt = /\((SP|SEC|L|ALT|Manga|Premium|PARALLEL)\)/i.test(card.card_name ?? '')
+                                const altType = getAltArtType(card)
                                 const badge = isPromo
                                   ? { label: 'PROMO', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.3)' }
                                   : isST
                                   ? { label: 'ST', color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' }
-                                  : isAltArt
-                                  ? { label: 'ALT', color: '#34d399', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.3)' }
+                                  : altType ? ALT_BADGES[altType]
                                   : null
                                 return (
                                   <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
