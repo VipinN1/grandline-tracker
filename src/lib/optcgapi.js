@@ -53,7 +53,10 @@ async function getSTCards() {
     const data = await res.json()
 
     const cardCache = getCache()
-    data.forEach(card => { if (card.card_set_id) cardCache[card.card_set_id] = card })
+    data.forEach(card => {
+      if (card.card_image_id) cardCache[card.card_image_id] = card
+      if (card.card_set_id && !cardCache[card.card_set_id]) cardCache[card.card_set_id] = card
+    })
     setCache(cardCache)
     writeTTLCache(ST_CACHE_KEY, data)
     return data
@@ -70,7 +73,10 @@ export async function getPromoCards() {
     const data = await res.json()
 
     const cardCache = getCache()
-    data.forEach(card => { if (card.card_set_id) cardCache[card.card_set_id] = card })
+    data.forEach(card => {
+      if (card.card_image_id) cardCache[card.card_image_id] = card
+      if (card.card_set_id && !cardCache[card.card_set_id]) cardCache[card.card_set_id] = card
+    })
     setCache(cardCache)
     writeTTLCache(PROMO_CACHE_KEY, data)
     return data
@@ -89,7 +95,10 @@ async function getSetCards(setId) {
     const data = await res.json()
 
     const cardCache = getCache()
-    data.forEach(card => { if (card.card_set_id) cardCache[card.card_set_id] = card })
+    data.forEach(card => {
+      if (card.card_image_id) cardCache[card.card_image_id] = card
+      if (card.card_set_id && !cardCache[card.card_set_id]) cardCache[card.card_set_id] = card
+    })
     setCache(cardCache)
     writeTTLCache(cacheKey, data)
     return data
@@ -144,8 +153,9 @@ export async function enrichCards(cards) {
 
           const res = await fetch(`${BASE}/sets/card/${id}/`)
           if (res.ok) {
-            const data = await res.json()
-            if (data[0]) cache[id] = data[0]
+            const data = await res.json() ?? []
+            data.forEach(card => { if (card.card_image_id) cache[card.card_image_id] = card })
+            if (data[0] && !cache[id]) cache[id] = data[0]
           }
         } catch {}
       })
@@ -171,8 +181,9 @@ export async function searchLeaders(query) {
 
   function addResult(card) {
     if (card.card_type !== 'Leader') return
-    if (!seen.has(card.card_set_id)) {
-      seen.add(card.card_set_id)
+    const key = card.card_image_id ?? card.card_set_id
+    if (key && !seen.has(key)) {
+      seen.add(key)
       results.push(card)
     }
   }
@@ -238,8 +249,9 @@ export async function searchCards(query) {
   const seen = new Set()
 
   function addResult(card) {
-    if (card && card.card_set_id && !seen.has(card.card_set_id)) {
-      seen.add(card.card_set_id)
+    const key = card?.card_image_id ?? card?.card_set_id
+    if (card && key && !seen.has(key)) {
+      seen.add(key)
       results.push(card)
     }
   }
@@ -258,31 +270,19 @@ export async function searchCards(query) {
     const cardCache = getCache()
     if (cardCache[normalizedId]) addResult(cardCache[normalizedId])
 
-    // 2. Try exact API lookup
-    if (!seen.has(normalizedId)) {
-      try {
-        const res = await fetch(`${BASE}/sets/card/${normalizedId}/`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data?.[0]) addResult(data[0])
-        }
-      } catch {}
-    }
+    // 2. Try exact API lookup — endpoint returns all variants sharing this card_set_id
+    try {
+      const res = await fetch(`${BASE}/sets/card/${normalizedId}/`)
+      if (res.ok) addResults(await res.json())
+    } catch {}
 
     // 3. Fetch entire set — guarantees we find the card even if exact lookup fails.
     //    Also discovers alt art variants with the same number (e.g. OP14-120 SP).
     if (setPrefix && !setPrefix.startsWith('ST') && setPrefix !== 'P') {
       try {
         const setCards = await getSetCards(setPrefix)
-        const exactInSet = setCards.find(c => c.card_set_id?.toUpperCase() === normalizedId)
-        if (exactInSet) addResult(exactInSet)
-        const baseNum = normalizedId.split('-')[1]
-        if (baseNum) {
-          addResults(setCards.filter(c => {
-            const cNum = c.card_set_id?.split('-')[1]
-            return cNum === baseNum && c.card_set_id?.toUpperCase() !== normalizedId
-          }))
-        }
+        // All variants (base, SP, Parallel, Manga, TR, etc.) share the same card_set_id
+        addResults(setCards.filter(c => c.card_set_id?.toUpperCase() === normalizedId))
       } catch {}
     }
 
@@ -339,6 +339,12 @@ export async function searchCards(query) {
   return results.slice(0, 30)
 }
 
-export function getCardImageUrl(cardId) {
-  return `https://optcgapi.com/media/static/Card_Images/${cardId}.jpg`
+export function getCardImageUrl(cardOrId) {
+  if (!cardOrId) return ''
+  if (typeof cardOrId === 'object') {
+    if (cardOrId.card_image) return cardOrId.card_image
+    const id = cardOrId.card_image_id ?? cardOrId.card_set_id ?? ''
+    return `https://optcgapi.com/media/static/Card_Images/${id}.jpg`
+  }
+  return `https://optcgapi.com/media/static/Card_Images/${cardOrId}.jpg`
 }

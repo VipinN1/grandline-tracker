@@ -564,7 +564,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                     <label style={LABEL}>Card Name or ID *</label>
                     {selectedCard ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '10px 12px' }}>
-                        <img src={getCardImageUrl(selectedCard.card_set_id)} alt={selectedCard.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                        <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
                           <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#7c6fa0', marginTop: 2 }}>
@@ -678,8 +678,8 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                   : altType ? ALT_BADGES[altType]
                                   : null
                                 return (
-                                  <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                    <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                                  <div key={card.card_image_id ?? card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
                                         <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</span>
@@ -705,7 +705,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                   </div>
                   {selectedCard && (
                     <div style={{ textAlign: 'center', marginTop: 4 }}>
-                      <img src={getCardImageUrl(selectedCard.card_set_id)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
+                      <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
                     </div>
                   )}
                   {!selectedCard && (
@@ -722,7 +722,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
             <>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 8, padding: '10px 12px' }}>
                 <img
-                  src={getCardImageUrl(manualMode ? manualCardId.trim() : selectedCard?.card_set_id ?? '')}
+                  src={getCardImageUrl(manualMode ? manualCardId.trim() : (selectedCard ?? ''))}
                   alt={manualMode ? manualName : selectedCard?.card_name}
                   style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, flexShrink: 0 }}
                   onError={e => { e.target.style.opacity = '0.2' }}
