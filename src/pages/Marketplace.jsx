@@ -124,10 +124,16 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
       <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
-            src={listing.photo_url ?? getCardImageUrl(listing.card_id)}
+            src={listing.photo_url ? listing.photo_url : `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
             alt={listing.card_name}
             style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
-            onError={e => { e.target.src = getCardImageUrl(listing.card_id) }}
+            onError={e => {
+              if (listing.photo_url && e.target.src === listing.photo_url) {
+                e.target.src = `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
+              } else {
+                e.target.style.display = 'none'
+              }
+            }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
@@ -213,15 +219,31 @@ function ListingDetailModal({ listing, currentUser, onClose, isMobile, onMarkSol
 
           <div style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', gap: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-              {listing.photo_url && (
-                <img src={listing.photo_url} alt={listing.card_name} style={{ width: isMobile ? '100%' : 180, maxWidth: 200, maxHeight: 260, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', background: '#1a1025', flexShrink: 0 }} />
-              )}
-              <img
-                src={getCardImageUrl(listing.card_id)}
-                alt={listing.card_name}
-                style={{ width: isMobile ? 110 : 140, height: isMobile ? 154 : 196, objectFit: 'cover', objectPosition: 'top', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}
-                onError={e => { e.target.style.opacity = '0.2' }}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+                <img
+                  src={listing.photo_url ? listing.photo_url : `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
+                  alt={listing.card_name}
+                  style={{ width: isMobile ? '100%' : 180, maxWidth: 200, maxHeight: 260, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', background: '#1a1025' }}
+                  onError={e => {
+                    if (listing.photo_url && e.target.src === listing.photo_url) {
+                      e.target.src = `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
+                    } else {
+                      e.target.style.display = 'none'
+                    }
+                  }}
+                />
+                {listing.photo_url && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', marginBottom: 4 }}>Official Art</div>
+                    <img
+                      src={`https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
+                      alt={`${listing.card_name} official art`}
+                      style={{ width: 60, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+                      onError={e => { e.target.style.display = 'none' }}
+                    />
+                  </div>
+                )}
+              </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 28, fontWeight: 700, color: '#f0f2f5', marginBottom: 8, fontFamily: "'Space Mono', monospace" }}>${Number(listing.price).toFixed(2)}</div>
                 <div style={{ marginBottom: 10 }}><ConditionBadge condition={listing.condition} /></div>
@@ -293,7 +315,7 @@ function ListingCard({ listing, currentUser, onDetail, onMessage }) {
   const [hovered, setHovered] = useState(false)
   const isOwner = listing.user_id === currentUser?.id
   const seller = listing.profiles
-  const imgSrc = listing.photo_url ?? getCardImageUrl(listing.card_id)
+  const imgSrc = listing.photo_url ? listing.photo_url : `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
   const cardColor = COLORS[listing.card_color]
 
   return (
@@ -308,7 +330,13 @@ function ListingCard({ listing, currentUser, onDetail, onMessage }) {
           src={imgSrc}
           alt={listing.card_name}
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
-          onError={e => { if (listing.photo_url) e.target.src = getCardImageUrl(listing.card_id) }}
+          onError={e => {
+            if (listing.photo_url && e.target.src === listing.photo_url) {
+              e.target.src = `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
+            } else {
+              e.target.style.display = 'none'
+            }
+          }}
         />
         {cardColor && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: cardColor }} />}
         {(listing.quantity ?? 1) > 1 && (
@@ -943,10 +971,16 @@ function MyListingsTab({ session, profile, isMobile }) {
           {listings.map(listing => (
             <div key={listing.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               <img
-                src={listing.photo_url ?? getCardImageUrl(listing.card_id)}
+                src={listing.photo_url ? listing.photo_url : `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
                 alt={listing.card_name}
                 style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(255,255,255,0.06)' }}
-                onError={e => { if (listing.photo_url) e.target.src = getCardImageUrl(listing.card_id) }}
+                onError={e => {
+                  if (listing.photo_url && e.target.src === listing.photo_url) {
+                    e.target.src = `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
+                  } else {
+                    e.target.style.display = 'none'
+                  }
+                }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
