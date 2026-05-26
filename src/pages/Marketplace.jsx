@@ -645,7 +645,10 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                 return null
                               }
                               const filtered = cardResults.filter(card => {
-                                if (filterColor.length > 0 && !filterColor.includes(card.card_color)) return false
+                                if (filterColor.length > 0) {
+                                  const cardColors = (card.card_color ?? '').split(/[\s/]+/).map(c => c.trim()).filter(Boolean)
+                                  if (!filterColor.every(fc => cardColors.some(cc => cc.toLowerCase() === fc.toLowerCase()))) return false
+                                }
                                 if (filterType && card.card_type !== filterType) return false
                                 const id = card.card_set_id ?? ''
                                 if (filterSource === 'ST' && !/^ST/i.test(id)) return false
