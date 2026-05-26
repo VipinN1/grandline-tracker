@@ -370,6 +370,12 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   const [photoPreview, setPhotoPreview] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [manualMode, setManualMode] = useState(false)
+  const [manualName, setManualName] = useState('')
+  const [manualCardId, setManualCardId] = useState('')
+  const [manualColor, setManualColor] = useState('')
+  const [manualType, setManualType] = useState('')
+  const [manualSetName, setManualSetName] = useState('')
   const debounceRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -407,7 +413,8 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   }
 
   async function handleSubmit() {
-    if (!selectedCard || !price || !condition) { setError('Please fill in all required fields.'); return }
+    if (manualMode ? !manualName.trim() : !selectedCard) { setError('Please select or enter a card.'); return }
+    if (!price || !condition) { setError('Please fill in all required fields.'); return }
     if (parseFloat(price) <= 0) { setError('Price must be greater than 0.'); return }
     setSaving(true)
     setError('')
@@ -423,13 +430,18 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
         }
       } catch {}
     }
+    const cardId = manualMode ? (manualCardId.trim() || `CUSTOM-${Date.now()}`) : selectedCard.card_set_id
+    const cardName = manualMode ? manualName.trim() : selectedCard.card_name
+    const cardColor = manualMode ? (manualColor || null) : (selectedCard.card_color ?? null)
+    const cardType = manualMode ? (manualType || null) : (selectedCard.card_type ?? null)
+    const cardSetName = manualMode ? (manualSetName.trim() || null) : (selectedCard.set_name ?? null)
     const { error: insertErr } = await supabase.from('marketplace_listings').insert({
       user_id: session.user.id,
-      card_id: selectedCard.card_set_id,
-      card_name: selectedCard.card_name,
-      card_color: selectedCard.card_color ?? null,
-      card_type: selectedCard.card_type ?? null,
-      set_name: selectedCard.set_name ?? null,
+      card_id: cardId,
+      card_name: cardName,
+      card_color: cardColor,
+      card_type: cardType,
+      set_name: cardSetName,
       price: parseFloat(price),
       quantity: parseInt(quantity) || 1,
       condition,
@@ -444,7 +456,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
     onClose()
   }
 
-  const canAdvance = !!selectedCard
+  const canAdvance = !!selectedCard || (manualMode && manualName.trim() !== '')
   const canSubmit = !saving
 
   return (
@@ -461,61 +473,139 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
         <div style={{ overflowY: 'auto', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {step === 1 ? (
             <>
-              <div style={{ fontSize: 13, color: '#7c6fa0' }}>Search for the card you want to sell.</div>
-              <div ref={dropdownRef} style={{ position: 'relative' }}>
-                <label style={LABEL}>Card Name or ID *</label>
-                {selectedCard ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '10px 12px' }}>
-                    <img src={getCardImageUrl(selectedCard.card_set_id)} alt={selectedCard.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
-                      <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#7c6fa0', marginTop: 2 }}>
-                        {selectedCard.card_color}{selectedCard.card_color && selectedCard.card_type ? ' · ' : ''}{selectedCard.card_type}{selectedCard.card_type ? ' · ' : ''}<span style={{ fontFamily: 'monospace' }}>{selectedCard.card_set_id}</span>
+              {manualMode ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: 13, color: '#7c6fa0' }}>Enter card details manually.</div>
+                    <button type="button" onClick={() => setManualMode(false)} style={{ fontSize: 12, color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                      ← Search instead
+                    </button>
+                  </div>
+                  <div style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      <label style={LABEL}>Card Name *</label>
+                      <input type="text" placeholder="e.g. Monkey D. Luffy" value={manualName} onChange={e => setManualName(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+                    </div>
+                    <div>
+                      <label style={{ ...LABEL, textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>Card ID <span style={{ fontWeight: 400, color: '#3d2d6e' }}>(optional — used for art preview)</span></label>
+                      <input type="text" placeholder="e.g. OP01-001" value={manualCardId} onChange={e => setManualCardId(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label style={LABEL}>Color</label>
+                        <select value={manualColor} onChange={e => setManualColor(e.target.value)} style={{ ...INPUT, width: '100%', cursor: 'pointer' }}>
+                          <option value="">Select...</option>
+                          {CARD_COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                          <option value="Other/Multi">Other/Multi</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={LABEL}>Type</label>
+                        <select value={manualType} onChange={e => setManualType(e.target.value)} style={{ ...INPUT, width: '100%', cursor: 'pointer' }}>
+                          <option value="">Select...</option>
+                          <option value="Leader">Leader</option>
+                          <option value="Character">Character</option>
+                          <option value="Event">Event</option>
+                          <option value="Stage">Stage</option>
+                          <option value="Don!!">Don!!</option>
+                        </select>
                       </div>
                     </div>
-                    <button onClick={() => { setSelectedCard(null); setCardQuery('') }} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
+                    <div>
+                      <label style={{ ...LABEL, textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>Set Name <span style={{ fontWeight: 400, color: '#3d2d6e' }}>(optional)</span></label>
+                      <input type="text" placeholder="e.g. Romance Dawn" value={manualSetName} onChange={e => setManualSetName(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%' }} />
-                    {dropdownOpen && cardQuery.length >= 2 && (
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.98)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 280, overflowY: 'auto' }}>
-                        {cardSearching ? <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
-                          : cardResults.length === 0 ? <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
-                          : cardResults.map(card => (
-                            <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                              <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
-                              <div>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                                <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>
-                                  {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
-                                  {card.card_color && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
-                                  {card.card_type && <span>{card.card_type}</span>}
-                                  {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
-                                  <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                  {manualCardId.trim() && (
+                    <div style={{ textAlign: 'center', marginTop: 4 }}>
+                      <img src={getCardImageUrl(manualCardId.trim())} alt="Card preview" style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.display = 'none' }} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 13, color: '#7c6fa0' }}>Search for the card you want to sell.</div>
+                  <div ref={dropdownRef} style={{ position: 'relative' }}>
+                    <label style={LABEL}>Card Name or ID *</label>
+                    {selectedCard ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '10px 12px' }}>
+                        <img src={getCardImageUrl(selectedCard.card_set_id)} alt={selectedCard.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
+                          <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#7c6fa0', marginTop: 2 }}>
+                            {selectedCard.card_color}{selectedCard.card_color && selectedCard.card_type ? ' · ' : ''}{selectedCard.card_type}{selectedCard.card_type ? ' · ' : ''}<span style={{ fontFamily: 'monospace' }}>{selectedCard.card_set_id}</span>
+                          </div>
+                        </div>
+                        <button onClick={() => { setSelectedCard(null); setCardQuery('') }} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
                       </div>
+                    ) : (
+                      <>
+                        <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%' }} />
+                        {dropdownOpen && cardQuery.length >= 2 && (
+                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.98)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', maxHeight: 280, overflowY: 'auto' }}>
+                            {cardSearching ? <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
+                              : cardResults.length === 0 ? <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
+                              : cardResults.map(card => (
+                                <div key={card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                  <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
+                                    <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>
+                                      {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
+                                      {card.card_color && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                                      {card.card_type && <span>{card.card_type}</span>}
+                                      {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                                      <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-              {selectedCard && (
-                <div style={{ textAlign: 'center', marginTop: 4 }}>
-                  <img src={getCardImageUrl(selectedCard.card_set_id)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
-                </div>
+                  </div>
+                  {selectedCard && (
+                    <div style={{ textAlign: 'center', marginTop: 4 }}>
+                      <img src={getCardImageUrl(selectedCard.card_set_id)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
+                    </div>
+                  )}
+                  {!selectedCard && (
+                    <div style={{ textAlign: 'right', marginTop: 4 }}>
+                      <button type="button" onClick={() => setManualMode(true)} style={{ fontSize: 12, color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                        Can't find your card? Enter manually →
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </>
           ) : (
             <>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 8, padding: '10px 12px' }}>
-                <img src={getCardImageUrl(selectedCard.card_set_id)} alt={selectedCard.card_name} style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                <img
+                  src={getCardImageUrl(manualMode ? manualCardId.trim() : selectedCard?.card_set_id ?? '')}
+                  alt={manualMode ? manualName : selectedCard?.card_name}
+                  style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, flexShrink: 0 }}
+                  onError={e => { e.target.style.opacity = '0.2' }}
+                />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
-                  <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#7c6fa0', marginTop: 1 }}>
-                    {selectedCard.card_color} · <span style={{ fontFamily: 'monospace' }}>{selectedCard.card_set_id}</span>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>
+                    {manualMode ? manualName : selectedCard?.card_name}
+                  </div>
+                  <div style={{ fontSize: 11, color: COLORS[manualMode ? manualColor : selectedCard?.card_color] ?? '#7c6fa0', marginTop: 1 }}>
+                    {manualMode ? (
+                      <>
+                        {manualColor && <span>{manualColor}</span>}
+                        {manualColor && (manualCardId || manualType) && <span> · </span>}
+                        {manualType && <span>{manualType}</span>}
+                        {manualType && manualCardId && <span> · </span>}
+                        {manualCardId && <span style={{ fontFamily: 'monospace' }}>{manualCardId}</span>}
+                        {!manualColor && !manualType && !manualCardId && <span style={{ color: '#3d2d6e' }}>Manual entry</span>}
+                      </>
+                    ) : (
+                      <>{selectedCard?.card_color} · <span style={{ fontFamily: 'monospace' }}>{selectedCard?.card_set_id}</span></>
+                    )}
                   </div>
                 </div>
               </div>
@@ -988,7 +1078,7 @@ export default function Marketplace({ session }) {
       {activeTab === 'browse' ? (
         <>
           {/* Filter bar */}
-          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(12,8,20,0.93)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(139,92,246,0.1)', marginBottom: 20, padding: '12px 0 14px' }}>
+          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(12,8,20,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(139,92,246,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
             {/* Row 1: Search */}
             <input
               type="text"
