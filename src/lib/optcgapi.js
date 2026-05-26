@@ -237,10 +237,7 @@ export async function searchLeaders(query) {
 
     try {
       const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(q)}&card_type=Leader`)
-      if (nameRes.ok) {
-        const nameData = await nameRes.json()
-        ;(nameData ?? []).forEach(addResult)
-      }
+      if (nameRes.ok) (await nameRes.json() ?? []).forEach(addResult)
     } catch {}
 
     stCards
@@ -250,6 +247,15 @@ export async function searchLeaders(query) {
           card.card_set_id?.toLowerCase().includes(ql) ||
           card.set_name?.toLowerCase().includes(ql)
         )
+      )
+      .forEach(addResult)
+
+    // Scan main card cache for any previously fetched leaders matching by name
+    const mainCache = getCache()
+    Object.values(mainCache)
+      .filter(card =>
+        typeof card === 'object' &&
+        card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedQ)
       )
       .forEach(addResult)
   }
@@ -350,9 +356,18 @@ export async function searchCards(query) {
       card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedQ) ||
       card.card_set_id?.toLowerCase().includes(q.toLowerCase())
     ))
+
+    // 4. Scan main card cache for any previously fetched cards matching by name
+    const mainCache = getCache()
+    addResults(
+      Object.values(mainCache).filter(card =>
+        typeof card === 'object' && card.card_name &&
+        card.card_name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedQ)
+      )
+    )
   }
 
-  return results.slice(0, 30)
+  return results.slice(0, 60)
 }
 
 export function getCardImageUrl(cardOrId) {
