@@ -66,23 +66,30 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const bottomRef = useRef(null)
-  const channelRef = useRef(null)
   const receiverId = otherUser?.id ?? listing?.user_id
 
   useEffect(() => {
     loadMessages()
-    channelRef.current = supabase
-      .channel(`mkt_msg_${listing.id}_${currentUser.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'marketplace_messages', filter: `listing_id=eq.${listing.id}` }, payload => {
-        const msg = payload.new
-        if (msg.sender_id === currentUser.id || msg.receiver_id === currentUser.id) {
-          setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg])
-          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    const channel = supabase
+      .channel(`listing-messages-${listing.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'marketplace_messages', filter: `listing_id=eq.${listing.id}` },
+        payload => {
+          setMessages(prev => {
+            const exists = prev.find(m => m.id === payload.new.id)
+            if (exists) return prev
+            return [...prev, payload.new]
+          })
         }
-      })
+      )
       .subscribe()
-    return () => { channelRef.current?.unsubscribe() }
+    return () => { supabase.removeChannel(channel) }
   }, [listing.id])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   async function loadMessages() {
     setLoading(true)
@@ -96,7 +103,6 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
     setLoading(false)
     const unreadIds = (data ?? []).filter(m => m.receiver_id === currentUser.id && !m.read).map(m => m.id)
     if (unreadIds.length > 0) await supabase.from('marketplace_messages').update({ read: true }).in('id', unreadIds)
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
   }
 
   async function sendMessage() {
@@ -108,7 +114,6 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
       .select().single()
     if (data) {
       setMessages(prev => prev.find(m => m.id === data.id) ? prev : [...prev, data])
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     }
     setText('')
     setSending(false)
@@ -298,7 +303,7 @@ function ListingCard({ listing, currentUser, onDetail, onMessage }) {
       onMouseLeave={() => setHovered(false)}
       style={{ background: 'rgba(139,92,246,0.05)', border: `1px solid ${hovered ? 'rgba(139,92,246,0.3)' : 'rgba(139,92,246,0.1)'}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', transform: hovered ? 'translateY(-2px)' : 'none', transition: 'all 0.15s', display: 'flex', flexDirection: 'column' }}
     >
-      <div style={{ position: 'relative', background: '#1a1025', aspectRatio: '3/4', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', background: '#1a1025', height: 180, overflow: 'hidden' }}>
         <img
           src={imgSrc}
           alt={listing.card_name}
@@ -306,33 +311,38 @@ function ListingCard({ listing, currentUser, onDetail, onMessage }) {
           onError={e => { if (listing.photo_url) e.target.src = getCardImageUrl(listing.card_id) }}
         />
         {cardColor && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: cardColor }} />}
+        {(listing.quantity ?? 1) > 1 && (
+          <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#a78bfa' }}>
+            x{listing.quantity}
+          </div>
+        )}
       </div>
 
-      <div style={{ padding: '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
+      <div style={{ padding: '8px 10px', flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
         <div style={{ fontSize: 11, color: '#3d2d6e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {listing.set_name && <span>{listing.set_name} · </span>}
           <span style={{ fontFamily: 'monospace' }}>{listing.card_id}</span>
         </div>
         <div style={{ marginTop: 2 }}><ConditionBadge condition={listing.condition} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5', fontFamily: "'Space Mono', monospace", marginTop: 4 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', fontFamily: "'Space Mono', monospace", marginTop: 3 }}>
           ${Number(listing.price).toFixed(2)}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 6, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <Avatar profile={seller} size={20} radius={5} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <Avatar profile={seller} size={18} radius={5} />
           <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {seller?.username ?? 'Unknown'}
             {listing.city && <span style={{ color: '#3d2d6e' }}> · {listing.city}</span>}
           </div>
         </div>
         {isOwner ? (
-          <div style={{ marginTop: 6, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ marginTop: 5, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Your listing
           </div>
         ) : (
           <button
             onClick={e => { e.stopPropagation(); onMessage(listing) }}
-            style={{ marginTop: 6, padding: '6px 10px', borderRadius: 7, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
+            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
           >
             Message Seller
           </button>
@@ -352,6 +362,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
   const [selectedCard, setSelectedCard] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [price, setPrice] = useState('')
+  const [quantity, setQuantity] = useState('1')
   const [condition, setCondition] = useState('')
   const [description, setDescription] = useState('')
   const [city, setCity] = useState('')
@@ -420,6 +431,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
       card_type: selectedCard.card_type ?? null,
       set_name: selectedCard.set_name ?? null,
       price: parseFloat(price),
+      quantity: parseInt(quantity) || 1,
       condition,
       description: description.trim() || null,
       city: city.trim() || null,
@@ -508,9 +520,15 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                 </div>
               </div>
 
-              <div>
-                <label style={LABEL}>Price (USD) *</label>
-                <input type="number" min="0.01" step="0.01" placeholder="0.00" value={price} onChange={e => setPrice(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={LABEL}>Price (USD) *</label>
+                  <input type="number" min="0.01" step="0.01" placeholder="0.00" value={price} onChange={e => setPrice(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+                </div>
+                <div>
+                  <label style={LABEL}>Quantity</label>
+                  <input type="number" min="1" max="99" step="1" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+                </div>
               </div>
               <div>
                 <label style={LABEL}>Condition *</label>
@@ -566,6 +584,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
 
 function EditListingModal({ listing, session, onClose, onSuccess, isMobile }) {
   const [price, setPrice] = useState(String(listing.price))
+  const [quantity, setQuantity] = useState(String(listing.quantity ?? 1))
   const [condition, setCondition] = useState(listing.condition)
   const [description, setDescription] = useState(listing.description ?? '')
   const [city, setCity] = useState(listing.city ?? '')
@@ -602,7 +621,7 @@ function EditListingModal({ listing, session, onClose, onSuccess, isMobile }) {
         }
       } catch {}
     }
-    const { error: updateErr } = await supabase.from('marketplace_listings').update({ price: parseFloat(price), condition, description: description.trim() || null, city: city.trim() || null, photo_url, updated_at: new Date().toISOString() }).eq('id', listing.id)
+    const { error: updateErr } = await supabase.from('marketplace_listings').update({ price: parseFloat(price), quantity: parseInt(quantity) || 1, condition, description: description.trim() || null, city: city.trim() || null, photo_url, updated_at: new Date().toISOString() }).eq('id', listing.id)
     setSaving(false)
     if (updateErr) { setError('Failed to update listing.'); return }
     onSuccess()
@@ -624,9 +643,15 @@ function EditListingModal({ listing, session, onClose, onSuccess, isMobile }) {
               <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 1 }}>Card selection locked</div>
             </div>
           </div>
-          <div>
-            <label style={LABEL}>Price (USD) *</label>
-            <input type="number" min="0.01" step="0.01" value={price} onChange={e => setPrice(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={LABEL}>Price (USD) *</label>
+              <input type="number" min="0.01" step="0.01" value={price} onChange={e => setPrice(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+            </div>
+            <div>
+              <label style={LABEL}>Quantity</label>
+              <input type="number" min="1" max="99" step="1" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+            </div>
           </div>
           <div>
             <label style={LABEL}>Condition *</label>
@@ -834,7 +859,10 @@ function MyListingsTab({ session, profile, isMobile }) {
                 onError={e => { if (listing.photo_url) e.target.src = getCardImageUrl(listing.card_id) }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {listing.card_name}
+                  {(listing.quantity ?? 1) > 1 && <span style={{ fontSize: 11, fontWeight: 400, color: '#7c6fa0', marginLeft: 6 }}>x{listing.quantity}</span>}
+                </div>
                 <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <ConditionBadge condition={listing.condition} />
                   <span style={{ color: '#3d2d6e' }}>·</span>
@@ -886,7 +914,7 @@ function MyListingsTab({ session, profile, isMobile }) {
 // ─── Marketplace (main page) ──────────────────────────────────────────────────
 
 export default function Marketplace({ session }) {
-  const { isMobile } = useWindowSize()
+  const { isMobile, isTablet } = useWindowSize()
   const [activeTab, setActiveTab] = useState('browse')
   const [allListings, setAllListings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -961,22 +989,27 @@ export default function Marketplace({ session }) {
         <>
           {/* Filter bar */}
           <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(12,8,20,0.93)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(139,92,246,0.1)', marginBottom: 20, padding: '12px 0 14px' }}>
+            {/* Row 1: Search */}
+            <input
+              type="text"
+              placeholder="Search cards by name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ ...INPUT, width: '100%', padding: '10px 14px', marginBottom: 12 }}
+            />
+            {/* Row 2: Filters */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-              <input type="text" placeholder="Search cards..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...INPUT, width: isMobile ? '100%' : 180 }} />
-              <select value={colorFilter} onChange={e => setColorFilter(e.target.value)} style={{ ...INPUT, width: isMobile ? 'calc(50% - 4px)' : 130, cursor: 'pointer' }}>
+              <select value={colorFilter} onChange={e => setColorFilter(e.target.value)} style={{ ...INPUT, minWidth: 130, cursor: 'pointer' }}>
                 <option value="">All Colors</option>
                 {CARD_COLORS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <select value={conditionFilter} onChange={e => setConditionFilter(e.target.value)} style={{ ...INPUT, width: isMobile ? 'calc(50% - 4px)' : 160, cursor: 'pointer' }}>
+              <select value={conditionFilter} onChange={e => setConditionFilter(e.target.value)} style={{ ...INPUT, minWidth: 160, cursor: 'pointer' }}>
                 <option value="">All Conditions</option>
                 {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                <input type="number" min="0" placeholder="Min $" value={priceMin} onChange={e => setPriceMin(e.target.value)} style={{ ...INPUT, width: 68, padding: '9px 8px' }} />
-                <span style={{ color: '#3d2d6e', fontSize: 12, flexShrink: 0 }}>—</span>
-                <input type="number" min="0" placeholder="Max $" value={priceMax} onChange={e => setPriceMax(e.target.value)} style={{ ...INPUT, width: 68, padding: '9px 8px' }} />
-              </div>
-              <input type="text" placeholder="City..." value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{ ...INPUT, width: isMobile ? '100%' : 110 }} />
+              <input type="number" min="0" placeholder="Min $" value={priceMin} onChange={e => setPriceMin(e.target.value)} style={{ ...INPUT, width: 100 }} />
+              <input type="number" min="0" placeholder="Max $" value={priceMax} onChange={e => setPriceMax(e.target.value)} style={{ ...INPUT, width: 100 }} />
+              <input type="text" placeholder="City..." value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{ ...INPUT, width: 130 }} />
               {filtersActive && (
                 <button onClick={clearFilters} style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>
                   Clear ✕
@@ -1006,7 +1039,7 @@ export default function Marketplace({ session }) {
             </div>
           ) : (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 1 : 3}, 1fr)`, gap: isMobile ? 12 : 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 2 : isTablet ? 3 : 4}, 1fr)`, gap: isMobile ? 10 : 14 }}>
                 {visibleListings.map(listing => (
                   <ListingCard key={listing.id} listing={listing} currentUser={session?.user} onDetail={setDetailListing} onMessage={setMessageListing} />
                 ))}
