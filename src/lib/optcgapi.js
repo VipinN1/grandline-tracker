@@ -12,6 +12,10 @@ function setCache(cache) {
   catch {}
 }
 
+function looksLikeCardId(query) {
+  return /^[a-zA-Z0-9]+-[0-9]+/i.test(query.trim())
+}
+
 // Fetch and cache all ST cards once
 async function getSTCards() {
   try {
@@ -39,21 +43,27 @@ export async function getCard(cardId) {
   const cache = getCache()
   if (cache[cardId]) return cache[cardId]
 
-  // Try sets endpoint first
+  // Check ST cache before hitting the API
+  const stCards = await getSTCards()
+  const stMatch = stCards.find(c => c.card_set_id === cardId)
+  if (stMatch) {
+    cache[cardId] = stMatch
+    setCache(cache)
+    return stMatch
+  }
+
   let res = await fetch(`${BASE}/sets/card/${cardId}/`)
   if (!res.ok) {
-    // Fall back to checking ST cache
-    const stCards = await getSTCards()
-    const found = stCards.find(c => c.card_set_id === cardId)
-    if (found) return found
-    throw new Error(`Card not found: ${cardId}`)
+    res = await fetch(`${BASE}/sets/card/${cardId.toUpperCase()}/`)
   }
+  if (!res.ok) throw new Error(`Card not found: ${cardId}`)
 
   const data = await res.json()
   const card = data[0]
-  const cardCache = getCache()
-  cardCache[cardId] = card
-  setCache(cardCache)
+  if (card) {
+    cache[cardId] = card
+    setCache(cache)
+  }
   return card
 }
 
@@ -89,58 +99,156 @@ export async function enrichCards(cards) {
 }
 
 export async function searchLeaders(query) {
-  const q = query.toLowerCase()
+  if (!query || query.trim().length < 2) return []
 
-  // Run both in parallel — ST cache fetch and sets API search
-  const [setsRes, stCards] = await Promise.all([
-    fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}&card_type=Leader`),
-    getSTCards(),
-  ])
-
-  const setsData = setsRes.ok ? await setsRes.json() : []
-
-  // Search ST leaders locally — check both name AND card_set_id
-  const stLeaders = stCards.filter(card =>
-    card.card_type === 'Leader' && (
-      card.card_name?.toLowerCase().includes(q) ||
-      card.card_set_id?.toLowerCase().includes(q) ||
-      card.set_name?.toLowerCase().includes(q)
-    )
-  )
-
-  // Merge and deduplicate by card_set_id
-  const merged = [...(setsData ?? []), ...stLeaders]
+  const q = query.trim()
+  const results = []
   const seen = new Set()
-  return merged.filter(card => {
-    const key = card.card_set_id
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
+
+  function addResult(card) {
+    if (card.card_type !== 'Leader') return
+    if (!seen.has(card.card_set_id)) {
+      seen.add(card.card_set_id)
+      results.push(card)
+    }
+  }
+
+  const stCards = await getSTCards()
+
+  if (looksLikeCardId(q)) {
+    const normalizedId = q.toUpperCase()
+    const setPrefix = normalizedId.split('-')[0]
+
+    try {
+      const exactRes = await fetch(`${BASE}/sets/card/${normalizedId}/`)
+      if (exactRes.ok) {
+        const exactData = await exactRes.json()
+        if (exactData?.[0]) {
+          addResult(exactData[0])
+
+          const cardName = exactData[0].card_name
+          const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(cardName)}&card_type=Leader`)
+          if (nameRes.ok) {
+            const nameData = await nameRes.json()
+            const sameSet = (nameData ?? []).filter(c => c.card_set_id.startsWith(setPrefix))
+            const otherSets = (nameData ?? []).filter(c => !c.card_set_id.startsWith(setPrefix))
+            sameSet.forEach(addResult)
+            otherSets.forEach(addResult)
+          }
+        }
+      }
+    } catch {}
+
+    stCards
+      .filter(c =>
+        c.card_set_id?.toUpperCase() === normalizedId ||
+        c.card_set_id?.toUpperCase().startsWith(setPrefix)
+      )
+      .forEach(addResult)
+
+  } else {
+    const ql = q.toLowerCase()
+    const normalizedQ = ql.replace(/[^a-z0-9]/g, '')
+
+    try {
+      const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(q)}&card_type=Leader`)
+      if (nameRes.ok) {
+        const nameData = await nameRes.json()
+        ;(nameData ?? []).forEach(addResult)
+      }
+    } catch {}
+
+    stCards
+      .filter(card =>
+        card.card_type === 'Leader' && (
+          card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedQ) ||
+          card.card_set_id?.toLowerCase().includes(ql) ||
+          card.set_name?.toLowerCase().includes(ql)
+        )
+      )
+      .forEach(addResult)
+  }
+
+  return results
 }
 
 export async function searchCards(query) {
-  const q = query.toLowerCase()
+  if (!query || query.trim().length < 2) return []
 
-  const [setsRes, stCache] = await Promise.all([
-    fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}`),
-    getSTCards(),
-  ])
-
-  const setsData = setsRes.ok ? await setsRes.json() : []
-
-  const stMatches = stCache.filter(card =>
-    card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(q.replace(/[^a-z0-9]/g, '')) ||
-    card.card_set_id?.toLowerCase().includes(q)
-  )
-
-  const merged = [...(setsData ?? []), ...stMatches]
+  const q = query.trim()
+  const results = []
   const seen = new Set()
-  return merged.filter(card => {
-    if (seen.has(card.card_set_id)) return false
-    seen.add(card.card_set_id)
-    return true
-  }).slice(0, 20)
+
+  function addResult(card) {
+    if (!seen.has(card.card_set_id)) {
+      seen.add(card.card_set_id)
+      results.push(card)
+    }
+  }
+
+  const stCards = await getSTCards()
+
+  if (looksLikeCardId(q)) {
+    const normalizedId = q.toUpperCase()
+    const setPrefix = normalizedId.split('-')[0]
+
+    try {
+      const exactRes = await fetch(`${BASE}/sets/card/${normalizedId}/`)
+      if (exactRes.ok) {
+        const exactData = await exactRes.json()
+        if (exactData?.[0]) {
+          const exactCard = exactData[0]
+          addResult(exactCard)
+
+          // Cache the exact result immediately
+          const cardCache = getCache()
+          if (!cardCache[exactCard.card_set_id]) {
+            cardCache[exactCard.card_set_id] = exactCard
+            setCache(cardCache)
+          }
+
+          const cardName = exactCard.card_name
+          const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(cardName)}`)
+          if (nameRes.ok) {
+            const nameData = await nameRes.json()
+            // Same-set variants first (e.g. OP09-119 SP alongside OP09-119)
+            const sameSet = (nameData ?? []).filter(c => c.card_set_id.startsWith(setPrefix))
+            const otherSets = (nameData ?? []).filter(c => !c.card_set_id.startsWith(setPrefix))
+            sameSet.forEach(addResult)
+            otherSets.forEach(addResult)
+          }
+        }
+      }
+    } catch {}
+
+    // Also check ST cards for matching ID or set prefix
+    stCards
+      .filter(c =>
+        c.card_set_id?.toUpperCase() === normalizedId ||
+        c.card_set_id?.toUpperCase().startsWith(setPrefix)
+      )
+      .forEach(addResult)
+
+  } else {
+    const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+    try {
+      const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(q)}`)
+      if (nameRes.ok) {
+        const nameData = await nameRes.json()
+        ;(nameData ?? []).forEach(addResult)
+      }
+    } catch {}
+
+    stCards
+      .filter(card =>
+        card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedQ) ||
+        card.card_set_id?.toLowerCase().includes(q.toLowerCase())
+      )
+      .forEach(addResult)
+  }
+
+  return results.slice(0, 24)
 }
 
 export function getCardImageUrl(cardId) {

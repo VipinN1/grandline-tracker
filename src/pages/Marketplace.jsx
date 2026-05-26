@@ -587,6 +587,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                       {card.card_type && <span>{card.card_type}</span>}
                                       {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
                                       <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
+                                      {card.set_name && <><span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span><span>{card.set_name}</span></>}
                                     </div>
                                   </div>
                                 </div>

@@ -444,7 +444,7 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
     if (val.length < 2) { setLeaderResults([]); return }
     debounceRef.current = setTimeout(async () => {
       setLeaderSearching(true)
-      try { const data = await searchLeaders(val); setLeaderResults(data.slice(0, 8)) }
+      try { const data = await searchLeaders(val); setLeaderResults(data.slice(0, 12)) }
       catch { setLeaderResults([]) }
       setLeaderSearching(false)
     }, 400)
@@ -552,7 +552,10 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
                             <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                              <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#7c6fa0', marginTop: 2 }}>{card.card_color} · {card.card_set_id}</div>
+                              <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#7c6fa0', marginTop: 2 }}>
+                                <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
+                                {card.set_name && <span style={{ color: '#3d2d6e' }}> · {card.set_name}</span>}
+                              </div>
                             </div>
                           </div>
                         ))
