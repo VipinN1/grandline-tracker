@@ -3,6 +3,7 @@ import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import TournamentModal from '../components/TournamentModal'
+import SelectDecklistModal from '../components/SelectDecklistModal'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -425,6 +426,8 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
   const [leaderOpen, setLeaderOpen] = useState(false)
   const leaderRef = useRef(null)
   const debounceRef = useRef(null)
+  const [selectingDecklist, setSelectingDecklist] = useState(false)
+  const [attachedDecklist, setAttachedDecklist] = useState(null)
 
   useEffect(() => {
     function handleClick(e) {
@@ -462,8 +465,8 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
   async function handleSubmit() {
     if (!title.trim() || !body.trim() || !session) return
     setSaving(true)
-    let decklistId = null
-    if (leaderResult && parsedCards.length > 0) {
+    let decklistId = attachedDecklist?.id ?? null
+    if (!attachedDecklist && leaderResult && parsedCards.length > 0) {
       const { data: dl } = await supabase.from('decklists').insert({ user_id: session.user.id, name: deckName || `${leaderResult.card_name} Deck`, leader_id: leaderResult.card_set_id, leader_name: leaderResult.card_name, leader_color: leaderResult.card_color, cards: parsedCards }).select().single()
       if (dl) decklistId = dl.id
     }
@@ -497,8 +500,34 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
         <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div><label style={labelStyle}>Title</label><input type="text" placeholder="Give your post a title..." value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} /></div>
           <div><label style={labelStyle}>Body</label><textarea placeholder="Share your thoughts..." value={body} onChange={e => setBody(e.target.value)} style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }} /></div>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#3d2d6e', marginBottom: 14 }}>Attach Decklist (optional)</div>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#3d2d6e', marginBottom: 14 }}>Attach Decklist (optional)</div>
+
+        {/* Attached from account */}
+        {attachedDecklist ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
+            <img src={getCardImageUrl(attachedDecklist.leader_id)} alt={attachedDecklist.leader_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{attachedDecklist.name}</div>
+              <div style={{ fontSize: 11, color: COLORS[attachedDecklist.leader_color] ?? '#7c6fa0', marginTop: 2 }}>{attachedDecklist.leader_name} · {attachedDecklist.leader_id}</div>
+            </div>
+            <button onClick={() => setAttachedDecklist(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
+          </div>
+        ) : (
+          <>
+            {/* Attach from account button */}
+            <button onClick={() => setSelectingDecklist(true)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12 }}>
+              Attach Decklist From Account
+            </button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#3d2d6e' }}>or</div>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
+            </div>
+
+            {/* Manual paste section */}
             <div style={{ marginBottom: 12 }}><label style={labelStyle}>Deck Name</label><input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} /></div>
             <div ref={leaderRef} style={{ position: 'relative', marginBottom: 12 }}>
               <label style={labelStyle}>Leader Card</label>
@@ -515,7 +544,7 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
                 <>
                   <input type="text" placeholder="Search by name or ID..." value={leaderQuery} onChange={handleLeaderQuery} onFocus={() => leaderQuery.length >= 2 && setLeaderOpen(true)} style={inputStyle} />
                   {leaderOpen && leaderQuery.length >= 2 && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.97)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto' }}>
                       {leaderSearching ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
                         : leaderResults.length === 0 ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#3d2d6e' }}>No leaders found</div>
                         : leaderResults.map(card => (
@@ -550,7 +579,9 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
                 </div>
               </div>
             )}
-          </div>
+          </>
+        )}
+      </div>
         </div>
         <div style={{ padding: '14px 24px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
           <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: 11, borderRadius: 8, border: 'none', background: saving ? '#5b21b6' : '#8b5cf6', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
@@ -558,6 +589,14 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
           </button>
         </div>
       </div>
+    {selectingDecklist && (
+      <SelectDecklistModal
+        session={session}
+        isMobile={isMobile}
+        onClose={() => setSelectingDecklist(false)}
+        onSelect={deck => { setAttachedDecklist(deck); setLeaderResult(null); setDecklistRaw(''); setParsedCards([]) }}
+      />
+    )}
     </div>
   )
 }
