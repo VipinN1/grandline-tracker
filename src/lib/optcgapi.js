@@ -120,9 +120,27 @@ export async function searchLeaders(query) {
 }
 
 export async function searchCards(query) {
-  const res = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}`)
-  if (!res.ok) throw new Error('Search failed')
-  return res.json()
+  const q = query.toLowerCase()
+
+  const [setsRes, stCache] = await Promise.all([
+    fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(query)}`),
+    getSTCards(),
+  ])
+
+  const setsData = setsRes.ok ? await setsRes.json() : []
+
+  const stMatches = stCache.filter(card =>
+    card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(q.replace(/[^a-z0-9]/g, '')) ||
+    card.card_set_id?.toLowerCase().includes(q)
+  )
+
+  const merged = [...(setsData ?? []), ...stMatches]
+  const seen = new Set()
+  return merged.filter(card => {
+    if (seen.has(card.card_set_id)) return false
+    seen.add(card.card_set_id)
+    return true
+  }).slice(0, 20)
 }
 
 export function getCardImageUrl(cardId) {

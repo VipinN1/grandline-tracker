@@ -10,6 +10,7 @@ import Decklists from './pages/Decklists'
 import Friends from './pages/Friends'
 import Profile from './pages/Profile'
 import Community from './pages/Community'
+import Marketplace from './pages/Marketplace'
 import Login from './pages/Login'
 import LiveTournament from './pages/LiveTournament'
 import Signup from './pages/Signup'
@@ -66,6 +67,7 @@ export default function App() {
               <Route path="/profile" element={<Profile session={session} />} />
               <Route path="/live" element={<LiveTournament session={session} />} />
               <Route path="/community" element={<Community session={session} />} />
+              <Route path="/marketplace" element={<Marketplace session={session} />} />
             </Routes>
           </main>
         </div>

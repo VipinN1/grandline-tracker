@@ -59,11 +59,13 @@ const NAV_LINKS = [
   { to: '/friends', label: 'Friends' },
   { to: '/profile', label: 'Profile' },
   { to: '/community', label: 'Community' },
+  { to: '/marketplace', label: 'Market' },
 ]
 
 export default function Navbar({ session }) {
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [unreadMktCount, setUnreadMktCount] = useState(0)
   const { isMobile } = useWindowSize()
 
   const username = session?.user?.user_metadata?.username ?? 'Me'
@@ -80,6 +82,29 @@ export default function Navbar({ session }) {
       if (data?.avatar_url) setAvatarUrl(data.avatar_url)
     }
     loadAvatar()
+  }, [session])
+
+  useEffect(() => {
+    if (!session) return
+    async function loadUnread() {
+      const { count } = await supabase
+        .from('marketplace_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', session.user.id)
+        .eq('read', false)
+      setUnreadMktCount(count ?? 0)
+    }
+    loadUnread()
+    const channel = supabase
+      .channel(`navbar_mkt_${session.user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'marketplace_messages', filter: `receiver_id=eq.${session.user.id}` }, () => {
+        setUnreadMktCount(c => c + 1)
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'marketplace_messages', filter: `receiver_id=eq.${session.user.id}` }, () => {
+        loadUnread()
+      })
+      .subscribe()
+    return () => { channel.unsubscribe() }
   }, [session])
 
   async function handleSignOut() {
@@ -115,7 +140,16 @@ export default function Navbar({ session }) {
           <>
             <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
               {NAV_LINKS.map(link => (
-                <NavLink key={link.to} to={link.to} style={({ isActive }) => tabStyle(isActive)}>{link.label}</NavLink>
+                <NavLink key={link.to} to={link.to} style={({ isActive }) => tabStyle(isActive)}>
+                  <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    {link.label}
+                    {link.to === '/marketplace' && unreadMktCount > 0 && (
+                      <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#f05252', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
+                        {unreadMktCount > 9 ? '9+' : unreadMktCount}
+                      </span>
+                    )}
+                  </span>
+                </NavLink>
               ))}
               <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
@@ -147,10 +181,17 @@ export default function Navbar({ session }) {
                 textDecoration: 'none',
                 borderBottom: '1px solid rgba(139,92,246,0.08)',
                 background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
-                display: 'block',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
               })}
             >
               {link.label}
+              {link.to === '/marketplace' && unreadMktCount > 0 && (
+                <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                  {unreadMktCount > 9 ? '9+' : unreadMktCount}
+                </span>
+              )}
             </NavLink>
           ))}
           <NavLink
