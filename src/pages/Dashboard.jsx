@@ -228,20 +228,27 @@ export default function Dashboard({ session }) {
               {leaderUsage.length === 0 ? <EmptyChart message="No data yet" /> : (() => {
                 const pl = leaderUsage.slice(0, 6)
                 const pieTotal = pl.reduce((s, l) => s + l.count, 0)
-                const CX = 70, CY = 70, R = 68
-                // Compute per-slice SVG gradients (Recharts pie: 0° = 3 o'clock, clockwise)
+                const CX = 70, CY = 70, R = 68, INNER = 40
+                const R_MID = (INNER + R) / 2  // midpoint of donut ring
+                // Recharts Pie: startAngle=0 → 3 o'clock, sweeps counter-clockwise
                 let cumPct = 0
                 const gradDefs = pl.map((l, i) => {
                   const pct = l.count / pieTotal
-                  const midRad = (cumPct + pct / 2) * 2 * Math.PI
+                  const f = cumPct + pct / 2
                   cumPct += pct
                   const cols = (l.leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
                   if (cols.length < 2) return null
-                  // Gradient sweeps perpendicular to the radial at midpoint angle
-                  const x1 = +(CX - R * Math.sin(midRad)).toFixed(2)
-                  const y1 = +(CY + R * Math.cos(midRad)).toFixed(2)
-                  const x2 = +(CX + R * Math.sin(midRad)).toFixed(2)
-                  const y2 = +(CY - R * Math.cos(midRad)).toFixed(2)
+                  // Mid-angle in SVG coords (counter-clockwise from 3 o'clock)
+                  const midRad = f * 2 * Math.PI
+                  const cosA = Math.cos(midRad)
+                  const sinA = Math.sin(midRad)
+                  // Center gradient on the donut ring midpoint, sweep perpendicular to radial
+                  const mx = CX + R_MID * cosA
+                  const my = CY - R_MID * sinA   // SVG y is flipped
+                  const x1 = +(mx - R * sinA).toFixed(2)
+                  const y1 = +(my - R * cosA).toFixed(2)
+                  const x2 = +(mx + R * sinA).toFixed(2)
+                  const y2 = +(my + R * cosA).toFixed(2)
                   return (
                     <linearGradient key={i} id={`plg-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} gradientUnits="userSpaceOnUse">
                       <stop offset="0%" stopColor={cols[0]} />
