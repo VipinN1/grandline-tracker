@@ -125,7 +125,10 @@ export default function Dashboard({ session }) {
 
   const leaderUsage = Object.values(
     tournaments.reduce((acc, t) => {
-      if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, fullName: t.leader_name, leaderColor: t.leader_color, color: COLORS[t.leader_color] ?? '#8b5cf6', count: 0, wins: 0, losses: 0 }
+      if (!acc[t.leader_id]) {
+        const primaryColor = (t.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? '#8b5cf6'
+        acc[t.leader_id] = { name: t.leader_name, fullName: t.leader_name, leaderColor: t.leader_color, color: primaryColor, count: 0, wins: 0, losses: 0 }
+      }
       acc[t.leader_id].count++
       acc[t.leader_id].wins += t.wins
       acc[t.leader_id].losses += t.losses
@@ -232,7 +235,7 @@ export default function Dashboard({ session }) {
                   const pct = l.count / pieTotal
                   const midRad = (cumPct + pct / 2) * 2 * Math.PI
                   cumPct += pct
-                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
+                  const cols = (l.leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
                   if (cols.length < 2) return null
                   // Gradient sweeps perpendicular to the radial at midpoint angle
                   const x1 = +(CX - R * Math.sin(midRad)).toFixed(2)
@@ -247,11 +250,13 @@ export default function Dashboard({ session }) {
                   )
                 })
                 const getFill = (l, i) => {
-                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
+                  const cols = (l.leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
+                  if (cols.length === 0) return '#8b5cf6'
                   return cols.length > 1 ? `url(#plg-${i})` : cols[0]
                 }
                 const getDotBg = l => {
-                  const cols = (l.leaderColor ?? '').split('/').map(c => COLORS[c.trim()] ?? '#8b5cf6')
+                  const cols = (l.leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
+                  if (cols.length === 0) return '#8b5cf6'
                   return cols.length > 1 ? `linear-gradient(135deg, ${cols[0]}, ${cols[1]})` : cols[0]
                 }
                 return (
