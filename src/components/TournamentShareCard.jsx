@@ -152,42 +152,42 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
                 <div
                   key={r.id}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
+                    display: 'flex', alignItems: 'center', gap: 12,
                     background: isWin ? 'rgba(52,211,153,0.04)' : 'rgba(240,82,82,0.04)',
-                    borderRadius: 9, padding: '9px 12px',
+                    borderRadius: 10, padding: '10px 14px',
                     border: `1px solid ${isWin ? 'rgba(52,211,153,0.15)' : 'rgba(240,82,82,0.12)'}`,
                   }}
                 >
                   {/* Round number */}
-                  <div style={{ fontSize: 11, color: '#7c6fa0', fontWeight: 700, width: 26, flexShrink: 0, fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: 11, color: '#7c6fa0', fontWeight: 700, width: 26, flexShrink: 0, fontFamily: 'monospace', alignSelf: 'flex-start', paddingTop: 4 }}>
                     R{r.round_number}
                   </div>
 
-                  {/* Opponent leader card thumbnail */}
+                  {/* Opponent leader card — large */}
                   {r.opponent_leader_id ? (
                     <img
                       crossOrigin="anonymous"
                       src={getCardImageUrl(r.opponent_leader_id)}
                       alt={r.opponent_leader_name ?? ''}
-                      style={{ width: 48, height: 67, objectFit: 'cover', objectPosition: 'top center', borderRadius: 5, flexShrink: 0, display: 'block', border: `1px solid ${oppColor}55` }}
+                      style={{ width: 90, height: 126, objectFit: 'cover', objectPosition: 'top center', borderRadius: 7, flexShrink: 0, display: 'block', border: `2px solid ${oppColor}66`, boxShadow: `0 4px 12px rgba(0,0,0,0.4)` }}
                     />
                   ) : (
-                    <div style={{ width: 48, height: 67, borderRadius: 5, background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#4a5068', flexShrink: 0 }}>?</div>
+                    <div style={{ width: 90, height: 126, borderRadius: 7, background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: '#4a5068', flexShrink: 0 }}>?</div>
                   )}
 
                   {/* Opponent name + tags */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, color: oppColor, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 4 }}>
+                    <div style={{ fontSize: 14, color: oppColor, fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>
                       {oppName}
                     </div>
-                    <div style={{ display: 'flex', gap: 5, flexWrap: 'nowrap' }}>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       {r.won_dice_roll !== null && (
-                        <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 4, background: r.won_dice_roll ? 'rgba(52,211,153,0.18)' : 'rgba(240,82,82,0.18)', color: r.won_dice_roll ? '#34d399' : '#f05252', fontWeight: 700 }}>
+                        <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: r.won_dice_roll ? 'rgba(52,211,153,0.18)' : 'rgba(240,82,82,0.18)', color: r.won_dice_roll ? '#34d399' : '#f05252', fontWeight: 700 }}>
                           {r.won_dice_roll ? 'Dice W' : 'Dice L'}
                         </span>
                       )}
                       {r.went_first !== null && (
-                        <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 4, background: 'rgba(255,255,255,0.07)', color: r.went_first ? '#fbbf24' : '#a78bfa', fontWeight: 700 }}>
+                        <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: 'rgba(255,255,255,0.07)', color: r.went_first ? '#fbbf24' : '#a78bfa', fontWeight: 700 }}>
                           {r.went_first ? '1st' : '2nd'}
                         </span>
                       )}
@@ -196,11 +196,12 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
 
                   {/* Win/Loss badge */}
                   <div style={{
-                    flexShrink: 0, minWidth: 36, padding: '5px 12px', borderRadius: 7,
-                    fontSize: 13, fontWeight: 700, textAlign: 'center',
+                    flexShrink: 0, minWidth: 40, padding: '6px 14px', borderRadius: 8,
+                    fontSize: 15, fontWeight: 700, textAlign: 'center',
                     background: isWin ? 'rgba(52,211,153,0.18)' : 'rgba(240,82,82,0.18)',
                     color: isWin ? '#34d399' : '#f05252',
                     border: `1px solid ${isWin ? 'rgba(52,211,153,0.4)' : 'rgba(240,82,82,0.4)'}`,
+                    alignSelf: 'flex-start',
                   }}>
                     {isWin ? 'W' : 'L'}
                   </div>
