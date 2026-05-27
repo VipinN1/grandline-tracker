@@ -3,6 +3,14 @@ import { getCardImageUrl } from '../lib/optcgapi'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
+function cleanName(name) {
+  if (!name) return ''
+  return name
+    .replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '')
+    .replace(/\s*\([^)]*\)$/, '')
+    .trim()
+}
+
 function pLabel(n) { if (n===1) return '1st'; if (n===2) return '2nd'; if (n===3) return '3rd'; return `${n}th` }
 
 function pBadge(n) {
@@ -96,7 +104,7 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
 
           {/* Leader name + color pill */}
           <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', marginBottom: 5, lineHeight: 1.3 }}>
-            {tournament.leader_name}
+            {cleanName(tournament.leader_name)}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 11, color: '#4a5068', fontFamily: 'monospace' }}>{tournament.leader_id}</span>
@@ -138,9 +146,7 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {rounds.map(r => {
               const oppColor = COLORS[r.opponent_leader_color] ?? '#94a3b8'
-              const oppName = r.opponent_leader_name
-                ? r.opponent_leader_name.replace(/\s*\([^)]*\)$/, '').trim()
-                : 'Unknown'
+              const oppName = cleanName(r.opponent_leader_name) || 'Unknown'
               const isWin = r.result === 'win'
               return (
                 <div
