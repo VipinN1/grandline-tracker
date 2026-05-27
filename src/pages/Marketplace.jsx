@@ -466,7 +466,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
       const { data: urlData } = supabase.storage.from('card-photos').getPublicUrl(uploadPath)
       photo_url = urlData?.publicUrl ?? null
     }
-    const cardId = manualMode ? (manualCardId.trim() || `CUSTOM-${Date.now()}`) : selectedCard.card_set_id
+    const cardId = manualMode ? (manualCardId.trim() || `CUSTOM-${Date.now()}`) : (selectedCard.card_image_id ?? selectedCard.card_set_id)
     const cardName = manualMode ? manualName.trim() : selectedCard.card_name
     const cardColor = manualMode ? (manualColor || null) : (selectedCard.card_color ?? null)
     const cardType = manualMode ? (manualType || null) : (selectedCard.card_type ?? null)
