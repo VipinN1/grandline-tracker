@@ -5,7 +5,8 @@
       "Bash(Select-Object -Last 100)",
       "Bash(Out-String)",
       "PowerShell(Get-Content \"C:\\\\Users\\\\siris\\\\.claude\\\\projects\\\\C--Users-siris-OneDrive-Desktop-New-folder--5--grandline-tracker\\\\956b0539-5780-4520-bd7e-af1dc6bb330c.jsonl\" -Tail 50 | ConvertFrom-Json | ForEach-Object { if \\($_.type -eq 'message'\\) { $_.content } } | Select-Object -Last 20)",
-      "PowerShell($lines = Get-Content \"C:\\\\Users\\\\siris\\\\.claude\\\\projects\\\\C--Users-siris-OneDrive-Desktop-New-folder--5--grandline-tracker\\\\956b0539-5780-4520-bd7e-af1dc6bb330c.jsonl\" -Tail 30; $lines | ForEach-Object { $_ | ConvertFrom-Json | Select-Object -ExpandProperty type } 2>$null)"
+      "PowerShell($lines = Get-Content \"C:\\\\Users\\\\siris\\\\.claude\\\\projects\\\\C--Users-siris-OneDrive-Desktop-New-folder--5--grandline-tracker\\\\956b0539-5780-4520-bd7e-af1dc6bb330c.jsonl\" -Tail 30; $lines | ForEach-Object { $_ | ConvertFrom-Json | Select-Object -ExpandProperty type } 2>$null)",
+      "Bash(curl -I \"https://optcgapi.com/media/static/Card_Images/OP14-060.jpg\")"
     ]
   }
 }

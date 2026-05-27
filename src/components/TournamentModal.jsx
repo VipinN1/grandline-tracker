@@ -80,37 +80,33 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
     try {
       const { default: html2canvas } = await import('html2canvas')
 
-      // Convert each card image to a data URL using Image()+crossOrigin+cache-buster.
-      // This is the same pattern the original canvas export used and is the only
-      // approach that reliably bypasses the browser's non-CORS cache (which gets
-      // poisoned by the modal's plain <img> tags that load without crossOrigin).
-      const imageUrls = [
-        getCardImageUrl(tournament.leader_id),
-        ...rounds.filter(r => r.opponent_leader_id).map(r => getCardImageUrl(r.opponent_leader_id)),
+      // Collect unique card IDs needed for the share card
+      const cardIds = [
+        tournament.leader_id,
+        ...rounds.filter(r => r.opponent_leader_id).map(r => r.opponent_leader_id),
       ].filter(Boolean)
 
+      // Fetch each image through the same-origin proxy (/api/card-image) which
+      // re-serves optcgapi.com images with CORS headers, making canvas operations safe.
       const dataUrls = {}
-      await Promise.allSettled(imageUrls.map(url => new Promise(resolve => {
+      await Promise.allSettled(cardIds.map(id => new Promise(resolve => {
+        const origUrl = getCardImageUrl(id)
         const img = new Image()
-        img.crossOrigin = 'anonymous'
         img.onload = () => {
           try {
             const c = document.createElement('canvas')
             c.width = img.naturalWidth
             c.height = img.naturalHeight
             c.getContext('2d').drawImage(img, 0, 0)
-            dataUrls[url] = c.toDataURL('image/jpeg', 0.92)
-          } catch { /* tainted — skip this image */ }
+            dataUrls[origUrl] = c.toDataURL('image/jpeg', 0.92)
+          } catch { }
           resolve()
         }
         img.onerror = resolve
-        // ?t= busts any non-CORS cached entry while keeping the dataUrls key clean
-        img.src = url + '?t=' + Date.now()
+        img.src = `/api/card-image?id=${encodeURIComponent(id)}`
       })))
 
-      // Swap the hidden card's img srcs to data URLs so html2canvas sees no
-      // cross-origin URLs at all.  Use getAttribute to get the raw attribute
-      // string — same value getCardImageUrl() produced, so the map lookup works.
+      // Swap img srcs in the hidden share card to data URLs before html2canvas runs
       const imgs = Array.from(cardRef.current.querySelectorAll('img'))
       const origSrcs = imgs.map(img => img.getAttribute('src'))
 
@@ -130,7 +126,6 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
         logging: false,
       })
 
-      // Restore original srcs on the hidden card
       imgs.forEach((img, i) => { img.src = origSrcs[i] })
 
       const link = document.createElement('a')
