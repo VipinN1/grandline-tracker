@@ -73,7 +73,7 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
         {/* Leader card — shown as a proper portrait card */}
         <div style={{
           flexShrink: 0,
-          width: 118,
+          width: 152,
           borderRadius: 10,
           overflow: 'hidden',
           border: `2px solid ${color}88`,
@@ -169,10 +169,10 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
                       crossOrigin="anonymous"
                       src={getCardImageUrl(r.opponent_leader_id)}
                       alt={r.opponent_leader_name ?? ''}
-                      style={{ width: 32, height: 45, objectFit: 'cover', objectPosition: 'top center', borderRadius: 5, flexShrink: 0, display: 'block', border: `1px solid ${oppColor}55` }}
+                      style={{ width: 48, height: 67, objectFit: 'cover', objectPosition: 'top center', borderRadius: 5, flexShrink: 0, display: 'block', border: `1px solid ${oppColor}55` }}
                     />
                   ) : (
-                    <div style={{ width: 32, height: 45, borderRadius: 5, background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#4a5068', flexShrink: 0 }}>?</div>
+                    <div style={{ width: 48, height: 67, borderRadius: 5, background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#4a5068', flexShrink: 0 }}>?</div>
                   )}
 
                   {/* Opponent name + tags */}
