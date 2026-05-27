@@ -335,13 +335,13 @@ function PostCard({ post, session, onProfileClick }) {
     if (!session) return
     if (liked) {
       await supabase.from('post_likes').delete().match({ user_id: session.user.id, post_id: post.id })
-      await supabase.from('posts').update({ likes: likes - 1 }).eq('id', post.id)
-      setLikes(likes - 1); setLiked(false)
+      await supabase.rpc('decrement_post_likes', { post_id: post.id })
+      setLikes(prev => prev - 1); setLiked(false)
     } else {
       const { error } = await supabase.from('post_likes').insert({ user_id: session.user.id, post_id: post.id })
       if (!error) {
-        await supabase.from('posts').update({ likes: likes + 1 }).eq('id', post.id)
-        setLikes(likes + 1); setLiked(true)
+        await supabase.rpc('increment_post_likes', { post_id: post.id })
+        setLikes(prev => prev + 1); setLiked(true)
       }
     }
   }
