@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
@@ -173,6 +174,7 @@ export default function Decklists({ session }) {
   const [selectedDeck, setSelectedDeck] = useState(null)
   const [search, setSearch] = useState('')
   const { isMobile } = useWindowSize()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!session) return
@@ -217,7 +219,7 @@ export default function Decklists({ session }) {
 
       <div style={{ display: 'flex', gap: 10, marginBottom: '1.5rem', alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
         <input type="text" placeholder="Search by leader or name..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 0, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-        <button style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>+ New Decklist</button>
+        <button onClick={() => navigate('/deck-builder')} style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>+ New Decklist</button>
       </div>
 
       {decks.length === 0 ? (

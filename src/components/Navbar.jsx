@@ -60,6 +60,7 @@ const NAV_LINKS = [
   { to: '/profile', label: 'Profile' },
   { to: '/community', label: 'Community' },
   { to: '/marketplace', label: 'Market' },
+  { to: '/deck-builder', label: 'Deck Builder' },
 ]
 
 export default function Navbar({ session }) {
