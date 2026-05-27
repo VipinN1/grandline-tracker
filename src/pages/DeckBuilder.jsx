@@ -75,6 +75,7 @@ export default function DeckBuilder({ session }) {
 
   // UI state
   const [mobileTab, setMobileTab] = useState('search')
+  const [deckView, setDeckView] = useState('list')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [showImport, setShowImport] = useState(false)
@@ -217,7 +218,7 @@ export default function DeckBuilder({ session }) {
   const filteredResults = cardResults.filter(card => {
     if (filterColor.length > 0) {
       const cc = (card.card_color ?? '').split(/[\s/]+/).map(c => c.trim()).filter(Boolean)
-      if (!filterColor.every(fc => cc.some(c => c.toLowerCase() === fc.toLowerCase()))) return false
+      if (!filterColor.some(fc => cc.some(c => c.toLowerCase() === fc.toLowerCase()))) return false
     }
     if (filterType && card.card_type !== filterType) return false
     const id = card.card_set_id ?? ''
@@ -246,15 +247,13 @@ export default function DeckBuilder({ session }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
           {[['', 'All'], ...CARD_COLORS.map(c => [c, c])].map(([val, label]) => {
             const isActive = val === '' ? filterColor.length === 0 : filterColor.includes(val)
-            const atMax = filterColor.length >= 2 && !isActive && val !== ''
             return (
               <button key={val || 'c-all'} onClick={() => {
                 if (val === '') { setFilterColor([]); return }
-                setFilterColor(prev => prev.includes(val) ? prev.filter(x => x !== val) : prev.length < 2 ? [...prev, val] : prev)
-              }} style={{ ...pillStyle(isActive, COLORS[val]), opacity: atMax ? 0.3 : 1, cursor: atMax ? 'default' : 'pointer' }}>{label}</button>
+                setFilterColor(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val])
+              }} style={pillStyle(isActive, COLORS[val])}>{label}</button>
             )
           })}
-          {filterColor.length > 0 && <span style={{ fontSize: 10, color: '#3d2d6e' }}>up to 2</span>}
         </div>
         {/* Type */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -426,41 +425,77 @@ export default function DeckBuilder({ session }) {
         )}
       </div>
 
-      {/* Card list */}
-      <div style={{ flex: 1, overflowY: 'auto', maxHeight: isMobile ? 280 : 380 }}>
-        {deckEntries.length === 0 ? (
-          <div style={{ padding: '28px 16px', textAlign: 'center', color: '#3d2d6e', fontSize: 12 }}>
-            Click cards in the search panel to add them here
-          </div>
-        ) : grouped.map(([type, entries]) => entries.length === 0 ? null : (
-          <div key={type}>
-            <div style={{ padding: '5px 14px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-              {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
-            </div>
-            {entries.map(([key, { card, count }]) => (
-              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 28, borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.12' }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
-                  <div style={{ fontSize: 10, color: '#3d2d6e', fontFamily: 'monospace' }}>{card.card_set_id}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                  <button
-                    onClick={() => adjustCount(key, -1)}
-                    style={{ width: 20, height: 20, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#f0f2f5', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
-                  >−</button>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', minWidth: 16, textAlign: 'center' }}>{count}</span>
-                  <button
-                    onClick={() => adjustCount(key, 1)}
-                    disabled={count >= MAX_COPIES || totalCards >= MAX_DECK}
-                    style={{ width: 20, height: 20, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'transparent' : 'rgba(255,255,255,0.05)', color: count >= MAX_COPIES || totalCards >= MAX_DECK ? '#3d2d6e' : '#f0f2f5', fontSize: 14, cursor: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
-                  >+</button>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* View toggle */}
+      <div style={{ padding: '6px 12px 0', display: 'flex', gap: 4, borderBottom: '1px solid rgba(139,92,246,0.08)' }}>
+        {[['list', 'List'], ['visual', 'Visual']].map(([v, label]) => (
+          <button key={v} onClick={() => setDeckView(v)} style={{ ...pillStyle(deckView === v, null), fontSize: 10, marginBottom: 6 }}>{label}</button>
         ))}
       </div>
+
+      {/* Card list */}
+      {deckView === 'list' ? (
+        <div style={{ flex: 1, overflowY: 'auto', maxHeight: isMobile ? 260 : 360 }}>
+          {deckEntries.length === 0 ? (
+            <div style={{ padding: '28px 16px', textAlign: 'center', color: '#3d2d6e', fontSize: 12 }}>
+              Click cards in the search panel to add them here
+            </div>
+          ) : grouped.map(([type, entries]) => entries.length === 0 ? null : (
+            <div key={type}>
+              <div style={{ padding: '5px 14px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
+              </div>
+              {entries.map(([key, { card, count }]) => (
+                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 28, borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.12' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
+                    <div style={{ fontSize: 10, color: '#3d2d6e', fontFamily: 'monospace' }}>{card.card_set_id}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+                    <button
+                      onClick={() => adjustCount(key, -1)}
+                      style={{ width: 20, height: 20, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#f0f2f5', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+                    >−</button>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', minWidth: 16, textAlign: 'center' }}>{count}</span>
+                    <button
+                      onClick={() => adjustCount(key, 1)}
+                      disabled={count >= MAX_COPIES || totalCards >= MAX_DECK}
+                      style={{ width: 20, height: 20, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'transparent' : 'rgba(255,255,255,0.05)', color: count >= MAX_COPIES || totalCards >= MAX_DECK ? '#3d2d6e' : '#f0f2f5', fontSize: 14, cursor: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+                    >+</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ flex: 1, overflowY: 'auto', maxHeight: isMobile ? 260 : 360, padding: '10px 12px' }}>
+          {deckEntries.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#3d2d6e', fontSize: 12, paddingTop: 20 }}>
+              Click cards in the search panel to add them here
+            </div>
+          ) : (
+            <>
+              {grouped.map(([type, entries]) => entries.length === 0 ? null : (
+                <div key={type} style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 5 }}>
+                    {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {entries.map(([key, { card, count }]) => (
+                      <div key={key} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => adjustCount(key, 1)} title={`${card.card_name} · ${count}/${MAX_COPIES} — click +1, right-click −1`} onContextMenu={e => { e.preventDefault(); adjustCount(key, -1) }}>
+                        <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 52, borderRadius: 5, border: `1px solid ${COLORS[card.card_color] ?? 'rgba(255,255,255,0.08)'}44`, display: 'block' }} onError={e => { e.target.style.opacity = '0.12' }} />
+                        <div style={{ position: 'absolute', bottom: 2, right: 2, background: 'rgba(0,0,0,0.75)', color: '#a78bfa', fontSize: 10, fontWeight: 700, borderRadius: 3, padding: '1px 3px', lineHeight: 1.4 }}>{count}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 6 }}>Click card to +1 · Right-click to −1</div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(139,92,246,0.1)', display: 'flex', flexDirection: 'column', gap: 8 }}>
