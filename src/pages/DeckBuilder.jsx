@@ -50,30 +50,25 @@ export default function DeckBuilder({ session }) {
   const { isMobile } = useWindowSize()
   const navigate = useNavigate()
 
-  // Deck state
   const [deckName, setDeckName] = useState('')
   const [leader, setLeader] = useState(null)
-  const [deckCards, setDeckCards] = useState({}) // { [card_set_id]: { card, count } }
+  const [deckCards, setDeckCards] = useState({})
 
-  // Card search
   const [cardQuery, setCardQuery] = useState('')
   const [cardResults, setCardResults] = useState([])
   const [cardSearching, setCardSearching] = useState(false)
 
-  // Leader search
   const [leaderQuery, setLeaderQuery] = useState('')
   const [leaderResults, setLeaderResults] = useState([])
   const [leaderSearching, setLeaderSearching] = useState(false)
   const [showLeaderDrop, setShowLeaderDrop] = useState(false)
 
-  // Filters
   const [filterColor, setFilterColor] = useState([])
   const [filterType, setFilterType] = useState('')
   const [filterSource, setFilterSource] = useState('')
   const [filterAltArt, setFilterAltArt] = useState('')
   const [filterCost, setFilterCost] = useState(null)
 
-  // UI state
   const [mobileTab, setMobileTab] = useState('search')
   const [deckView, setDeckView] = useState('list')
   const [saving, setSaving] = useState(false)
@@ -152,8 +147,7 @@ export default function DeckBuilder({ session }) {
     const lines = []
     if (leader) lines.push(`Leader: ${leader.card_set_id}`)
     Object.values(deckCards).forEach(({ card, count }) => lines.push(`${count}x${card.card_set_id}`))
-    const text = lines.join('\n')
-    navigator.clipboard?.writeText(text).catch(() => {})
+    navigator.clipboard?.writeText(lines.join('\n')).catch(() => {})
     setSaveMsg('Copied!'); setTimeout(() => setSaveMsg(''), 2000)
   }
 
@@ -214,7 +208,6 @@ export default function DeckBuilder({ session }) {
     navigate('/decklists')
   }
 
-  // Client-side filter (same logic as Marketplace)
   const filteredResults = cardResults.filter(card => {
     if (filterColor.length > 0) {
       const cc = (card.card_color ?? '').split(/[\s/]+/).map(c => c.trim()).filter(Boolean)
@@ -238,12 +231,15 @@ export default function DeckBuilder({ session }) {
     ['Other', deckEntries.filter(([, { card }]) => !['Character', 'Event', 'Stage'].includes(card.card_type))],
   ]
 
+  const cardThumb = isMobile ? 68 : 90
+  const visualThumb = isMobile ? 56 : 82
+  const listMaxH = isMobile ? 260 : 'calc(100vh - 390px)'
+
   // ─── Search panel ─────────────────────────────────────────────────────────────
   const searchPanel = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Filter pills */}
       <div style={{ background: 'rgba(139,92,246,0.03)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {/* Color */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
           {[['', 'All'], ...CARD_COLORS.map(c => [c, c])].map(([val, label]) => {
             const isActive = val === '' ? filterColor.length === 0 : filterColor.includes(val)
@@ -255,13 +251,11 @@ export default function DeckBuilder({ session }) {
             )
           })}
         </div>
-        {/* Type */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {[['', 'All Types'], ['Leader', 'Leader'], ['Character', 'Character'], ['Event', 'Event'], ['Stage', 'Stage']].map(([val, label]) => (
             <button key={val || 't-all'} onClick={() => setFilterType(val)} style={pillStyle(filterType === val, null)}>{label}</button>
           ))}
         </div>
-        {/* Source */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
           <button onClick={() => setFilterSource('')} style={pillStyle(filterSource === '', null)}>All</button>
           <select
@@ -275,14 +269,12 @@ export default function DeckBuilder({ session }) {
           <button onClick={() => setFilterSource('ST')} style={pillStyle(filterSource === 'ST', null)}>Starter Decks</button>
           <button onClick={() => setFilterSource('Promos')} style={pillStyle(filterSource === 'Promos', null)}>Promos</button>
         </div>
-        {/* Alt Art */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
             const ac = { parallel: '#e879f9', sp: '#34d399', manga: '#38bdf8', tr: '#f97316' }[val]
             return <button key={val || 'a-all'} onClick={() => setFilterAltArt(val)} style={pillStyle(filterAltArt === val, ac)}>{label}</button>
           })}
         </div>
-        {/* Cost */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
           <button onClick={() => setFilterCost(null)} style={pillStyle(filterCost === null, null)}>All Costs</button>
           {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
@@ -291,7 +283,6 @@ export default function DeckBuilder({ session }) {
         </div>
       </div>
 
-      {/* Search input */}
       <input
         type="text"
         placeholder="Search cards by name or ID..."
@@ -300,7 +291,6 @@ export default function DeckBuilder({ session }) {
         style={{ ...INPUT, padding: '10px 14px', fontSize: 14 }}
       />
 
-      {/* Status */}
       {cardSearching && <div style={{ fontSize: 12, color: '#7c6fa0' }}>Searching...</div>}
       {!cardSearching && cardQuery.length >= 2 && filteredResults.length === 0 && (
         <div style={{ fontSize: 12, color: '#3d2d6e' }}>No cards found. Try adjusting filters or your query.</div>
@@ -309,7 +299,6 @@ export default function DeckBuilder({ session }) {
         <div style={{ fontSize: 12, color: '#3d2d6e' }}>Type at least 2 characters to search</div>
       )}
 
-      {/* Results grid */}
       {filteredResults.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {filteredResults.map(card => {
@@ -324,13 +313,13 @@ export default function DeckBuilder({ session }) {
                 onClick={() => !disabled && addCard(card)}
                 title={`${card.card_name} — ${card.card_set_id}${card.card_cost ? ` · Cost ${card.card_cost}` : ''}${inDeck ? ` · ${inDeck.count}/${MAX_COPIES} in deck` : ''}`}
                 style={{ position: 'relative', cursor: disabled ? 'default' : 'pointer', opacity: atMax ? 0.4 : 1, transition: 'transform 0.1s, opacity 0.1s', flexShrink: 0 }}
-                onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = 'scale(1.07)' }}
+                onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = 'scale(1.06)' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
               >
                 <img
                   src={getCardImageUrl(card)}
                   alt={card.card_name}
-                  style={{ width: 68, borderRadius: 6, border: inDeck ? '2px solid #8b5cf6' : '1px solid rgba(255,255,255,0.08)', display: 'block' }}
+                  style={{ width: cardThumb, borderRadius: 7, border: inDeck ? '2px solid #8b5cf6' : '1px solid rgba(255,255,255,0.08)', display: 'block' }}
                   onError={e => { e.target.style.opacity = '0.12' }}
                 />
                 {inDeck && (
@@ -339,7 +328,7 @@ export default function DeckBuilder({ session }) {
                   </div>
                 )}
                 {atMax && (
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: 6, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: 7, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(0,0,0,0.7)', padding: '2px 4px', borderRadius: 3 }}>MAX</span>
                   </div>
                 )}
@@ -354,15 +343,15 @@ export default function DeckBuilder({ session }) {
   // ─── Deck panel ───────────────────────────────────────────────────────────────
   const deckPanel = (
     <div style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Leader section */}
+      {/* Leader */}
       <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(139,92,246,0.1)' }}>
         <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 8 }}>Leader</div>
         {leader ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 44, borderRadius: 6, border: `2px solid ${COLORS[leader.card_color] ?? '#8b5cf6'}44`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+            <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 56, borderRadius: 7, border: `2px solid ${COLORS[leader.card_color] ?? '#8b5cf6'}44`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leader.card_name}</div>
-              <div style={{ fontSize: 11, marginTop: 1 }}>
+              <div style={{ fontSize: 11, marginTop: 2 }}>
                 <span style={{ color: COLORS[leader.card_color] ?? '#7c6fa0' }}>{leader.card_color}</span>
                 <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>
                 <span style={{ color: '#7c6fa0', fontFamily: 'monospace' }}>{leader.card_set_id}</span>
@@ -411,7 +400,7 @@ export default function DeckBuilder({ session }) {
         )}
       </div>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ fontSize: 12, color: '#7c6fa0', flexShrink: 0 }}>
           <span style={{ fontWeight: 700, color: totalCards === MAX_DECK ? '#34d399' : '#f0f2f5' }}>{totalCards}</span>
@@ -432,11 +421,11 @@ export default function DeckBuilder({ session }) {
         ))}
       </div>
 
-      {/* Card list */}
+      {/* Card display */}
       {deckView === 'list' ? (
-        <div style={{ flex: 1, overflowY: 'auto', maxHeight: isMobile ? 260 : 360 }}>
+        <div style={{ flex: 1, overflowY: 'auto', maxHeight: listMaxH }}>
           {deckEntries.length === 0 ? (
-            <div style={{ padding: '28px 16px', textAlign: 'center', color: '#3d2d6e', fontSize: 12 }}>
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: '#3d2d6e', fontSize: 12 }}>
               Click cards in the search panel to add them here
             </div>
           ) : grouped.map(([type, entries]) => entries.length === 0 ? null : (
@@ -446,7 +435,7 @@ export default function DeckBuilder({ session }) {
               </div>
               {entries.map(([key, { card, count }]) => (
                 <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 28, borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.12' }} />
+                  <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 32, borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.12' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
                     <div style={{ fontSize: 10, color: '#3d2d6e', fontFamily: 'monospace' }}>{card.card_set_id}</div>
@@ -454,13 +443,13 @@ export default function DeckBuilder({ session }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
                     <button
                       onClick={() => adjustCount(key, -1)}
-                      style={{ width: 20, height: 20, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#f0f2f5', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#f0f2f5', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
                     >−</button>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', minWidth: 16, textAlign: 'center' }}>{count}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', minWidth: 18, textAlign: 'center' }}>{count}</span>
                     <button
                       onClick={() => adjustCount(key, 1)}
                       disabled={count >= MAX_COPIES || totalCards >= MAX_DECK}
-                      style={{ width: 20, height: 20, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'transparent' : 'rgba(255,255,255,0.05)', color: count >= MAX_COPIES || totalCards >= MAX_DECK ? '#3d2d6e' : '#f0f2f5', fontSize: 14, cursor: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'transparent' : 'rgba(255,255,255,0.05)', color: count >= MAX_COPIES || totalCards >= MAX_DECK ? '#3d2d6e' : '#f0f2f5', fontSize: 15, cursor: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
                     >+</button>
                   </div>
                 </div>
@@ -469,29 +458,42 @@ export default function DeckBuilder({ session }) {
           ))}
         </div>
       ) : (
-        <div style={{ flex: 1, overflowY: 'auto', maxHeight: isMobile ? 260 : 360, padding: '10px 12px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', maxHeight: listMaxH, padding: '12px 14px' }}>
           {deckEntries.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#3d2d6e', fontSize: 12, paddingTop: 20 }}>
+            <div style={{ textAlign: 'center', color: '#3d2d6e', fontSize: 12, paddingTop: 28 }}>
               Click cards in the search panel to add them here
             </div>
           ) : (
             <>
               {grouped.map(([type, entries]) => entries.length === 0 ? null : (
-                <div key={type} style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 5 }}>
+                <div key={type} style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 7 }}>
                     {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {entries.map(([key, { card, count }]) => (
-                      <div key={key} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => adjustCount(key, 1)} title={`${card.card_name} · ${count}/${MAX_COPIES} — click +1, right-click −1`} onContextMenu={e => { e.preventDefault(); adjustCount(key, -1) }}>
-                        <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 52, borderRadius: 5, border: `1px solid ${COLORS[card.card_color] ?? 'rgba(255,255,255,0.08)'}44`, display: 'block' }} onError={e => { e.target.style.opacity = '0.12' }} />
-                        <div style={{ position: 'absolute', bottom: 2, right: 2, background: 'rgba(0,0,0,0.75)', color: '#a78bfa', fontSize: 10, fontWeight: 700, borderRadius: 3, padding: '1px 3px', lineHeight: 1.4 }}>{count}</div>
+                      <div
+                        key={key}
+                        style={{ position: 'relative', cursor: 'pointer', transition: 'transform 0.1s' }}
+                        onClick={() => adjustCount(key, 1)}
+                        onContextMenu={e => { e.preventDefault(); adjustCount(key, -1) }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                        title={`${card.card_name} · ${count}/${MAX_COPIES} — click +1, right-click −1`}
+                      >
+                        <img
+                          src={getCardImageUrl(card)}
+                          alt={card.card_name}
+                          style={{ width: visualThumb, borderRadius: 6, border: `1px solid ${COLORS[card.card_color] ?? 'rgba(255,255,255,0.08)'}55`, display: 'block' }}
+                          onError={e => { e.target.style.opacity = '0.12' }}
+                        />
+                        <div style={{ position: 'absolute', bottom: 3, right: 3, background: 'rgba(0,0,0,0.8)', color: '#a78bfa', fontSize: 11, fontWeight: 700, borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 }}>{count}</div>
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
-              <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 6 }}>Click card to +1 · Right-click to −1</div>
+              <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 4 }}>Click +1 · Right-click −1</div>
             </>
           )}
         </div>
@@ -504,22 +506,14 @@ export default function DeckBuilder({ session }) {
           placeholder="Deck name..."
           value={deckName}
           onChange={e => setDeckName(e.target.value)}
-          style={{ ...INPUT, padding: '8px 11px', fontSize: 12 }}
+          style={{ ...INPUT, padding: '9px 12px', fontSize: 13 }}
         />
         <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={exportDeck}
-            style={{ flex: 1, padding: '7px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-          >Export</button>
-          <button
-            onClick={() => setShowImport(true)}
-            style={{ flex: 1, padding: '7px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-          >Import</button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{ flex: 2, padding: '7px 6px', borderRadius: 8, border: 'none', background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: saving ? '#7c6fa0' : '#fff', fontSize: 11, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}
-          >{saving ? 'Saving...' : saveMsg || 'Save Deck'}</button>
+          <button onClick={exportDeck} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Export</button>
+          <button onClick={() => setShowImport(true)} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Import</button>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '8px 6px', borderRadius: 8, border: 'none', background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: saving ? '#7c6fa0' : '#fff', fontSize: 12, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+            {saving ? 'Saving...' : saveMsg || 'Save Deck'}
+          </button>
         </div>
         {error && <div style={{ fontSize: 11, color: '#f05252' }}>{error}</div>}
       </div>
@@ -532,7 +526,7 @@ export default function DeckBuilder({ session }) {
       <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, width: Math.min(460, window.innerWidth - 32), padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Import Decklist</div>
         <div style={{ fontSize: 12, color: '#7c6fa0', lineHeight: 1.6 }}>
-          One card per line in the format <span style={{ fontFamily: 'monospace', color: '#a78bfa' }}>4xOP01-001</span>. Optionally include a leader line: <span style={{ fontFamily: 'monospace', color: '#a78bfa' }}>Leader: OP01-001</span>
+          One card per line: <span style={{ fontFamily: 'monospace', color: '#a78bfa' }}>4xOP01-001</span>. Leader line: <span style={{ fontFamily: 'monospace', color: '#a78bfa' }}>Leader: OP01-001</span>
         </div>
         <textarea
           value={importText}
@@ -544,29 +538,30 @@ export default function DeckBuilder({ session }) {
         {error && <div style={{ fontSize: 11, color: '#f05252' }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => { setShowImport(false); setImportText(''); setError('') }} style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-          <button
-            onClick={handleImport}
-            disabled={!importText.trim() || importing}
-            style={{ flex: 2, padding: 9, borderRadius: 8, border: 'none', background: importText.trim() && !importing ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: importText.trim() && !importing ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: importText.trim() && !importing ? 'pointer' : 'default', fontFamily: 'inherit' }}
-          >{importing ? 'Importing...' : 'Import'}</button>
+          <button onClick={handleImport} disabled={!importText.trim() || importing} style={{ flex: 2, padding: 9, borderRadius: 8, border: 'none', background: importText.trim() && !importing ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: importText.trim() && !importing ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: importText.trim() && !importing ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+            {importing ? 'Importing...' : 'Import'}
+          </button>
         </div>
       </div>
     </div>
   )
 
   // ─── Page layout ──────────────────────────────────────────────────────────────
+  const header = (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Builder</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px' }}>Deck Builder</div>
+      <div style={{ fontSize: 13, color: '#7c6fa0', marginTop: 2 }}>Build and save your competitive decklists</div>
+    </div>
+  )
+
   return (
     <div>
       {importModal}
 
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Builder</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px' }}>Deck Builder</div>
-        <div style={{ fontSize: 13, color: '#7c6fa0', marginTop: 2 }}>Build and save your competitive decklists</div>
-      </div>
-
       {isMobile ? (
         <>
+          {header}
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 4 }}>
             {[['search', 'Card Search'], ['deck', `Deck (${totalCards}/${MAX_DECK})`]].map(([tab, label]) => (
               <button key={tab} onClick={() => setMobileTab(tab)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: mobileTab === tab ? 'rgba(139,92,246,0.2)' : 'transparent', color: mobileTab === tab ? '#a78bfa' : '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -577,9 +572,14 @@ export default function DeckBuilder({ session }) {
           {mobileTab === 'search' ? searchPanel : deckPanel}
         </>
       ) : (
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>{searchPanel}</div>
-          <div style={{ width: 300, flexShrink: 0, position: 'sticky', top: 68 }}>{deckPanel}</div>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {header}
+            {searchPanel}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, position: 'sticky', top: 68 }}>
+            {deckPanel}
+          </div>
         </div>
       )}
     </div>
