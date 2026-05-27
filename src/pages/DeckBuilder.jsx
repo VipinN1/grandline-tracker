@@ -77,6 +77,7 @@ export default function DeckBuilder({ session }) {
   const [importText, setImportText] = useState('')
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState('')
+  const [hoverPreview, setHoverPreview] = useState(null)
 
   const cardDebounce = useRef(null)
   const leaderDebounce = useRef(null)
@@ -114,6 +115,13 @@ export default function DeckBuilder({ session }) {
       setLeaderSearching(false)
     }, 350)
   }
+
+  function showPreview(card, e) {
+    if (isMobile) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    setHoverPreview({ imageUrl: getCardImageUrl(card), name: card.card_name, rect })
+  }
+  function hidePreview() { setHoverPreview(null) }
 
   const totalCards = Object.values(deckCards).reduce((s, e) => s + e.count, 0)
 
@@ -313,8 +321,8 @@ export default function DeckBuilder({ session }) {
                 onClick={() => !disabled && addCard(card)}
                 title={`${card.card_name} — ${card.card_set_id}${card.card_cost ? ` · Cost ${card.card_cost}` : ''}${inDeck ? ` · ${inDeck.count}/${MAX_COPIES} in deck` : ''}`}
                 style={{ position: 'relative', cursor: disabled ? 'default' : 'pointer', opacity: atMax ? 0.4 : 1, transition: 'transform 0.1s, opacity 0.1s', flexShrink: 0 }}
-                onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = 'scale(1.06)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+                onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = 'scale(1.06)'; showPreview(card, e) }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; hidePreview() }}
               >
                 <img
                   src={getCardImageUrl(card)}
@@ -348,7 +356,7 @@ export default function DeckBuilder({ session }) {
         <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 8 }}>Leader</div>
         {leader ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 56, borderRadius: 7, border: `2px solid ${COLORS[leader.card_color] ?? '#8b5cf6'}44`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+            <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 56, borderRadius: 7, border: `2px solid ${COLORS[leader.card_color] ?? '#8b5cf6'}44`, flexShrink: 0, cursor: 'default' }} onError={e => { e.target.style.opacity = '0.2' }} onMouseEnter={e => showPreview(leader, e)} onMouseLeave={hidePreview} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leader.card_name}</div>
               <div style={{ fontSize: 11, marginTop: 2 }}>
@@ -434,7 +442,7 @@ export default function DeckBuilder({ session }) {
                 {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
               </div>
               {entries.map(([key, { card, count }]) => (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(255,255,255,0.03)' }} onMouseEnter={e => showPreview(card, e)} onMouseLeave={hidePreview}>
                   <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 32, borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.12' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
@@ -477,8 +485,8 @@ export default function DeckBuilder({ session }) {
                         style={{ position: 'relative', cursor: 'pointer', transition: 'transform 0.1s' }}
                         onClick={() => adjustCount(key, 1)}
                         onContextMenu={e => { e.preventDefault(); adjustCount(key, -1) }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; showPreview(card, e) }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; hidePreview() }}
                         title={`${card.card_name} · ${count}/${MAX_COPIES} — click +1, right-click −1`}
                       >
                         <img
@@ -555,8 +563,25 @@ export default function DeckBuilder({ session }) {
     </div>
   )
 
+  const previewEl = hoverPreview && (() => {
+    const { imageUrl, name, rect } = hoverPreview
+    const W = 210
+    const MARGIN = 14
+    const imgH = W * 1.4
+    let left = rect.right + MARGIN
+    if (left + W > window.innerWidth - 10) left = rect.left - W - MARGIN
+    let top = rect.top + rect.height / 2 - imgH / 2
+    top = Math.max(10, Math.min(top, window.innerHeight - imgH - 10))
+    return (
+      <div style={{ position: 'fixed', left, top, zIndex: 9999, pointerEvents: 'none', width: W, background: 'rgba(12,8,20,0.95)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.8)', padding: 6 }}>
+        <img src={imageUrl} alt={name} style={{ width: '100%', borderRadius: 8, display: 'block' }} />
+      </div>
+    )
+  })()
+
   return (
     <div>
+      {previewEl}
       {importModal}
 
       {isMobile ? (
