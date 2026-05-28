@@ -440,12 +440,12 @@ export default function LogResult({ session }) {
                 <label style={labelStyle}>Tournament Name <span style={{ color: '#3d2d6e', fontWeight: 400 }}>(if no series)</span></label>
                 <input type="text" placeholder="e.g. One-off event" value={selectedSeries ? selectedSeries.name : tournamentName} onChange={e => setTournamentName(e.target.value)} disabled={!!selectedSeries} style={{ ...inputStyle, opacity: selectedSeries ? 0.5 : 1 }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
                   <label style={labelStyle}>Date</label>
-                  <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
+                  <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...inputStyle, WebkitAppearance: 'none', maxWidth: '100%' }} />
                 </div>
-                <div style={{ minWidth: 0 }}>
+                <div style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
                   <label style={labelStyle}>Players</label>
                   <input type="number" placeholder="e.g. 32" value={playerCount} onChange={e => setPlayerCount(e.target.value)} style={inputStyle} />
                 </div>
