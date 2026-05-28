@@ -183,9 +183,9 @@ function ToggleGroup({ label, value, onChange, options }) {
 
 function RoundRow({ round, index, onChange, onRemove }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.05)' }}>
+    <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: 10, padding: 14, border: '1px solid rgba(139,92,246,0.12)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>Round {index + 1}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', letterSpacing: '0.2px' }}>Round {index + 1}</div>
         <button onClick={() => onRemove(index)} style={{ background: 'none', border: 'none', color: '#3d2d6e', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
       </div>
 
@@ -378,61 +378,97 @@ export default function LogResult({ session }) {
   }
 
   const storesForDisplay = stores.map(s => ({ ...s, sublabel: [s.city, s.state].filter(Boolean).join(', ') }))
+  const pad = isMobile ? 16 : 24
+
+  const leaderCardPanel = (
+    <div style={isMobile
+      ? { background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 14, padding: 14, marginBottom: 14 }
+      : { background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, position: 'sticky', top: 70 }
+    }>
+      <div style={sectionTitle}>Your Leader Card</div>
+      {leaderResult ? (
+        isMobile ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src={leaderResult.card_image ?? getCardImageUrl(leaderResult.card_set_id)} alt={leaderResult.card_name} style={{ width: 52, borderRadius: 6, border: `1px solid ${COLORS[leaderResult.card_color] ?? 'rgba(255,255,255,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.3' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leaderResult.card_name}</div>
+              <div style={{ fontSize: 11, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 2 }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
+            </div>
+            <button onClick={() => setLeaderResult(null)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#7c6fa0', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit', padding: '4px 10px', flexShrink: 0 }}>Change</button>
+          </div>
+        ) : (
+          <div>
+            <img src={leaderResult.card_image ?? getCardImageUrl(leaderResult.card_set_id)} alt={leaderResult.card_name} style={{ width: '100%', borderRadius: 10, marginBottom: 12, border: '1px solid rgba(255,255,255,0.08)' }} />
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{leaderResult.card_name}</div>
+            <div style={{ fontSize: 12, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 3 }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
+            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 6 }}>Power: {leaderResult.card_power} · Life: {leaderResult.life}</div>
+            <button onClick={() => setLeaderResult(null)} style={{ marginTop: 10, fontSize: 11, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>← Change leader</button>
+          </div>
+        )
+      ) : (
+        <LeaderSearchInput
+          placeholder="Search your leader..."
+          onSelect={setLeaderResult}
+          selected={null}
+          onClear={() => setLeaderResult(null)}
+        />
+      )}
+    </div>
+  )
 
   return (
     <div>
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: isMobile ? '1rem' : '1.5rem' }}>
         <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Record</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Log Tournament Result</div>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Add a locals or major event to your history</div>
+        <div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Log Tournament Result</div>
+        {!isMobile && <div style={{ fontSize: 13, color: '#7c6fa0' }}>Add a locals or major event to your history</div>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {isMobile && leaderCardPanel}
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
           {/* Tournament Info */}
-          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: pad }}>
             <div style={sectionTitle}>Tournament Info</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <SearchableSelect label="Store / Venue" placeholder="Search or create a store..." items={storesForDisplay} selected={selectedStore} onSelect={setSelectedStore} onCreateNew={createStore} createLabel="Create store" sublabel="sublabel" />
               <SearchableSelect label="Tournament Series" placeholder="Search or create a series..." items={series} selected={selectedSeries} onSelect={setSelectedSeries} onCreateNew={createSeries} createLabel="Create series" />
+              <div>
+                <label style={labelStyle}>Tournament Name <span style={{ color: '#3d2d6e', fontWeight: 400 }}>(if no series)</span></label>
+                <input type="text" placeholder="e.g. One-off event" value={selectedSeries ? selectedSeries.name : tournamentName} onChange={e => setTournamentName(e.target.value)} disabled={!!selectedSeries} style={{ ...inputStyle, opacity: selectedSeries ? 0.5 : 1 }} />
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={labelStyle}>Tournament Name <span style={{ color: '#3d2d6e', fontWeight: 400 }}>(if no series)</span></label>
-                  <input type="text" placeholder="e.g. One-off event" value={selectedSeries ? selectedSeries.name : tournamentName} onChange={e => setTournamentName(e.target.value)} disabled={!!selectedSeries} style={{ ...inputStyle, opacity: selectedSeries ? 0.5 : 1 }} />
-                </div>
                 <div>
                   <label style={labelStyle}>Date</label>
                   <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
                 </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={labelStyle}>Player Count</label>
+                  <label style={labelStyle}>Players</label>
                   <input type="number" placeholder="e.g. 32" value={playerCount} onChange={e => setPlayerCount(e.target.value)} style={inputStyle} />
                 </div>
-                <div>
-                  <label style={labelStyle}>Final Placement</label>
-                  <input type="number" placeholder="e.g. 1" value={placement} onChange={e => setPlacement(e.target.value)} style={inputStyle} />
-                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Final Placement</label>
+                <input type="number" placeholder="e.g. 1" value={placement} onChange={e => setPlacement(e.target.value)} style={inputStyle} />
               </div>
             </div>
           </div>
 
           {/* Rounds */}
-          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={sectionTitle}>Rounds</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ fontSize: 13, fontFamily: 'monospace', color: '#7c6fa0' }}>
-                  <span style={{ color: '#34d399', fontWeight: 700 }}>{wins}W</span>
-                  {' · '}
-                  <span style={{ color: '#f05252', fontWeight: 700 }}>{losses}L</span>
-                </div>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: pad }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ ...sectionTitle, marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>Rounds</div>
+              <div style={{ fontSize: 13, fontFamily: 'monospace' }}>
+                <span style={{ color: '#34d399', fontWeight: 700 }}>{wins}W</span>
+                <span style={{ color: '#7c6fa0' }}> · </span>
+                <span style={{ color: '#f05252', fontWeight: 700 }}>{losses}L</span>
               </div>
             </div>
+            <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 14 }} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {rounds.map((round, i) => (
                 <RoundRow key={i} round={round} index={i} onChange={updateRound} onRemove={removeRound} />
               ))}
@@ -440,7 +476,7 @@ export default function LogResult({ session }) {
 
             <button
               onClick={addRound}
-              style={{ marginTop: 12, width: '100%', padding: '10px', borderRadius: 8, border: '1px dashed rgba(255,255,255,0.12)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
+              style={{ marginTop: 10, width: '100%', padding: '10px', borderRadius: 8, border: '1px dashed rgba(255,255,255,0.12)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.color = '#8b5cf6' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#7c6fa0' }}
             >
@@ -449,7 +485,7 @@ export default function LogResult({ session }) {
           </div>
 
           {/* Decklist */}
-          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: pad }}>
             <div style={sectionTitle}>Decklist</div>
 
             {attachedDecklist ? (
@@ -464,19 +500,16 @@ export default function LogResult({ session }) {
               </div>
             ) : (
               <>
-                {/* Attach from account */}
                 <button onClick={() => setSelectingDecklist(true)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 14 }}>
                   Attach Decklist From Account
                 </button>
 
-                {/* Divider */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#3d2d6e' }}>or</div>
                   <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
                 </div>
 
-                {/* Manual paste */}
                 <div style={{ marginBottom: 12 }}>
                   <label style={labelStyle}>Deck Name</label>
                   <input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} />
@@ -521,7 +554,7 @@ export default function LogResult({ session }) {
           </div>
 
           {/* Notes */}
-          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24 }}>
+          <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: pad }}>
             <div style={sectionTitle}>Notes</div>
             <textarea placeholder="Tournament notes, meta observations..." value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} />
           </div>
@@ -530,32 +563,12 @@ export default function LogResult({ session }) {
             <div style={{ fontSize: 13, color: '#f05252', background: 'rgba(240,82,82,0.08)', border: '1px solid rgba(240,82,82,0.2)', borderRadius: 8, padding: '10px 14px' }}>{error}</div>
           )}
 
-          <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: saving ? '#5b21b6' : '#8b5cf6', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: isMobile ? 14 : 12, borderRadius: 10, border: 'none', background: saving ? '#5b21b6' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
             {saving ? 'Saving...' : 'Save Result'}
           </button>
         </div>
 
-        {/* RIGHT — leader lookup */}
-        <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, position: 'sticky', top: 70 }}>
-          <div style={sectionTitle}>Your Leader Card</div>
-
-          {leaderResult ? (
-            <div>
-              <img src={leaderResult.card_image ?? getCardImageUrl(leaderResult.card_set_id)} alt={leaderResult.card_name} style={{ width: '100%', borderRadius: 10, marginBottom: 12, border: '1px solid rgba(255,255,255,0.08)' }} />
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{leaderResult.card_name}</div>
-              <div style={{ fontSize: 12, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 3 }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
-              <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 6 }}>Power: {leaderResult.card_power} · Life: {leaderResult.life}</div>
-              <button onClick={() => setLeaderResult(null)} style={{ marginTop: 10, fontSize: 11, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>← Change leader</button>
-            </div>
-          ) : (
-            <LeaderSearchInput
-              placeholder="Search your leader..."
-              onSelect={setLeaderResult}
-              selected={null}
-              onClear={() => setLeaderResult(null)}
-            />
-          )}
-        </div>
+        {!isMobile && leaderCardPanel}
       </div>
       {selectingDecklist && (
         <SelectDecklistModal
