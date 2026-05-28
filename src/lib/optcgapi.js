@@ -204,6 +204,19 @@ export async function searchLeaders(query) {
     }
   }
 
+  // Fetch all art variants (parallel, SP, alt art, etc.) for each unique card_set_id
+  async function fetchVariants(cards) {
+    const uniqueIds = [...new Set(cards.map(c => c.card_set_id).filter(Boolean))]
+    await Promise.all(
+      uniqueIds.map(async id => {
+        try {
+          const res = await fetch(`${BASE}/sets/card/${id}/`)
+          if (res.ok) (await res.json() ?? []).forEach(addResult)
+        } catch {}
+      })
+    )
+  }
+
   const stCards = await getSTCards()
 
   if (looksLikeCardId(q)) {
@@ -213,15 +226,16 @@ export async function searchLeaders(query) {
     try {
       const exactRes = await fetch(`${BASE}/sets/card/${normalizedId}/`)
       if (exactRes.ok) {
-        const exactData = await exactRes.json()
-        if (exactData?.[0]) {
-          addResult(exactData[0])
+        const exactData = await exactRes.json() ?? []
+        exactData.forEach(addResult) // all art variants of the exact ID
+        if (exactData[0]) {
           const cardName = exactData[0].card_name
           const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(cardName)}&card_type=Leader`)
           if (nameRes.ok) {
-            const nameData = await nameRes.json()
-            ;(nameData ?? []).filter(c => c.card_set_id.startsWith(setPrefix)).forEach(addResult)
-            ;(nameData ?? []).filter(c => !c.card_set_id.startsWith(setPrefix)).forEach(addResult)
+            const nameData = await nameRes.json() ?? []
+            nameData.filter(c => c.card_set_id.startsWith(setPrefix)).forEach(addResult)
+            nameData.filter(c => !c.card_set_id.startsWith(setPrefix)).forEach(addResult)
+            await fetchVariants(nameData)
           }
         }
       }
@@ -237,7 +251,11 @@ export async function searchLeaders(query) {
 
     try {
       const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(q)}&card_type=Leader`)
-      if (nameRes.ok) (await nameRes.json() ?? []).forEach(addResult)
+      if (nameRes.ok) {
+        const nameData = await nameRes.json() ?? []
+        nameData.forEach(addResult)
+        await fetchVariants(nameData) // fetch alt arts for each result
+      }
     } catch {}
 
     stCards
