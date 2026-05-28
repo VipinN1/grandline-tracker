@@ -10,6 +10,7 @@ const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a7
 const inputStyle = {
   width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)',
   borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit',
+  boxSizing: 'border-box',
 }
 
 const labelStyle = {
@@ -440,11 +441,11 @@ export default function LogResult({ session }) {
                 <input type="text" placeholder="e.g. One-off event" value={selectedSeries ? selectedSeries.name : tournamentName} onChange={e => setTournamentName(e.target.value)} disabled={!!selectedSeries} style={{ ...inputStyle, opacity: selectedSeries ? 0.5 : 1 }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <label style={labelStyle}>Date</label>
                   <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
                 </div>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <label style={labelStyle}>Players</label>
                   <input type="number" placeholder="e.g. 32" value={playerCount} onChange={e => setPlayerCount(e.target.value)} style={inputStyle} />
                 </div>
