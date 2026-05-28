@@ -8,7 +8,7 @@ import { useWindowSize } from '../hooks/useWindowSize'
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
 const inputStyle = {
-  width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+  width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)',
   borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit',
 }
 
@@ -54,7 +54,7 @@ function SearchableSelect({ label, placeholder, items, selected, onSelect, onCre
     <div ref={ref} style={{ position: 'relative' }}>
       <label style={labelStyle}>{label}</label>
       {selected ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15,8,30,0.95)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '9px 12px' }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected[displayKey]}</div>
             {sublabel && selected[sublabel] && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>{selected[sublabel]}</div>}
@@ -65,7 +65,7 @@ function SearchableSelect({ label, placeholder, items, selected, onSelect, onCre
         <>
           <input type="text" placeholder={placeholder} value={query} onChange={e => { setQuery(e.target.value); setOpen(true) }} onFocus={() => setOpen(true)} style={inputStyle} />
           {open && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(10,5,22,0.97)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, marginTop: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
               {filtered.length > 0 && (
                 <div style={{ maxHeight: 200, overflowY: 'auto' }}>
                   {filtered.map(item => (
@@ -123,7 +123,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
     return (
       <div>
         {label && <label style={labelStyle}>{label}</label>}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '8px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(15,8,30,0.95)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '8px 12px' }}>
           <img src={getCardImageUrl(selected.card_set_id)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected.card_name}</div>
@@ -140,7 +140,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
       {label && <label style={labelStyle}>{label}</label>}
       <input type="text" placeholder={placeholder ?? 'Search leader...'} value={query} onChange={handleChange} onFocus={() => query.length >= 2 && setOpen(true)} style={inputStyle} />
       {open && query.length >= 2 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 280, overflowY: 'auto' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(10,5,22,0.97)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.6)', maxHeight: 280, overflowY: 'auto' }}>
           {searching ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
             : results.length === 0 ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#3d2d6e' }}>No leaders found</div>
             : results.map(card => (
