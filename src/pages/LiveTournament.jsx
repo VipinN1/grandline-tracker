@@ -130,11 +130,27 @@ function SetupScreen({ session, onStart }) {
     setError('')
     if (!leader) return setError('Please select your leader')
     if (!name.trim() && !selectedSeries) return setError('Please enter a tournament name or select a series')
-    setSaving(true)
 
     const finalName = selectedSeries?.name ?? name.trim()
     const storeLocation = selectedStore ? [selectedStore.name, selectedStore.city, selectedStore.state].filter(Boolean).join(', ') : location
 
+    if (!session) {
+      onStart({
+        id: `guest-${Date.now()}`,
+        name: finalName,
+        date,
+        location: storeLocation,
+        player_count: playerCount ? parseInt(playerCount) : null,
+        leader_id: leader.card_set_id,
+        leader_name: leader.card_name,
+        leader_color: leader.card_color,
+        deck_name: deckName || `${leader.card_name} Deck`,
+        status: 'active',
+      })
+      return
+    }
+
+    setSaving(true)
     const { data, error: err } = await supabase.from('live_tournaments').insert({
       user_id: session.user.id,
       name: finalName,
@@ -250,7 +266,7 @@ function SetupScreen({ session, onStart }) {
   )
 }
 
-function RoundLogger({ tournament, rounds, onRoundLogged }) {
+function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
   const [oppLeader, setOppLeader] = useState(null)
   const [wonDice, setWonDice] = useState(null)
   const [wentFirst, setWentFirst] = useState(null)
@@ -265,6 +281,24 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
     setError('')
     if (!result) return setError('Please select a result')
     setSaving(true)
+
+    if (!session) {
+      onRoundLogged({
+        id: `guest-round-${Date.now()}`,
+        tournament_id: tournament.id,
+        round_number: roundNumber,
+        opponent_leader_id: oppLeader?.card_set_id ?? null,
+        opponent_leader_name: oppLeader?.card_name ?? null,
+        opponent_leader_color: oppLeader?.card_color ?? null,
+        won_dice_roll: wonDice,
+        went_first: wentFirst,
+        result,
+        notes: notes.trim(),
+      })
+      setOppLeader(null); setWonDice(null); setWentFirst(null); setResult(null); setNotes('')
+      setSaving(false)
+      return
+    }
 
     const { data, error: err } = await supabase.from('live_rounds').insert({
       tournament_id: tournament.id,
@@ -473,9 +507,11 @@ function ActiveTournament({ tournament, session, onFinish }) {
                         <div style={{ display: 'flex', gap: 8 }}>
                 <button
                     onClick={async () => {
-                    if (!confirm('Cancel this tournament? All round data will be deleted.')) return
-                    await supabase.from('live_rounds').delete().eq('tournament_id', tournament.id)
-                    await supabase.from('live_tournaments').delete().eq('id', tournament.id)
+                    if (!confirm('Cancel this tournament? All round data will be lost.')) return
+                    if (session) {
+                      await supabase.from('live_rounds').delete().eq('tournament_id', tournament.id)
+                      await supabase.from('live_tournaments').delete().eq('id', tournament.id)
+                    }
                     onFinish()
                     }}
                     style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -508,7 +544,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
-        <RoundLogger tournament={tournament} rounds={rounds} onRoundLogged={r => setRounds(prev => [...prev, r])} />
+        <RoundLogger tournament={tournament} rounds={rounds} onRoundLogged={r => setRounds(prev => [...prev, r])} session={session} />
         <RoundHistory rounds={rounds} />
       </div>
 
@@ -516,47 +552,62 @@ function ActiveTournament({ tournament, session, onFinish }) {
         <div onClick={() => setShowFinishConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: 24, width: 360 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 8 }}>Finish Tournament?</div>
-            <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 20 }}>
-              This will save your result ({wins}W - {losses}L) to your tournament history. Enter your final placement.
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Final Placement</label>
-              <input
-                id="placement-input"
-                type="number"
-                placeholder="e.g. 1 for 1st place"
-                style={inputStyle}
-              />
-            </div>
+            {session ? (
+              <>
+                <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 20 }}>
+                  This will save your result ({wins}W - {losses}L) to your tournament history. Enter your final placement.
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>Final Placement</label>
+                  <input
+                    id="placement-input"
+                    type="number"
+                    placeholder="e.g. 1 for 1st place"
+                    style={inputStyle}
+                  />
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 20, lineHeight: 1.6 }}>
+                Great run! Final record: <span style={{ color: '#f0f2f5', fontWeight: 700 }}>{wins}W - {losses}L</span>.
+                <br />
+                <span style={{ color: '#a78bfa' }}>Sign up for a free account</span> to save results to your tournament history.
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowFinishConfirm(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={() => setShowFinishConfirm(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Back</button>
               <button
                 onClick={async () => {
-                  const val = parseInt(document.getElementById('placement-input').value)
-                  if (!val || isNaN(val)) return
-                  setShowFinishConfirm(false)
-                  setFinishing(true)
-                  await supabase.from('tournaments').insert({
-                    user_id: session.user.id,
-                    name: tournament.name,
-                    date: tournament.date,
-                    location: tournament.location,
-                    player_count: tournament.player_count,
-                    placement: val,
-                    wins,
-                    losses,
-                    leader_id: tournament.leader_id,
-                    leader_name: tournament.leader_name,
-                    leader_color: tournament.leader_color,
-                    deck_name: tournament.deck_name,
-                  })
-                  await supabase.from('live_tournaments').update({ status: 'finished' }).eq('id', tournament.id)
-                  setFinishing(false)
-                  onFinish()
+                  if (session) {
+                    const val = parseInt(document.getElementById('placement-input').value)
+                    if (!val || isNaN(val)) return
+                    setShowFinishConfirm(false)
+                    setFinishing(true)
+                    await supabase.from('tournaments').insert({
+                      user_id: session.user.id,
+                      name: tournament.name,
+                      date: tournament.date,
+                      location: tournament.location,
+                      player_count: tournament.player_count,
+                      placement: val,
+                      wins,
+                      losses,
+                      leader_id: tournament.leader_id,
+                      leader_name: tournament.leader_name,
+                      leader_color: tournament.leader_color,
+                      deck_name: tournament.deck_name,
+                    })
+                    await supabase.from('live_tournaments').update({ status: 'finished' }).eq('id', tournament.id)
+                    setFinishing(false)
+                    onFinish()
+                  } else {
+                    setShowFinishConfirm(false)
+                    onFinish()
+                  }
                 }}
                 style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
               >
-                {finishing ? 'Saving...' : 'Save & Finish'}
+                {finishing ? 'Saving...' : session ? 'Save & Finish' : 'Finish'}
               </button>
             </div>
           </div>
@@ -572,6 +623,7 @@ export default function LiveTournament({ session }) {
   const navigate = useNavigate()
 
   useEffect(() => {
+    if (!session) { setLoading(false); return }
     async function checkActive() {
       const { data } = await supabase.from('live_tournaments').select('*').eq('user_id', session.user.id).eq('status', 'active').order('created_at', { ascending: false }).limit(1).single()
       if (data) setActiveTournament(data)
@@ -589,7 +641,7 @@ export default function LiveTournament({ session }) {
   }
 
   if (activeTournament) {
-    return <ActiveTournament tournament={activeTournament} session={session} onFinish={() => { setActiveTournament(null); navigate('/dashboard') }} />
+    return <ActiveTournament tournament={activeTournament} session={session} onFinish={() => { setActiveTournament(null); if (session) navigate('/dashboard') }} />
   }
 
   return <SetupScreen session={session} onStart={setActiveTournament} />

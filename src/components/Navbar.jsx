@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
@@ -52,7 +52,7 @@ function liveTabStyle(isActive) {
   }
 }
 
-const NAV_LINKS = [
+const AUTH_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/log', label: 'Log Result' },
   { to: '/decklists', label: 'Decklists' },
@@ -63,7 +63,12 @@ const NAV_LINKS = [
   { to: '/deck-builder', label: 'Deck Builder' },
 ]
 
+const LIVE_DOT = (
+  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
+)
+
 export default function Navbar({ session }) {
+  const navigate = useNavigate()
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [unreadMktCount, setUnreadMktCount] = useState(0)
@@ -124,11 +129,11 @@ export default function Navbar({ session }) {
   return (
     <>
       <nav style={{ background: 'rgba(12,8,20,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(139,92,246,0.12)', padding: '0 1.5rem', height: 52, display: 'flex', alignItems: 'center', gap: 4, position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={LOGO_STYLE}>PirateTracker</div>
+        <NavLink to="/" style={{ ...LOGO_STYLE, textDecoration: 'none' }}>PirateTracker</NavLink>
 
         {isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-            {avatarEl}
+            {session && avatarEl}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               style={{ background: 'none', border: 'none', color: '#f0f2f5', fontSize: 22, cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
@@ -137,10 +142,10 @@ export default function Navbar({ session }) {
               {menuOpen ? '✕' : '☰'}
             </button>
           </div>
-        ) : (
+        ) : session ? (
           <>
             <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-              {NAV_LINKS.map(link => (
+              {AUTH_LINKS.map(link => (
                 <NavLink key={link.to} to={link.to} style={({ isActive }) => tabStyle(isActive)}>
                   <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     {link.label}
@@ -153,7 +158,7 @@ export default function Navbar({ session }) {
                 </NavLink>
               ))}
               <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
+                {LIVE_DOT}
                 Live
               </NavLink>
             </div>
@@ -164,61 +169,124 @@ export default function Navbar({ session }) {
               </button>
             </div>
           </>
+        ) : (
+          <>
+            <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <NavLink to="/deck-builder" style={({ isActive }) => tabStyle(isActive)}>Deck Builder</NavLink>
+              <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
+                {LIVE_DOT}
+                Live
+              </NavLink>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+              <button onClick={() => navigate('/login')} style={{ fontSize: 13, fontWeight: 600, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '5px 10px' }}>
+                Log In
+              </button>
+              <button onClick={() => navigate('/signup')} style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '6px 14px', borderRadius: 8 }}>
+                Sign Up
+              </button>
+            </div>
+          </>
         )}
       </nav>
 
       {isMobile && menuOpen && (
         <div style={{ position: 'fixed', top: 52, left: 0, right: 0, bottom: 0, background: '#0c0814', zIndex: 49, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          {NAV_LINKS.map(link => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              onClick={() => setMenuOpen(false)}
-              style={({ isActive }) => ({
-                fontSize: 16,
-                fontWeight: 600,
-                padding: '16px 24px',
-                color: isActive ? '#a78bfa' : '#f0f2f5',
-                textDecoration: 'none',
-                borderBottom: '1px solid rgba(139,92,246,0.08)',
-                background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              })}
-            >
-              {link.label}
-              {link.to === '/marketplace' && unreadMktCount > 0 && (
-                <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
-                  {unreadMktCount > 9 ? '9+' : unreadMktCount}
-                </span>
-              )}
-            </NavLink>
-          ))}
-          <NavLink
-            to="/live"
-            onClick={() => setMenuOpen(false)}
-            style={({ isActive }) => ({
-              fontSize: 16,
-              fontWeight: 600,
-              padding: '16px 24px',
-              color: '#34d399',
-              textDecoration: 'none',
-              borderBottom: '1px solid rgba(139,92,246,0.08)',
-              background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            })}
-          >
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite' }} />
-            Live
-          </NavLink>
-          <div style={{ padding: '16px 24px', marginTop: 'auto', borderTop: '1px solid rgba(139,92,246,0.08)' }}>
-            <button onClick={handleSignOut} style={{ fontSize: 15, fontWeight: 600, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
-              Sign out
-            </button>
-          </div>
+          {session ? (
+            <>
+              {AUTH_LINKS.map(link => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMenuOpen(false)}
+                  style={({ isActive }) => ({
+                    fontSize: 16,
+                    fontWeight: 600,
+                    padding: '16px 24px',
+                    color: isActive ? '#a78bfa' : '#f0f2f5',
+                    textDecoration: 'none',
+                    borderBottom: '1px solid rgba(139,92,246,0.08)',
+                    background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  })}
+                >
+                  {link.label}
+                  {link.to === '/marketplace' && unreadMktCount > 0 && (
+                    <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                      {unreadMktCount > 9 ? '9+' : unreadMktCount}
+                    </span>
+                  )}
+                </NavLink>
+              ))}
+              <NavLink
+                to="/live"
+                onClick={() => setMenuOpen(false)}
+                style={({ isActive }) => ({
+                  fontSize: 16,
+                  fontWeight: 600,
+                  padding: '16px 24px',
+                  color: '#34d399',
+                  textDecoration: 'none',
+                  borderBottom: '1px solid rgba(139,92,246,0.08)',
+                  background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                })}
+              >
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite' }} />
+                Live
+              </NavLink>
+              <div style={{ padding: '16px 24px', marginTop: 'auto', borderTop: '1px solid rgba(139,92,246,0.08)' }}>
+                <button onClick={handleSignOut} style={{ fontSize: 15, fontWeight: 600, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                  Sign out
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <NavLink
+                to="/deck-builder"
+                onClick={() => setMenuOpen(false)}
+                style={({ isActive }) => ({
+                  fontSize: 16, fontWeight: 600, padding: '16px 24px', color: isActive ? '#a78bfa' : '#f0f2f5',
+                  textDecoration: 'none', borderBottom: '1px solid rgba(139,92,246,0.08)',
+                  background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
+                })}
+              >
+                Deck Builder
+              </NavLink>
+              <NavLink
+                to="/live"
+                onClick={() => setMenuOpen(false)}
+                style={({ isActive }) => ({
+                  fontSize: 16, fontWeight: 600, padding: '16px 24px', color: '#34d399',
+                  textDecoration: 'none', borderBottom: '1px solid rgba(139,92,246,0.08)',
+                  background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                })}
+              >
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite' }} />
+                Live
+              </NavLink>
+              <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(139,92,246,0.08)', marginTop: 'auto' }}>
+                <button
+                  onClick={() => { setMenuOpen(false); navigate('/signup') }}
+                  style={{ padding: '11px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Sign Up Free
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); navigate('/login') }}
+                  style={{ padding: '11px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Log In
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </>

@@ -192,6 +192,7 @@ export default function DeckBuilder({ session }) {
   }
 
   async function handleSave() {
+    if (!session) { navigate('/login'); return }
     if (!deckName.trim()) { setError('Enter a deck name.'); return }
     if (!leader) { setError('Select a leader first.'); return }
     setSaving(true); setError('')
@@ -520,7 +521,7 @@ export default function DeckBuilder({ session }) {
           <button onClick={exportDeck} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Export</button>
           <button onClick={() => setShowImport(true)} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Import</button>
           <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '8px 6px', borderRadius: 8, border: 'none', background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: saving ? '#7c6fa0' : '#fff', fontSize: 12, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
-            {saving ? 'Saving...' : saveMsg || 'Save Deck'}
+            {saving ? 'Saving...' : saveMsg || (session ? 'Save Deck' : 'Sign in to Save')}
           </button>
         </div>
         {error && <div style={{ fontSize: 11, color: '#f05252' }}>{error}</div>}

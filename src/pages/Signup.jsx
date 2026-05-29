@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const inputStyle = {
@@ -21,7 +22,8 @@ const labelStyle = {
   display: 'block',
 }
 
-export default function Signup({ onSwitch }) {
+export default function Signup() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
@@ -69,7 +71,7 @@ export default function Signup({ onSwitch }) {
           <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5', marginBottom: 8 }}>Check your email</div>
           <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 24 }}>We sent a confirmation link to <span style={{ color: '#f0f2f5' }}>{email}</span>. Click it to activate your account.</div>
-          <button onClick={onSwitch} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
+          <button onClick={() => navigate('/login')} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
             Back to sign in
           </button>
         </div>
@@ -149,7 +151,7 @@ export default function Signup({ onSwitch }) {
 
         <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#7c6fa0' }}>
           Already have an account?{' '}
-          <button onClick={onSwitch} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
+          <button onClick={() => navigate('/login')} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
             Sign in
           </button>
         </div>

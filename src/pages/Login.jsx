@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const inputStyle = {
@@ -21,7 +22,8 @@ const labelStyle = {
   display: 'block',
 }
 
-export default function Login({ onSwitch }) {
+export default function Login() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -88,7 +90,7 @@ export default function Login({ onSwitch }) {
 
         <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#7c6fa0' }}>
           Don't have an account?{' '}
-          <button onClick={onSwitch} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
+          <button onClick={() => navigate('/signup')} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600 }}>
             Sign up
           </button>
         </div>
