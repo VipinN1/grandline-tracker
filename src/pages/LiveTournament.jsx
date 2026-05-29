@@ -583,7 +583,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
                     if (!val || isNaN(val)) return
                     setShowFinishConfirm(false)
                     setFinishing(true)
-                    await supabase.from('tournaments').insert({
+                    const { data: savedTournament } = await supabase.from('tournaments').insert({
                       user_id: session.user.id,
                       name: tournament.name,
                       date: tournament.date,
@@ -596,7 +596,21 @@ function ActiveTournament({ tournament, session, onFinish }) {
                       leader_name: tournament.leader_name,
                       leader_color: tournament.leader_color,
                       deck_name: tournament.deck_name,
-                    })
+                    }).select().single()
+                    if (savedTournament && rounds.length > 0) {
+                      await supabase.from('tournament_rounds').insert(
+                        rounds.map(r => ({
+                          tournament_id: savedTournament.id,
+                          round_number: r.round_number,
+                          opponent_leader_id: r.opponent_leader_id ?? null,
+                          opponent_leader_name: r.opponent_leader_name ?? null,
+                          opponent_leader_color: r.opponent_leader_color ?? null,
+                          won_dice_roll: r.won_dice_roll,
+                          went_first: r.went_first,
+                          result: r.result,
+                        }))
+                      )
+                    }
                     await supabase.from('live_tournaments').update({ status: 'finished' }).eq('id', tournament.id)
                     setFinishing(false)
                     onFinish()
