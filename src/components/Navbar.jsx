@@ -173,6 +173,8 @@ export default function Navbar({ session }) {
           <>
             <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
               <NavLink to="/deck-builder" style={({ isActive }) => tabStyle(isActive)}>Deck Builder</NavLink>
+              <NavLink to="/community" style={({ isActive }) => tabStyle(isActive)}>Community</NavLink>
+              <NavLink to="/marketplace" style={({ isActive }) => tabStyle(isActive)}>Market</NavLink>
               <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
                 {LIVE_DOT}
                 Live
@@ -247,17 +249,24 @@ export default function Navbar({ session }) {
             </>
           ) : (
             <>
-              <NavLink
-                to="/deck-builder"
-                onClick={() => setMenuOpen(false)}
-                style={({ isActive }) => ({
-                  fontSize: 16, fontWeight: 600, padding: '16px 24px', color: isActive ? '#a78bfa' : '#f0f2f5',
-                  textDecoration: 'none', borderBottom: '1px solid rgba(139,92,246,0.08)',
-                  background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
-                })}
-              >
-                Deck Builder
-              </NavLink>
+              {[
+                { to: '/deck-builder', label: 'Deck Builder' },
+                { to: '/community', label: 'Community' },
+                { to: '/marketplace', label: 'Market' },
+              ].map(link => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMenuOpen(false)}
+                  style={({ isActive }) => ({
+                    fontSize: 16, fontWeight: 600, padding: '16px 24px', color: isActive ? '#a78bfa' : '#f0f2f5',
+                    textDecoration: 'none', borderBottom: '1px solid rgba(139,92,246,0.08)',
+                    background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
+                  })}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
               <NavLink
                 to="/live"
                 onClick={() => setMenuOpen(false)}

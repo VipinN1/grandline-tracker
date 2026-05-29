@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
@@ -214,6 +215,7 @@ function DeckPanel({ decklist }) {
 }
 
 function CommentBox({ comment, session, depth = 0 }) {
+  const navigate = useNavigate()
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [liked, setLiked] = useState(false)
@@ -237,7 +239,7 @@ function CommentBox({ comment, session, depth = 0 }) {
   }, [comment.id])
 
   async function toggleLike() {
-    if (!session) return
+    if (!session) { navigate('/login'); return }
     if (liked) {
       await supabase.from('comment_likes').delete().match({ user_id: session.user.id, comment_id: comment.id })
       await supabase.rpc('decrement_comment_likes', { comment_id: comment.id })
@@ -273,7 +275,7 @@ function CommentBox({ comment, session, depth = 0 }) {
           </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 4, paddingLeft: 2, alignItems: 'center' }}>
             <button onClick={toggleLike} style={{ fontSize: 11, fontWeight: 600, color: liked ? '#ec4899' : '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>♥ {likes}</button>
-            {depth < 2 && <button onClick={() => setShowReply(!showReply)} style={{ fontSize: 11, fontWeight: 600, color: showReply ? '#8b5cf6' : '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>{showReply ? 'Cancel' : 'Reply'}</button>}
+            {depth < 2 && <button onClick={() => session ? setShowReply(!showReply) : navigate('/login')} style={{ fontSize: 11, fontWeight: 600, color: showReply ? '#8b5cf6' : '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>{showReply ? 'Cancel' : 'Reply'}</button>}
             <span style={{ fontSize: 11, color: '#3d2d6e' }}>{new Date(comment.created_at).toLocaleDateString()}</span>
           </div>
           {showReply && (
@@ -294,6 +296,7 @@ function CommentBox({ comment, session, depth = 0 }) {
 }
 
 function PostCard({ post, session, onProfileClick }) {
+  const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
   const [liked, setLiked] = useState(false)
   const [likes, setLikes] = useState(post.likes ?? 0)
@@ -332,7 +335,7 @@ function PostCard({ post, session, onProfileClick }) {
   }
 
   async function toggleLike() {
-    if (!session) return
+    if (!session) { navigate('/login'); return }
     if (liked) {
       await supabase.from('post_likes').delete().match({ user_id: session.user.id, post_id: post.id })
       await supabase.rpc('decrement_post_likes', { post_id: post.id })
@@ -387,13 +390,20 @@ function PostCard({ post, session, onProfileClick }) {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-          {myInitials}
+      {session ? (
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+            {myInitials}
+          </div>
+          <input type="text" placeholder="Write a comment..." value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submitComment()} style={{ flex: 1, background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '7px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+          <button onClick={submitComment} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Post</button>
         </div>
-        <input type="text" placeholder="Write a comment..." value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submitComment()} style={{ flex: 1, background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '7px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-        <button onClick={submitComment} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Post</button>
-      </div>
+      ) : (
+        <div style={{ marginTop: 12, fontSize: 12, color: '#3d2d6e' }}>
+          <button onClick={() => navigate('/login')} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 0 }}>Sign in</button>
+          {' '}to like and comment
+        </div>
+      )}
 
       {showComments && (
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
@@ -605,6 +615,7 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
 }
 
 export default function Community({ session }) {
+  const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -635,7 +646,11 @@ export default function Community({ session }) {
             <button key={f} onClick={() => setFilter(f)} style={{ fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: filter === f ? '#8b5cf6' : 'transparent', color: filter === f ? '#fff' : '#7c6fa0', transition: 'all 0.1s', textTransform: 'capitalize' }}>{f}</button>
           ))}
         </div>
-        <button onClick={() => setShowCreate(true)} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit' }}>+ Create Post</button>
+        {session ? (
+          <button onClick={() => setShowCreate(true)} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit' }}>+ Create Post</button>
+        ) : (
+          <button onClick={() => navigate('/login')} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', fontFamily: 'inherit' }}>Sign in to post</button>
+        )}
       </div>
 
       {loading ? (

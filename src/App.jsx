@@ -77,13 +77,13 @@ export default function App() {
           <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Home />} />
           <Route path="/deck-builder" element={<DeckBuilder session={session} />} />
           <Route path="/live" element={<LiveTournament session={session} />} />
+          <Route path="/community" element={<Community session={session} />} />
+          <Route path="/marketplace" element={<Marketplace session={session} />} />
           <Route path="/dashboard" element={<ProtectedRoute session={session}><Dashboard session={session} /></ProtectedRoute>} />
           <Route path="/log" element={<ProtectedRoute session={session}><LogResult session={session} /></ProtectedRoute>} />
           <Route path="/decklists" element={<ProtectedRoute session={session}><Decklists session={session} /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute session={session}><Friends session={session} /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute session={session}><Profile session={session} /></ProtectedRoute>} />
-          <Route path="/community" element={<ProtectedRoute session={session}><Community session={session} /></ProtectedRoute>} />
-          <Route path="/marketplace" element={<ProtectedRoute session={session}><Marketplace session={session} /></ProtectedRoute>} />
         </Route>
       </Routes>
     </BrowserRouter>

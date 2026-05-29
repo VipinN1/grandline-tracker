@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { searchCards, getCardImageUrl } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
@@ -192,7 +193,7 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
 
 // ─── ListingDetailModal ───────────────────────────────────────────────────────
 
-function ListingDetailModal({ listing, currentUser, onClose, isMobile, onMarkSold }) {
+function ListingDetailModal({ listing, currentUser, onClose, isMobile, onMarkSold, onMessageGuest }) {
   const [showMsg, setShowMsg] = useState(false)
   const [marking, setMarking] = useState(false)
   const isOwner = listing?.user_id === currentUser?.id
@@ -286,10 +287,10 @@ function ListingDetailModal({ listing, currentUser, onClose, isMobile, onMarkSol
               </button>
             ) : (
               <button
-                onClick={() => setShowMsg(true)}
+                onClick={() => currentUser ? setShowMsg(true) : onMessageGuest?.()}
                 style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
               >
-                Message Seller
+                {currentUser ? 'Message Seller' : 'Sign in to Message'}
               </button>
             )}
           </div>
@@ -370,9 +371,9 @@ function ListingCard({ listing, currentUser, onDetail, onMessage }) {
         ) : (
           <button
             onClick={e => { e.stopPropagation(); onMessage(listing) }}
-            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
+            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: currentUser ? 'none' : '1px solid rgba(139,92,246,0.25)', background: currentUser ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'transparent', color: currentUser ? '#fff' : '#a78bfa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
           >
-            Message Seller
+            {currentUser ? 'Message Seller' : 'Sign in to Message'}
           </button>
         )}
       </div>
@@ -1160,6 +1161,7 @@ function MyListingsTab({ session, profile, isMobile }) {
 // ─── Marketplace (main page) ──────────────────────────────────────────────────
 
 export default function Marketplace({ session }) {
+  const navigate = useNavigate()
   const { isMobile, isTablet } = useWindowSize()
   const [activeTab, setActiveTab] = useState('browse')
   const [allListings, setAllListings] = useState([])
@@ -1228,7 +1230,11 @@ export default function Marketplace({ session }) {
 
       <div style={{ display: 'flex', gap: 4, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
         <button onClick={() => setActiveTab('browse')} style={tabBtn(activeTab === 'browse')}>Browse</button>
-        <button onClick={() => setActiveTab('mylistings')} style={tabBtn(activeTab === 'mylistings')}>My Listings</button>
+        {session ? (
+          <button onClick={() => setActiveTab('mylistings')} style={tabBtn(activeTab === 'mylistings')}>My Listings</button>
+        ) : (
+          <button onClick={() => navigate('/login')} style={{ ...tabBtn(false), color: '#3d2d6e' }}>My Listings 🔒</button>
+        )}
       </div>
 
       {activeTab === 'browse' ? (
@@ -1287,7 +1293,7 @@ export default function Marketplace({ session }) {
             <>
               <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 2 : isTablet ? 3 : 4}, 1fr)`, gap: isMobile ? 10 : 14 }}>
                 {visibleListings.map(listing => (
-                  <ListingCard key={listing.id} listing={listing} currentUser={session?.user} onDetail={setDetailListing} onMessage={setMessageListing} />
+                  <ListingCard key={listing.id} listing={listing} currentUser={session?.user} onDetail={setDetailListing} onMessage={l => session ? setMessageListing(l) : navigate('/login')} />
                 ))}
               </div>
               {hasMore && (
@@ -1311,6 +1317,7 @@ export default function Marketplace({ session }) {
           onClose={() => setDetailListing(null)}
           isMobile={isMobile}
           onMarkSold={id => { setAllListings(prev => prev.filter(l => l.id !== id)); setDetailListing(null) }}
+          onMessageGuest={() => { setDetailListing(null); navigate('/login') }}
         />
       )}
 
