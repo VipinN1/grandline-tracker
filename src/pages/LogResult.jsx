@@ -7,6 +7,16 @@ import { useWindowSize } from '../hooks/useWindowSize'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
+// Extracts the variant-specific image ID from a card object.
+// card_image URL is the most reliable source (e.g. ".../Card_Images/OP01-001_p1.jpg" → "OP01-001_p1").
+function getLeaderStorageId(card) {
+  if (card?.card_image) {
+    const m = card.card_image.match(/Card_Images\/(.+?)\.jpg/i)
+    if (m?.[1]) return m[1]
+  }
+  return card?.card_image_id ?? card?.card_set_id ?? ''
+}
+
 const inputStyle = {
   width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)',
   borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit',
@@ -125,7 +135,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
       <div>
         {label && <label style={labelStyle}>{label}</label>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(15,8,30,0.95)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '8px 12px' }}>
-          <img src={getCardImageUrl(selected.card_set_id)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
+          <img src={getCardImageUrl(selected)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected.card_name}</div>
             <div style={{ fontSize: 11, color: COLORS[selected.card_color] ?? '#7c6fa0' }}>{selected.card_color} · {selected.card_set_id}</div>
@@ -325,7 +335,7 @@ export default function LogResult({ session }) {
       const { data: dl, error: dlError } = await supabase.from('decklists').insert({
         user_id: session.user.id,
         name: deckName || `${leaderResult.card_name} Deck`,
-        leader_id: leaderResult.card_image_id ?? leaderResult.card_set_id,
+        leader_id: getLeaderStorageId(leaderResult),
         leader_name: leaderResult.card_name,
         leader_color: leaderResult.card_color,
         cards: parsedCards,
@@ -346,7 +356,7 @@ export default function LogResult({ session }) {
       placement: parseInt(placement),
       wins,
       losses,
-      leader_id: leaderResult.card_image_id ?? leaderResult.card_set_id,
+      leader_id: getLeaderStorageId(leaderResult),
       leader_name: leaderResult.card_name,
       leader_color: leaderResult.card_color,
       deck_name: deckName || `${leaderResult.card_name} Deck`,
