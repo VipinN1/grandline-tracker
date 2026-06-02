@@ -9,6 +9,7 @@ import LogResult from './pages/LogResult'
 import Decklists from './pages/Decklists'
 import Friends from './pages/Friends'
 import Profile from './pages/Profile'
+import UserProfilePage from './pages/UserProfilePage'
 import Community from './pages/Community'
 import Marketplace from './pages/Marketplace'
 import DeckBuilder from './pages/DeckBuilder'
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/decklists" element={<ProtectedRoute session={session}><Decklists session={session} /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute session={session}><Friends session={session} /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute session={session}><Profile session={session} /></ProtectedRoute>} />
+          <Route path="/profile/:userId" element={<UserProfilePage session={session} />} />
         </Route>
       </Routes>
     </BrowserRouter>

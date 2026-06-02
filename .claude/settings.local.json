@@ -9,7 +9,9 @@
       "Bash(curl -I \"https://optcgapi.com/media/static/Card_Images/OP14-060.jpg\")",
       "Bash(Get-ChildItem -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\siris\\\\OneDrive\\\\Desktop\\\\New folder \\(5\\)\\\\grandline-tracker\" -Recurse -File -Name)",
+      "Bash(npm run *)"
     ]
   }
 }

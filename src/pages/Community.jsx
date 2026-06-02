@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import TournamentModal from '../components/TournamentModal'
 import SelectDecklistModal from '../components/SelectDecklistModal'
+import ProfilePopover from '../components/ProfilePopover'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -24,147 +25,6 @@ function CardPreview({ card, onClose }) {
   )
 }
 
-function ProfileModal({ profile, session, onClose, isMobile }) {
-  const [tournaments, setTournaments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [friendStatus, setFriendStatus] = useState(null)
-  const [selectedTournament, setSelectedTournament] = useState(null)
-
-  useEffect(() => {
-    async function load() {
-      const [{ data: tData }, { data: fData }] = await Promise.all([
-        supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*)').eq('user_id', profile.id).order('date', { ascending: false }),
-        supabase.from('friends').select('*').or(`and(user_id.eq.${session.user.id},friend_id.eq.${profile.id}),and(user_id.eq.${profile.id},friend_id.eq.${session.user.id})`)
-      ])
-      setTournaments(tData ?? [])
-      if (fData && fData.length > 0) {
-        const rel = fData[0]
-        if (rel.status === 'accepted') setFriendStatus('accepted')
-        else if (rel.user_id === session.user.id) setFriendStatus('pending_sent')
-        else setFriendStatus('pending_received')
-      }
-      setLoading(false)
-    }
-    load()
-  }, [profile.id])
-
-  const totalWins = tournaments.reduce((s, t) => s + t.wins, 0)
-  const totalLosses = tournaments.reduce((s, t) => s + t.losses, 0)
-  const winRate = totalWins + totalLosses > 0 ? Math.round((totalWins / (totalWins + totalLosses)) * 100) : 0
-  const topEights = tournaments.filter(t => t.placement <= 8).length
-  const initials = profile?.username?.slice(0, 2).toUpperCase() ?? '??'
-
-  async function sendFriendRequest() {
-    const { error } = await supabase.from('friends').insert({ user_id: session.user.id, friend_id: profile.id, status: 'pending' })
-    if (!error) setFriendStatus('pending_sent')
-  }
-
-  async function acceptRequest() {
-    await supabase.from('friends').update({ status: 'accepted' }).eq('user_id', profile.id).eq('friend_id', session.user.id)
-    await supabase.from('friends').insert({ user_id: session.user.id, friend_id: profile.id, status: 'accepted' })
-    setFriendStatus('accepted')
-  }
-
-  function FriendButton() {
-    if (profile.id === session.user.id) return null
-    if (friendStatus === 'accepted') return <button style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.08)', color: '#34d399', cursor: 'default', fontFamily: 'inherit' }}>Friends ✓</button>
-    if (friendStatus === 'pending_sent') return <button disabled style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'default', fontFamily: 'inherit' }}>Request Sent</button>
-    if (friendStatus === 'pending_received') return <button onClick={acceptRequest} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit' }}>Accept Request</button>
-    return <button onClick={sendFriendRequest} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Friend</button>
-  }
-
-  function pLabel(n) { if (n===1) return '1st'; if (n===2) return '2nd'; if (n===3) return '3rd'; return `${n}th` }
-  function pStyle(n) {
-    if (n===1) return { background: 'rgba(251,191,36,0.12)', color: '#fbbf24' }
-    if (n===2) return { background: 'rgba(148,163,184,0.1)', color: '#94a3b8' }
-    if (n===3) return { background: 'rgba(251,146,60,0.1)', color: '#fb923c' }
-    return { background: 'rgba(255,255,255,0.04)', color: '#3d2d6e' }
-  }
-
-  const modalBox = {
-    background: 'rgba(139,92,246,0.05)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: isMobile ? '16px 16px 0 0' : 16,
-    width: isMobile ? '100%' : 520,
-    maxHeight: isMobile ? '95vh' : '85vh',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
-  }
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-        <div onClick={e => e.stopPropagation()} style={modalBox}>
-
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 12, background: '#8b5cf622', border: '1px solid #8b5cf644', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#8b5cf6', flexShrink: 0, overflow: 'hidden' }}>
-              {profile.avatar_url ? <img src={profile.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{profile.username}</div>
-              {profile.location && <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>{profile.location}</div>}
-            </div>
-            <FriendButton />
-            <button onClick={onClose} style={{ marginLeft: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-          </div>
-
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-            {[['Win Rate', `${winRate}%`], ['Events', tournaments.length], ['Top 8s', topEights]].map(([label, val]) => (
-              <div key={label} style={{ flex: 1, padding: '12px 16px', borderRight: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, color: '#7c6fa0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>{label}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5' }}>{val}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ overflowY: 'auto', padding: 20 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 12 }}>Tournament History — click to view deck</div>
-            {loading ? (
-              <div style={{ fontSize: 13, color: '#7c6fa0', textAlign: 'center', padding: 20 }}>Loading...</div>
-            ) : tournaments.length === 0 ? (
-              <div style={{ fontSize: 13, color: '#3d2d6e', textAlign: 'center', padding: 20 }}>No tournaments logged yet</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {tournaments.map(t => (
-                  <div
-                    key={t.id}
-                    onClick={() => setSelectedTournament(t)}
-                    style={{ display: 'grid', gridTemplateColumns: isMobile ? '34px 1fr auto' : '40px 1fr auto auto', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.1s' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#212d40' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
-                  >
-                    <div style={{ width: 34, height: 34, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, ...pStyle(t.placement) }}>{pLabel(t.placement)}</div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{t.name}</div>
-                      <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>{t.date} · {t.player_count} players</div>
-                    </div>
-                    {!isMobile && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <img src={getCardImageUrl(t.leader_id)} alt={t.leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
-                        <div style={{ fontSize: 11, color: COLORS[t.leader_color] ?? '#7c6fa0' }}>{t.leader_name}</div>
-                      </div>
-                    )}
-                    <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                      <span style={{ color: '#34d399' }}>{t.wins}W</span>
-                      <span style={{ color: '#3d2d6e', margin: '0 3px' }}>·</span>
-                      <span style={{ color: '#f05252' }}>{t.losses}L</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {selectedTournament && (
-        <TournamentModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} zIndex={300} isMobile={isMobile} onDelete={false} />
-      )}
-    </>
-  )
-}
 
 function DeckPanel({ decklist }) {
   const [expanded, setExpanded] = useState(false)
@@ -668,7 +528,7 @@ export default function Community({ session }) {
       )}
 
       {showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={() => { setShowCreate(false); loadPosts() }} isMobile={isMobile} />}
-      {selectedProfile && session && <ProfileModal profile={selectedProfile} session={session} onClose={() => setSelectedProfile(null)} isMobile={isMobile} />}
+      {selectedProfile && <ProfilePopover profile={selectedProfile} session={session} onClose={() => setSelectedProfile(null)} />}
     </div>
   )
 }

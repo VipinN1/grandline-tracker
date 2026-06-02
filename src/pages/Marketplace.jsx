@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { searchCards, getCardImageUrl } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
+import ProfilePopover from '../components/ProfilePopover'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -193,9 +194,10 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
 
 // ─── ListingDetailModal ───────────────────────────────────────────────────────
 
-function ListingDetailModal({ listing, currentUser, onClose, isMobile, onMarkSold, onMessageGuest }) {
+function ListingDetailModal({ listing, currentUser, session, onClose, isMobile, onMarkSold, onMessageGuest }) {
   const [showMsg, setShowMsg] = useState(false)
   const [marking, setMarking] = useState(false)
+  const [sellerProfile, setSellerProfile] = useState(null)
   const isOwner = listing?.user_id === currentUser?.id
   const seller = listing?.profiles
 
@@ -266,11 +268,17 @@ function ListingDetailModal({ listing, currentUser, onClose, isMobile, onMarkSol
               </div>
             )}
 
-            <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              onClick={() => seller && setSellerProfile(seller)}
+              style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: seller ? 'pointer' : 'default', transition: 'border-color 0.1s' }}
+              onMouseEnter={e => { if (seller) e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)' }}
+            >
               <Avatar profile={seller} size={40} radius={10} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{seller?.username ?? 'Unknown'}</div>
                 {seller?.location && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>📍 {seller.location}</div>}
+                {seller && <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 3 }}>Click to view profile</div>}
               </div>
               <div style={{ fontSize: 11, color: '#3d2d6e' }}>
                 {new Date(listing.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -304,6 +312,13 @@ function ListingDetailModal({ listing, currentUser, onClose, isMobile, onMarkSol
           otherUser={seller}
           onClose={() => setShowMsg(false)}
           isMobile={isMobile}
+        />
+      )}
+      {sellerProfile && (
+        <ProfilePopover
+          profile={sellerProfile}
+          session={session}
+          onClose={() => setSellerProfile(null)}
         />
       )}
     </>
@@ -2001,6 +2016,7 @@ export default function Marketplace({ session }) {
         <ListingDetailModal
           listing={detailListing}
           currentUser={session?.user}
+          session={session}
           onClose={() => setDetailListing(null)}
           isMobile={isMobile}
           onMarkSold={id => { setAllListings(prev => prev.filter(l => l.id !== id)); setDetailListing(null) }}
