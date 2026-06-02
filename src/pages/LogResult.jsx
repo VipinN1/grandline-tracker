@@ -17,6 +17,11 @@ function getLeaderStorageId(card) {
   return card?.card_image_id ?? card?.card_set_id ?? ''
 }
 
+// Returns the clean base card ID for display (strips variant suffixes like "_p1_9XMhMTI").
+function baseCardId(id) {
+  return id?.match(/^[A-Z]{1,3}[0-9]{0,3}-[0-9]+/i)?.[0] ?? id ?? ''
+}
+
 const inputStyle = {
   width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)',
   borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit',
@@ -138,7 +143,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
           <img src={getCardImageUrl(selected)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected.card_name}</div>
-            <div style={{ fontSize: 11, color: COLORS[selected.card_color] ?? '#7c6fa0' }}>{selected.card_color} · {selected.card_set_id}</div>
+            <div style={{ fontSize: 11, color: COLORS[selected.card_color] ?? '#7c6fa0' }}>{selected.card_color} · {baseCardId(selected.card_set_id)}</div>
           </div>
           <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
         </div>
@@ -160,7 +165,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
                   <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#7c6fa0', marginTop: 2 }}>
-                    <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
+                    <span style={{ fontFamily: 'monospace' }}>{baseCardId(card.card_set_id)}</span>
                     {card.set_name && <span style={{ color: '#3d2d6e' }}> · {card.set_name}</span>}
                   </div>
                 </div>
@@ -403,7 +408,7 @@ export default function LogResult({ session }) {
             <img src={leaderResult.card_image ?? getCardImageUrl(leaderResult.card_set_id)} alt={leaderResult.card_name} style={{ width: 52, borderRadius: 6, border: `1px solid ${COLORS[leaderResult.card_color] ?? 'rgba(255,255,255,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.3' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leaderResult.card_name}</div>
-              <div style={{ fontSize: 11, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 2 }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
+              <div style={{ fontSize: 11, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 2 }}>{leaderResult.card_color} · {baseCardId(leaderResult.card_set_id)}</div>
             </div>
             <button onClick={() => setLeaderResult(null)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#7c6fa0', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit', padding: '4px 10px', flexShrink: 0 }}>Change</button>
           </div>
@@ -411,7 +416,7 @@ export default function LogResult({ session }) {
           <div>
             <img src={leaderResult.card_image ?? getCardImageUrl(leaderResult.card_set_id)} alt={leaderResult.card_name} style={{ width: '100%', borderRadius: 10, marginBottom: 12, border: '1px solid rgba(255,255,255,0.08)' }} />
             <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{leaderResult.card_name}</div>
-            <div style={{ fontSize: 12, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 3 }}>{leaderResult.card_color} · {leaderResult.card_set_id}</div>
+            <div style={{ fontSize: 12, color: COLORS[leaderResult.card_color] ?? '#7c6fa0', marginTop: 3 }}>{leaderResult.card_color} · {baseCardId(leaderResult.card_set_id)}</div>
             <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 6 }}>Power: {leaderResult.card_power} · Life: {leaderResult.life}</div>
             <button onClick={() => setLeaderResult(null)} style={{ marginTop: 10, fontSize: 11, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>← Change leader</button>
           </div>
