@@ -213,7 +213,14 @@ export default function TournamentDetailPage({ session }) {
   }, [id])
 
   useEffect(() => {
-    if (tournament && session) setIsAdmin(tournament.created_by === session.user.id)
+    if (!tournament || !session) return
+    if (tournament.created_by === session.user.id) { setIsAdmin(true); return }
+    supabase.from('sim_tournament_admins')
+      .select('id')
+      .eq('tournament_id', tournament.id)
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data))
   }, [tournament, session])
 
   useEffect(() => {
