@@ -325,7 +325,7 @@ export default function LogResult({ session }) {
       const { data: dl, error: dlError } = await supabase.from('decklists').insert({
         user_id: session.user.id,
         name: deckName || `${leaderResult.card_name} Deck`,
-        leader_id: leaderResult.card_set_id,
+        leader_id: leaderResult.card_image_id ?? leaderResult.card_set_id,
         leader_name: leaderResult.card_name,
         leader_color: leaderResult.card_color,
         cards: parsedCards,
@@ -346,7 +346,7 @@ export default function LogResult({ session }) {
       placement: parseInt(placement),
       wins,
       losses,
-      leader_id: leaderResult.card_set_id,
+      leader_id: leaderResult.card_image_id ?? leaderResult.card_set_id,
       leader_name: leaderResult.card_name,
       leader_color: leaderResult.card_color,
       deck_name: deckName || `${leaderResult.card_name} Deck`,
@@ -364,7 +364,7 @@ export default function LogResult({ session }) {
         rounds.map((r, i) => ({
           tournament_id: tournament.id,
           round_number: i + 1,
-          opponent_leader_id: r.oppLeader?.card_set_id ?? null,
+          opponent_leader_id: r.oppLeader?.card_image_id ?? r.oppLeader?.card_set_id ?? null,
           opponent_leader_name: r.oppLeader?.card_name ?? null,
           opponent_leader_color: r.oppLeader?.card_color ?? null,
           won_dice_roll: r.wonDice,
