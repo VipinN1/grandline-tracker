@@ -175,7 +175,7 @@ function SetupScreen({ session, onStart }) {
   return (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#34d399', marginBottom: 4 }}>● Live</div>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#34d399', marginBottom: 4 }}>● Live Tournament</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Start Live Tournament</div>
         <div style={{ fontSize: 13, color: '#7c6fa0' }}>Track your rounds in real time</div>
       </div>
