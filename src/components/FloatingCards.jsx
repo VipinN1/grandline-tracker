@@ -21,74 +21,77 @@ const SETS = [
   { prefix: 'ST01', count: 17 },
   { prefix: 'ST02', count: 17 },
   { prefix: 'ST03', count: 17 },
-  { prefix: 'ST04', count: 17 },
-  { prefix: 'ST06', count: 17 },
   { prefix: 'ST10', count: 20 },
   { prefix: 'ST11', count: 20 },
   { prefix: 'ST12', count: 20 },
   { prefix: 'ST13', count: 20 },
   { prefix: 'ST15', count: 20 },
-  { prefix: 'ST16', count: 20 },
-  { prefix: 'ST17', count: 20 },
-  { prefix: 'ST18', count: 20 },
   { prefix: 'ST19', count: 20 },
-  { prefix: 'ST20', count: 20 },
   { prefix: 'ST21', count: 20 },
 ]
 
 const ri = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
-const rf = (min, max) => (Math.random() * (max - min) + min)
+const rf = (min, max) => Math.random() * (max - min) + min
 const pick = arr => arr[Math.floor(Math.random() * arr.length)]
 
 function generateCardIds(count) {
   const ids = new Set()
-  let attempts = 0
-  while (ids.size < count && attempts < count * 10) {
+  while (ids.size < count) {
     const set = pick(SETS)
     const num = ri(1, set.count)
     ids.add(`${set.prefix}-${String(num).padStart(3, '0')}`)
-    attempts++
   }
   return [...ids]
 }
 
+// Divide screen into a 4-column × 4-row grid so cards are guaranteed to spread out.
+// Columns: far-left | left-edge | right-edge | far-right
+// Each card gets a unique cell, then positions are shuffled so card sizes/delays feel random.
 function generatePositions(count) {
-  // Divide the screen into loose vertical bands to avoid clustering
-  return Array.from({ length: count }, (_, i) => {
-    const size = ri(52, 130)
-    const useRight = Math.random() > 0.55
-    const topPct = rf(2, 94)
-    const pos = {
-      top: `${topPct.toFixed(1)}%`,
-      rot: `${rf(-24, 24).toFixed(1)}deg`,
-      opacity: rf(0.04, 0.10),
-      dur: `${rf(7, 15).toFixed(1)}s`,
-      delay: `${rf(0, 6).toFixed(2)}s`,
-      size,
+  const COLS = [
+    () => ({ left:  `${rf(0,   7).toFixed(1)}%` }),   // far left
+    () => ({ left:  `${rf(10, 22).toFixed(1)}%` }),   // left
+    () => ({ right: `${rf(10, 22).toFixed(1)}%` }),   // right
+    () => ({ right: `${rf(0,   7).toFixed(1)}%` }),   // far right
+  ]
+  const numCols = COLS.length
+  const numRows = Math.ceil(count / numCols)
+
+  const positions = Array.from({ length: count }, (_, i) => {
+    const col = i % numCols
+    const row = Math.floor(i / numCols)
+    const rowH = 92 / numRows
+    const topMin = 2 + row * rowH
+    const topMax = topMin + rowH - 4
+
+    return {
+      top:     `${rf(topMin, topMax).toFixed(1)}%`,
+      rot:     `${rf(-20, 20).toFixed(1)}deg`,
+      opacity: rf(0.10, 0.18),
+      dur:     `${rf(8, 14).toFixed(1)}s`,
+      delay:   `${rf(0, 6).toFixed(2)}s`,
+      size:    ri(60, 118),
+      ...COLS[col](),
     }
-    if (useRight) {
-      pos.right = `${rf(0, 11).toFixed(1)}%`
-    } else {
-      pos.left = `${rf(0, 13).toFixed(1)}%`
-    }
-    return pos
   })
+
+  // Shuffle so column order doesn't map to predictable sizes
+  return positions.sort(() => Math.random() - 0.5)
 }
 
 const CARD_COUNT = 16
-const CARD_IDS = generateCardIds(CARD_COUNT)
-const POSITIONS = generatePositions(CARD_COUNT)
+const CARD_IDS   = generateCardIds(CARD_COUNT)
+const POSITIONS  = generatePositions(CARD_COUNT)
 
 function FloatingCard({ cardId, position }) {
   const [errored, setErrored] = useState(false)
-  const { top, left, right, bottom, rot, opacity, dur, delay, size } = position
+  const { top, left, right, rot, opacity, dur, delay, size } = position
   const url = `https://optcgapi.com/media/static/Card_Images/${cardId}.jpg`
 
   const posStyle = {}
-  if (top !== undefined) posStyle.top = top
-  if (left !== undefined) posStyle.left = left
+  if (top   !== undefined) posStyle.top   = top
+  if (left  !== undefined) posStyle.left  = left
   if (right !== undefined) posStyle.right = right
-  if (bottom !== undefined) posStyle.bottom = bottom
 
   return (
     <div
