@@ -1034,6 +1034,409 @@ function InboxSection({ session, isMobile }) {
   )
 }
 
+// ─── WantMessageModal ─────────────────────────────────────────────────────────
+
+function WantMessageModal({ want, currentUser, otherUser, onClose, isMobile }) {
+  const [messages, setMessages] = useState([])
+  const [text, setText] = useState('')
+  const [sending, setSending] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const bottomRef = useRef(null)
+  const receiverId = otherUser?.id ?? want?.user_id
+
+  useEffect(() => {
+    loadMessages()
+    const channel = supabase
+      .channel(`want-messages-${want.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'want_messages', filter: `want_id=eq.${want.id}` },
+        payload => setMessages(prev => prev.find(m => m.id === payload.new.id) ? prev : [...prev, payload.new]))
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [want.id])
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+
+  async function loadMessages() {
+    setLoading(true)
+    const { data } = await supabase
+      .from('want_messages')
+      .select('*')
+      .eq('want_id', want.id)
+      .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`)
+      .order('created_at', { ascending: true })
+    setMessages(data ?? [])
+    setLoading(false)
+    const unreadIds = (data ?? []).filter(m => m.receiver_id === currentUser.id && !m.read).map(m => m.id)
+    if (unreadIds.length > 0) await supabase.from('want_messages').update({ read: true }).in('id', unreadIds)
+  }
+
+  async function sendMessage() {
+    if (!text.trim() || sending) return
+    setSending(true)
+    const { data } = await supabase
+      .from('want_messages')
+      .insert({ want_id: want.id, sender_id: currentUser.id, receiver_id: receiverId, body: text.trim() })
+      .select().single()
+    if (data) setMessages(prev => prev.find(m => m.id === data.id) ? prev : [...prev, data])
+    setText('')
+    setSending(false)
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 300, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img
+            src={`https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
+            alt={want.card_name}
+            style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
+            onError={e => { e.target.style.display = 'none' }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {want.card_name} <span style={{ color: '#7c6fa0', fontWeight: 400 }}>x{want.quantity}</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#7c6fa0' }}>Wanted by {otherUser?.username ?? 'Buyer'}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {loading ? (
+            <div style={{ color: '#7c6fa0', fontSize: 13, textAlign: 'center', padding: 20 }}>Loading...</div>
+          ) : messages.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '30px 20px' }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
+              <div style={{ fontSize: 13, color: '#7c6fa0' }}>Let them know you have this card!</div>
+            </div>
+          ) : messages.map(msg => {
+            const isMe = msg.sender_id === currentUser.id
+            return (
+              <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                <div style={{ maxWidth: '75%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.06)', color: isMe ? '#fff' : '#f0f2f5', fontSize: 13, lineHeight: 1.5 }}>
+                  {msg.body}
+                  <div style={{ fontSize: 10, color: isMe ? 'rgba(255,255,255,0.5)' : '#3d2d6e', marginTop: 3, textAlign: 'right' }}>
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+          <div ref={bottomRef} />
+        </div>
+        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', gap: 8 }}>
+          <input type="text" placeholder="Type a message..." value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} style={{ ...INPUT, flex: 1 }} />
+          <button onClick={sendMessage} disabled={sending || !text.trim()} style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: text.trim() ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: text.trim() ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── CreateWantModal ──────────────────────────────────────────────────────────
+
+function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
+  const [cardQuery, setCardQuery] = useState('')
+  const [cardResults, setCardResults] = useState([])
+  const [cardSearching, setCardSearching] = useState(false)
+  const [selectedCard, setSelectedCard] = useState(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [quantity, setQuantity] = useState('1')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const debounceRef = useRef(null)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    function handleClick(e) { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function handleCardQuery(e) {
+    const val = e.target.value
+    setCardQuery(val)
+    setDropdownOpen(true)
+    clearTimeout(debounceRef.current)
+    if (val.length < 2) { setCardResults([]); return }
+    debounceRef.current = setTimeout(async () => {
+      setCardSearching(true)
+      try { setCardResults(await searchCards(val)) } catch { setCardResults([]) }
+      setCardSearching(false)
+    }, 350)
+  }
+
+  async function handleSubmit() {
+    if (!selectedCard) { setError('Please select a card.'); return }
+    setSaving(true)
+    setError('')
+    const cardId = selectedCard.card_image_id ?? selectedCard.card_set_id
+    const { error: insertErr } = await supabase.from('marketplace_wants').insert({
+      user_id: session.user.id,
+      card_id: cardId,
+      card_name: selectedCard.card_name,
+      card_color: selectedCard.card_color ?? null,
+      card_type: selectedCard.card_type ?? null,
+      set_name: selectedCard.set_name ?? null,
+      quantity: parseInt(quantity) || 1,
+      max_price: maxPrice ? parseFloat(maxPrice) : null,
+      notes: notes.trim() || null,
+      status: 'active',
+    })
+    setSaving(false)
+    if (insertErr) { setError('Failed to post want. Please try again.'); return }
+    onSuccess()
+    onClose()
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 520, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Looking For</div>
+            <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Post a card you want to find</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        </div>
+        <div style={{ overflowY: 'auto', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div ref={dropdownRef}>
+            <label style={LABEL}>Card *</label>
+            {selectedCard ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, padding: '10px 12px' }}>
+                <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
+                  <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#7c6fa0', marginTop: 2 }}>
+                    {selectedCard.card_color}{selectedCard.card_color && selectedCard.card_type ? ' · ' : ''}{selectedCard.card_type}{selectedCard.card_type ? ' · ' : ''}<span style={{ fontFamily: 'monospace' }}>{selectedCard.card_set_id}</span>
+                  </div>
+                </div>
+                <button onClick={() => { setSelectedCard(null); setCardQuery('') }} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
+              </div>
+            ) : (
+              <>
+                <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
+                {dropdownOpen && cardQuery.length >= 2 && (
+                  <div style={{ maxHeight: 300, overflowY: 'auto', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, marginTop: 6, background: 'rgba(12,8,20,0.98)' }}>
+                    {cardSearching ? (
+                      <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
+                    ) : cardResults.length === 0 ? (
+                      <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
+                    ) : cardResults.map(card => (
+                      <div key={card.card_image_id ?? card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
+                          <div style={{ fontSize: 12, color: '#7c6fa0' }}>
+                            {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
+                            {card.card_color && card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                            {card.card_type && <span>{card.card_type}</span>}
+                            {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                            <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {selectedCard && (
+            <div style={{ textAlign: 'center' }}>
+              <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={LABEL}>Quantity *</label>
+              <input type="number" min="1" max="99" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+            </div>
+            <div>
+              <label style={LABEL}>Max Price <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+              <input type="number" min="0" step="0.01" placeholder="$0.00" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ ...INPUT, width: '100%' }} />
+            </div>
+          </div>
+          <div>
+            <label style={LABEL}>Notes <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+            <textarea placeholder="Any condition preferences, specific art, etc." value={notes} onChange={e => setNotes(e.target.value.slice(0, 300))} style={{ ...INPUT, width: '100%', minHeight: 70, resize: 'vertical' }} />
+            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 3, textAlign: 'right' }}>{notes.length}/300</div>
+          </div>
+          {error && <div style={{ fontSize: 12, color: '#f05252', background: 'rgba(240,82,82,0.08)', borderRadius: 7, padding: '8px 12px', border: '1px solid rgba(240,82,82,0.2)' }}>{error}</div>}
+        </div>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.12)', flexShrink: 0 }}>
+          <button onClick={handleSubmit} disabled={!selectedCard || saving} style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: selectedCard && !saving ? 'linear-gradient(135deg, #d97706, #fbbf24)' : 'rgba(255,255,255,0.05)', color: selectedCard && !saving ? '#0f1117' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: selectedCard && !saving ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+            {saving ? 'Posting...' : 'Post Want'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── WantCard ─────────────────────────────────────────────────────────────────
+
+function WantCard({ want, currentUser, onContact }) {
+  const [hovered, setHovered] = useState(false)
+  const isOwner = want.user_id === currentUser?.id
+  const poster = want.profiles
+  const cardColor = COLORS[want.card_color]
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ background: 'rgba(251,191,36,0.03)', border: `1px solid ${hovered ? 'rgba(251,191,36,0.3)' : 'rgba(251,191,36,0.12)'}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.15s', transform: hovered ? 'translateY(-2px)' : 'none' }}
+    >
+      <div style={{ position: 'relative', background: '#1a1025', height: 180, overflow: 'hidden' }}>
+        <img
+          src={`https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
+          alt={want.card_name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+          onError={e => { e.target.style.display = 'none' }}
+        />
+        {cardColor && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: cardColor }} />}
+        <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(251,191,36,0.9)', borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 700, color: '#0f1117', letterSpacing: '0.4px' }}>
+          WTB
+        </div>
+        {want.quantity > 1 && (
+          <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#fbbf24' }}>
+            x{want.quantity}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '8px 10px', flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.card_name}</div>
+        <div style={{ fontSize: 11, color: '#3d2d6e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {want.set_name && <span>{want.set_name} · </span>}
+          <span style={{ fontFamily: 'monospace' }}>{want.card_id}</span>
+        </div>
+        {want.max_price ? (
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#fbbf24', fontFamily: "'Space Mono', monospace", marginTop: 2 }}>
+            Up to ${Number(want.max_price).toFixed(2)}
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: '#3d2d6e', marginTop: 2 }}>Price negotiable</div>
+        )}
+        {want.notes && (
+          <div style={{ fontSize: 11, color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.notes}</div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <Avatar profile={poster} size={18} radius={5} />
+          <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {poster?.username ?? 'Unknown'}
+          </div>
+        </div>
+        {isOwner ? (
+          <div style={{ marginTop: 5, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Your want
+          </div>
+        ) : (
+          <button
+            onClick={() => onContact(want)}
+            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: currentUser ? 'none' : '1px solid rgba(251,191,36,0.25)', background: currentUser ? 'linear-gradient(135deg, #d97706, #fbbf24)' : 'transparent', color: currentUser ? '#0f1117' : '#fbbf24', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
+          >
+            {currentUser ? 'I Have This!' : 'Sign in to Offer'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── MyWantsSection ───────────────────────────────────────────────────────────
+
+function MyWantsSection({ session, profile, isMobile }) {
+  const [wants, setWants] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showCreate, setShowCreate] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+
+  useEffect(() => { loadWants() }, [session.user.id])
+
+  async function loadWants() {
+    setLoading(true)
+    const { data } = await supabase.from('marketplace_wants').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
+    setWants(data ?? [])
+    setLoading(false)
+  }
+
+  async function deleteWant(id) {
+    await supabase.from('marketplace_wants').delete().eq('id', id)
+    setWants(prev => prev.filter(w => w.id !== id))
+    setConfirmDelete(null)
+  }
+
+  async function markFound(id) {
+    await supabase.from('marketplace_wants').update({ status: 'found' }).eq('id', id)
+    setWants(prev => prev.map(w => w.id === id ? { ...w, status: 'found' } : w))
+  }
+
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>
+          My Wants <span style={{ fontSize: 12, fontWeight: 400, color: '#7c6fa0' }}>({wants.filter(w => w.status === 'active').length} active)</span>
+        </div>
+        <button onClick={() => setShowCreate(true)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Want</button>
+      </div>
+      {loading ? (
+        <div style={{ fontSize: 13, color: '#7c6fa0', textAlign: 'center', padding: 20 }}>Loading...</div>
+      ) : wants.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '30px 20px', color: '#3d2d6e' }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
+          <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 4 }}>No active wants</div>
+          <div style={{ fontSize: 12 }}>Post cards you're looking for</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {wants.map(want => (
+            <div key={want.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(251,191,36,0.04)', border: `1px solid ${want.status === 'found' ? 'rgba(52,211,153,0.15)' : 'rgba(251,191,36,0.12)'}`, borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap', opacity: want.status === 'found' ? 0.65 : 1 }}>
+              <img
+                src={`https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
+                alt={want.card_name}
+                style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(255,255,255,0.06)' }}
+                onError={e => { e.target.style.display = 'none' }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {want.card_name}
+                  <span style={{ fontSize: 11, fontWeight: 400, color: '#fbbf24', marginLeft: 6 }}>x{want.quantity}</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  {want.max_price && <span style={{ color: '#fbbf24', fontFamily: 'monospace' }}>Up to ${Number(want.max_price).toFixed(2)}</span>}
+                  {want.max_price && want.notes && <span style={{ color: '#3d2d6e' }}>·</span>}
+                  {want.notes && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.notes}</span>}
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: want.status === 'found' ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.1)', color: want.status === 'found' ? '#34d399' : '#fbbf24', border: `1px solid ${want.status === 'found' ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.3)'}`, textTransform: 'capitalize' }}>
+                  {want.status === 'found' ? 'Found' : 'Seeking'}
+                </span>
+                {want.status === 'active' && (
+                  <button onClick={() => markFound(want.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(52,211,153,0.25)', background: 'rgba(52,211,153,0.06)', color: '#34d399', cursor: 'pointer', fontFamily: 'inherit' }}>Mark Found</button>
+                )}
+                {confirmDelete === want.id ? (
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button onClick={() => deleteWant(want.id)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: '#f05252', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Confirm</button>
+                    <button onClick={() => setConfirmDelete(null)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDelete(want.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.2)', background: 'rgba(240,82,82,0.05)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Delete</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {showCreate && <CreateWantModal session={session} profile={profile} onClose={() => setShowCreate(false)} onSuccess={loadWants} isMobile={isMobile} />}
+    </>
+  )
+}
+
 // ─── MyListingsTab ────────────────────────────────────────────────────────────
 
 function MyListingsTab({ session, profile, isMobile }) {
@@ -1148,6 +1551,11 @@ function MyListingsTab({ session, profile, isMobile }) {
       )}
 
       <div style={{ marginTop: 32 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 14 }}>Looking For</div>
+        <MyWantsSection session={session} profile={profile} isMobile={isMobile} />
+      </div>
+
+      <div style={{ marginTop: 32 }}>
         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 14 }}>Messages</div>
         <InboxSection session={session} isMobile={isMobile} />
       </div>
@@ -1177,8 +1585,16 @@ export default function Marketplace({ session }) {
   const [cityFilter, setCityFilter] = useState('')
   const [detailListing, setDetailListing] = useState(null)
   const [messageListing, setMessageListing] = useState(null)
+  const [allWants, setAllWants] = useState([])
+  const [wantsLoading, setWantsLoading] = useState(false)
+  const [wantsLoadError, setWantsLoadError] = useState(null)
+  const [wantSearch, setWantSearch] = useState('')
+  const [wantDisplayCount, setWantDisplayCount] = useState(50)
+  const [contactWant, setContactWant] = useState(null)
+  const [showCreateWant, setShowCreateWant] = useState(false)
 
   useEffect(() => { loadListings(); loadProfile() }, [])
+  useEffect(() => { if (activeTab === 'wants') loadWants() }, [activeTab])
 
   async function loadListings() {
     setLoading(true)
@@ -1192,6 +1608,20 @@ export default function Marketplace({ session }) {
     setAllListings(data ?? [])
     setDisplayCount(50)
     setLoading(false)
+  }
+
+  async function loadWants() {
+    setWantsLoading(true)
+    setWantsLoadError(null)
+    const { data, error } = await supabase
+      .from('marketplace_wants')
+      .select('*, profiles!marketplace_wants_user_id_fkey(id, username, avatar_url)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+    if (error) { setWantsLoadError('Failed to load wants.'); setWantsLoading(false); return }
+    setAllWants(data ?? [])
+    setWantDisplayCount(50)
+    setWantsLoading(false)
   }
 
   async function loadProfile() {
@@ -1230,6 +1660,7 @@ export default function Marketplace({ session }) {
 
       <div style={{ display: 'flex', gap: 4, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
         <button onClick={() => setActiveTab('browse')} style={tabBtn(activeTab === 'browse')}>Browse</button>
+        <button onClick={() => setActiveTab('wants')} style={{ ...tabBtn(activeTab === 'wants'), color: activeTab === 'wants' ? '#fff' : '#fbbf24', background: activeTab === 'wants' ? '#d97706' : 'transparent' }}>Looking For</button>
         {session ? (
           <button onClick={() => setActiveTab('mylistings')} style={tabBtn(activeTab === 'mylistings')}>My Listings</button>
         ) : (
@@ -1306,6 +1737,83 @@ export default function Marketplace({ session }) {
             </>
           )}
         </>
+      ) : activeTab === 'wants' ? (
+        <>
+          {/* Wants header bar */}
+          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(12,8,20,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(251,191,36,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+              <input
+                type="text"
+                placeholder="Search wanted cards..."
+                value={wantSearch}
+                onChange={e => setWantSearch(e.target.value)}
+                style={{ ...INPUT, flex: 1, padding: '10px 14px' }}
+              />
+              {session ? (
+                <button onClick={() => setShowCreateWant(true)} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  + I'm Looking For
+                </button>
+              ) : (
+                <button onClick={() => navigate('/login')} style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid rgba(251,191,36,0.2)', background: 'transparent', color: '#fbbf24', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  Sign in to post
+                </button>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: '#3d2d6e' }}>
+              {wantsLoading ? 'Loading...' : (() => {
+                const count = allWants.filter(w => !wantSearch || w.card_name.toLowerCase().includes(wantSearch.toLowerCase())).length
+                return `${count} want${count !== 1 ? 's' : ''} posted`
+              })()}
+            </div>
+          </div>
+
+          {/* Wants grid */}
+          {wantsLoading ? (
+            <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading wants...</div>
+          ) : wantsLoadError ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <div style={{ fontSize: 36, marginBottom: 14 }}>⚠️</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#f05252', marginBottom: 10 }}>{wantsLoadError}</div>
+              <button onClick={loadWants} style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>Try again</button>
+            </div>
+          ) : (() => {
+            const filteredWants = allWants.filter(w => !wantSearch || w.card_name.toLowerCase().includes(wantSearch.toLowerCase()))
+            const visibleWants = filteredWants.slice(0, wantDisplayCount)
+            if (filteredWants.length === 0) return (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e' }}>
+                <div style={{ fontSize: 40, marginBottom: 14 }}>{wantSearch ? '🔍' : '🔎'}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>{wantSearch ? 'No wants match your search' : 'No wants posted yet'}</div>
+                <div style={{ fontSize: 13 }}>{wantSearch ? 'Try a different card name' : 'Be the first to post a card you\'re looking for!'}</div>
+                {session && !wantSearch && (
+                  <button onClick={() => setShowCreateWant(true)} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    + Post a Want
+                  </button>
+                )}
+              </div>
+            )
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 2 : isTablet ? 3 : 4}, 1fr)`, gap: isMobile ? 10 : 14 }}>
+                  {visibleWants.map(want => (
+                    <WantCard
+                      key={want.id}
+                      want={want}
+                      currentUser={session?.user}
+                      onContact={w => session ? setContactWant(w) : navigate('/login')}
+                    />
+                  ))}
+                </div>
+                {filteredWants.length > wantDisplayCount && (
+                  <div style={{ textAlign: 'center', marginTop: 24 }}>
+                    <button onClick={() => setWantDisplayCount(c => c + 50)} style={{ padding: '10px 28px', borderRadius: 8, border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.06)', color: '#fbbf24', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      Load more ({filteredWants.length - wantDisplayCount} remaining)
+                    </button>
+                  </div>
+                )}
+              </>
+            )
+          })()}
+        </>
       ) : (
         <MyListingsTab session={session} profile={profile} isMobile={isMobile} />
       )}
@@ -1327,6 +1835,26 @@ export default function Marketplace({ session }) {
           currentUser={session?.user}
           otherUser={messageListing.profiles}
           onClose={() => setMessageListing(null)}
+          isMobile={isMobile}
+        />
+      )}
+
+      {contactWant && (
+        <WantMessageModal
+          want={contactWant}
+          currentUser={session?.user}
+          otherUser={contactWant.profiles}
+          onClose={() => setContactWant(null)}
+          isMobile={isMobile}
+        />
+      )}
+
+      {showCreateWant && (
+        <CreateWantModal
+          session={session}
+          profile={profile}
+          onClose={() => setShowCreateWant(false)}
+          onSuccess={() => { setShowCreateWant(false); loadWants() }}
           isMobile={isMobile}
         />
       )}
