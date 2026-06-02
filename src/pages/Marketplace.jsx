@@ -1145,6 +1145,9 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
   const [quantity, setQuantity] = useState('1')
   const [maxPrice, setMaxPrice] = useState('')
   const [notes, setNotes] = useState('')
+  const [customTitle, setCustomTitle] = useState('')
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterColor, setFilterColor] = useState([])
@@ -1184,10 +1187,34 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
     return null
   }
 
+  function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setPhotoPreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
   async function handleSubmit() {
     if (!selectedCard) { setError('Please select a card.'); return }
     setSaving(true)
     setError('')
+    let photo_url = null
+    if (photoFile) {
+      const ext = photoFile.name.split('.').pop() || 'jpg'
+      const uploadPath = `${session.user.id}/${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('card-photos')
+        .upload(uploadPath, photoFile, { cacheControl: '3600', upsert: false, contentType: photoFile.type })
+      if (uploadError) {
+        setSaving(false)
+        setError('Photo upload failed: ' + uploadError.message)
+        return
+      }
+      const { data: urlData } = supabase.storage.from('card-photos').getPublicUrl(uploadPath)
+      photo_url = urlData?.publicUrl ?? null
+    }
     const cardId = selectedCard.card_image_id ?? selectedCard.card_set_id
     const { error: insertErr } = await supabase.from('marketplace_wants').insert({
       user_id: session.user.id,
@@ -1199,6 +1226,8 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
       quantity: parseInt(quantity) || 1,
       max_price: maxPrice ? parseFloat(maxPrice) : null,
       notes: notes.trim() || null,
+      custom_title: customTitle.trim() || null,
+      photo_url,
       status: 'active',
     })
     setSaving(false)
@@ -1364,8 +1393,34 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
             )}
           </div>
           {selectedCard && (
-            <div style={{ textAlign: 'center' }}>
-              <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
+            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              <div style={{ flexShrink: 0 }}>
+                <img
+                  src={photoPreview ?? getCardImageUrl(selectedCard)}
+                  alt={selectedCard.card_name}
+                  style={{ width: 80, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', display: 'block' }}
+                  onError={e => { if (!photoPreview) e.target.style.opacity = '0.2' }}
+                />
+                {photoPreview && (
+                  <button onClick={() => { setPhotoFile(null); setPhotoPreview(null) }} style={{ marginTop: 4, fontSize: 10, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, display: 'block', width: '100%', textAlign: 'center' }}>Remove</button>
+                )}
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div>
+                  <label style={LABEL}>Post Title <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+                  <input
+                    type="text"
+                    placeholder={selectedCard.card_name}
+                    value={customTitle}
+                    onChange={e => setCustomTitle(e.target.value.slice(0, 80))}
+                    style={{ ...INPUT, width: '100%' }}
+                  />
+                </div>
+                <div>
+                  <label style={LABEL}>Photo <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontSize: 12, color: '#7c6fa0', cursor: 'pointer' }} />
+                </div>
+              </div>
             </div>
           )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -1411,10 +1466,16 @@ function WantCard({ want, currentUser, onContact }) {
     >
       <div style={{ position: 'relative', background: '#1a1025', height: 180, overflow: 'hidden' }}>
         <img
-          src={`https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
-          alt={want.card_name}
+          src={want.photo_url ?? `https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
+          alt={want.custom_title ?? want.card_name}
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
-          onError={e => { e.target.style.display = 'none' }}
+          onError={e => {
+            if (want.photo_url && e.target.src === want.photo_url) {
+              e.target.src = `https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`
+            } else {
+              e.target.style.display = 'none'
+            }
+          }}
         />
         {cardColor && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: cardColor }} />}
         <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(251,191,36,0.9)', borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 700, color: '#0f1117', letterSpacing: '0.4px' }}>
@@ -1427,7 +1488,7 @@ function WantCard({ want, currentUser, onContact }) {
         )}
       </div>
       <div style={{ padding: '8px 10px', flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.card_name}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.custom_title ?? want.card_name}</div>
         <div style={{ fontSize: 11, color: '#3d2d6e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {want.set_name && <span>{want.set_name} · </span>}
           <span style={{ fontFamily: 'monospace' }}>{want.card_id}</span>
