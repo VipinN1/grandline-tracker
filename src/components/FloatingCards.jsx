@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const SETS = [
   { prefix: 'OP01', count: 120 },
@@ -120,9 +121,11 @@ function FloatingCard({ cardId, position }) {
 }
 
 export default function FloatingCards() {
+  const { isMobile, isTablet } = useWindowSize()
+  const count = isMobile ? 4 : isTablet ? 8 : 16
   return (
     <>
-      {CARD_IDS.map((id, i) => (
+      {CARD_IDS.slice(0, count).map((id, i) => (
         <FloatingCard key={id} cardId={id} position={POSITIONS[i]} />
       ))}
     </>
