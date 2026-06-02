@@ -67,7 +67,7 @@ function generatePositions(count) {
     return {
       top:     `${rf(topMin, topMax).toFixed(1)}%`,
       rot:     `${rf(-20, 20).toFixed(1)}deg`,
-      opacity: rf(0.10, 0.18),
+      opacity: rf(0.45, 0.70),
       dur:     `${rf(8, 14).toFixed(1)}s`,
       delay:   `${rf(0, 6).toFixed(2)}s`,
       size:    ri(60, 118),
