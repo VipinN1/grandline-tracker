@@ -1,24 +1,83 @@
 import { useState } from 'react'
 
-const CARD_IDS = [
-  'OP01-001', 'OP01-060', 'OP02-001', 'OP03-001', 'OP04-001', 'OP05-001',
-  'OP06-001', 'ST01-001', 'ST02-001', 'OP08-001', 'OP07-001', 'OP09-001',
+const SETS = [
+  { prefix: 'OP01', count: 120 },
+  { prefix: 'OP02', count: 126 },
+  { prefix: 'OP03', count: 119 },
+  { prefix: 'OP04', count: 124 },
+  { prefix: 'OP05', count: 124 },
+  { prefix: 'OP06', count: 120 },
+  { prefix: 'OP07', count: 126 },
+  { prefix: 'OP08', count: 126 },
+  { prefix: 'OP09', count: 126 },
+  { prefix: 'OP10', count: 120 },
+  { prefix: 'OP11', count: 120 },
+  { prefix: 'OP12', count: 120 },
+  { prefix: 'OP13', count: 120 },
+  { prefix: 'OP14', count: 120 },
+  { prefix: 'EB01', count: 80 },
+  { prefix: 'EB02', count: 90 },
+  { prefix: 'EB03', count: 80 },
+  { prefix: 'ST01', count: 17 },
+  { prefix: 'ST02', count: 17 },
+  { prefix: 'ST03', count: 17 },
+  { prefix: 'ST04', count: 17 },
+  { prefix: 'ST06', count: 17 },
+  { prefix: 'ST10', count: 20 },
+  { prefix: 'ST11', count: 20 },
+  { prefix: 'ST12', count: 20 },
+  { prefix: 'ST13', count: 20 },
+  { prefix: 'ST15', count: 20 },
+  { prefix: 'ST16', count: 20 },
+  { prefix: 'ST17', count: 20 },
+  { prefix: 'ST18', count: 20 },
+  { prefix: 'ST19', count: 20 },
+  { prefix: 'ST20', count: 20 },
+  { prefix: 'ST21', count: 20 },
 ]
 
-const POSITIONS = [
-  { top: '4%',  left: '1%',   rot: '-15deg', opacity: 0.07, dur: '8s',   delay: '0s',    size: 78 },
-  { top: '12%', right: '2%',  rot: '12deg',  opacity: 0.05, dur: '11s',  delay: '1.2s',  size: 72 },
-  { top: '38%', left: '3%',   rot: '-8deg',  opacity: 0.06, dur: '9s',   delay: '2.5s',  size: 82 },
-  { top: '68%', left: '0%',   rot: '18deg',  opacity: 0.05, dur: '12s',  delay: '0.8s',  size: 70 },
-  { top: '82%', right: '3%',  rot: '-12deg', opacity: 0.07, dur: '10s',  delay: '3s',    size: 76 },
-  { top: '54%', right: '1%',  rot: '20deg',  opacity: 0.04, dur: '7s',   delay: '1.5s',  size: 68 },
-  { top: '22%', left: '7%',   rot: '-5deg',  opacity: 0.06, dur: '9.5s', delay: '4s',    size: 80 },
-  { top: '91%', left: '38%',  rot: '8deg',   opacity: 0.05, dur: '11s',  delay: '2s',    size: 74 },
-  { top: '8%',  left: '52%',  rot: '-18deg', opacity: 0.04, dur: '8.5s', delay: '0.5s',  size: 70 },
-  { top: '62%', left: '48%',  rot: '15deg',  opacity: 0.05, dur: '10s',  delay: '3.5s',  size: 76 },
-  { top: '32%', right: '8%',  rot: '-10deg', opacity: 0.06, dur: '9s',   delay: '1s',    size: 80 },
-  { top: '76%', left: '22%',  rot: '5deg',   opacity: 0.04, dur: '12s',  delay: '4.5s',  size: 72 },
-]
+const ri = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
+const rf = (min, max) => (Math.random() * (max - min) + min)
+const pick = arr => arr[Math.floor(Math.random() * arr.length)]
+
+function generateCardIds(count) {
+  const ids = new Set()
+  let attempts = 0
+  while (ids.size < count && attempts < count * 10) {
+    const set = pick(SETS)
+    const num = ri(1, set.count)
+    ids.add(`${set.prefix}-${String(num).padStart(3, '0')}`)
+    attempts++
+  }
+  return [...ids]
+}
+
+function generatePositions(count) {
+  // Divide the screen into loose vertical bands to avoid clustering
+  return Array.from({ length: count }, (_, i) => {
+    const size = ri(52, 130)
+    const useRight = Math.random() > 0.55
+    const topPct = rf(2, 94)
+    const pos = {
+      top: `${topPct.toFixed(1)}%`,
+      rot: `${rf(-24, 24).toFixed(1)}deg`,
+      opacity: rf(0.04, 0.10),
+      dur: `${rf(7, 15).toFixed(1)}s`,
+      delay: `${rf(0, 6).toFixed(2)}s`,
+      size,
+    }
+    if (useRight) {
+      pos.right = `${rf(0, 11).toFixed(1)}%`
+    } else {
+      pos.left = `${rf(0, 13).toFixed(1)}%`
+    }
+    return pos
+  })
+}
+
+const CARD_COUNT = 16
+const CARD_IDS = generateCardIds(CARD_COUNT)
+const POSITIONS = generatePositions(CARD_COUNT)
 
 function FloatingCard({ cardId, position }) {
   const [errored, setErrored] = useState(false)
