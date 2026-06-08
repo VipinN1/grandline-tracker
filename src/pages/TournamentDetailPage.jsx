@@ -480,12 +480,37 @@ export default function TournamentDetailPage({ session }) {
       {activeTab === 'pairings' && (
         <div>
           {rounds.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>⚔️</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>
-                {tournament.status === 'registration' ? 'Waiting for tournament to start' : 'No pairings yet'}
+            <div>
+              <div style={{ textAlign: 'center', padding: '40px 20px 24px' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>⚔️</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>
+                  {tournament.status === 'registration' ? 'Waiting for tournament to start' : 'No pairings yet'}
+                </div>
+                <div style={{ fontSize: 13, color: '#3d2d6e' }}>{players.length} player{players.length !== 1 ? 's' : ''} registered</div>
               </div>
-              <div style={{ fontSize: 13, color: '#3d2d6e' }}>{players.length} player{players.length !== 1 ? 's' : ''} registered</div>
+              {players.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', marginBottom: 4, paddingLeft: 4 }}>Registered Players</div>
+                  {players.map((p, i) => (
+                    <div
+                      key={p.user_id}
+                      onClick={() => p.profiles && setSelectedProfile(p.profiles)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: p.user_id === session?.user?.id ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.04)', border: `1px solid ${p.user_id === session?.user?.id ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, cursor: p.profiles ? 'pointer' : 'default' }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#3d2d6e', width: 20, textAlign: 'right', flexShrink: 0 }}>{i + 1}</div>
+                      <Avatar profile={p.profiles} size={32} radius={8} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.profiles?.username ?? 'Unknown'}
+                          {p.user_id === session?.user?.id && <span style={{ fontSize: 10, marginLeft: 6, color: '#8b5cf6', fontWeight: 700 }}>you</span>}
+                        </div>
+                        {p.profiles?.location && <div style={{ fontSize: 11, color: '#7c6fa0' }}>{p.profiles.location}</div>}
+                      </div>
+                      {p.decklist_submitted && <span style={{ fontSize: 10, fontWeight: 600, color: '#34d399', flexShrink: 0 }}>Decklist ✓</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             currentMatches.map(m => {
