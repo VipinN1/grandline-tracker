@@ -239,12 +239,20 @@ export default function TournamentDetailPage({ session }) {
   }
 
   async function loadPlayers() {
-    const { data } = await supabase
+    const { data: playerRows } = await supabase
       .from('sim_tournament_players')
-      .select('*, profiles(id, username, avatar_url, location, bio)')
+      .select('*')
       .eq('tournament_id', id)
       .order('created_at')
-    setPlayers(data ?? [])
+    if (!playerRows?.length) { setPlayers([]); return }
+
+    const userIds = playerRows.map(p => p.user_id)
+    const { data: profileRows } = await supabase
+      .from('profiles')
+      .select('id, username, avatar_url, location, bio')
+      .in('id', userIds)
+    const profileMap = Object.fromEntries((profileRows ?? []).map(p => [p.id, p]))
+    setPlayers(playerRows.map(p => ({ ...p, profiles: profileMap[p.user_id] ?? null })))
   }
 
   async function loadRounds() {
@@ -262,6 +270,7 @@ export default function TournamentDetailPage({ session }) {
     if (!session || isParticipant) return
     setJoining(true)
     await supabase.from('sim_tournament_players').insert({ tournament_id: id, user_id: session.user.id })
+    await loadPlayers()
     setJoining(false)
   }
 
