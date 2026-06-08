@@ -345,11 +345,17 @@ export default function TournamentDetailPage({ session }) {
 
   async function deleteTournament() {
     setDeleting(true)
-    await supabase.from('sim_matches').delete().eq('tournament_id', id)
-    await supabase.from('sim_rounds').delete().eq('tournament_id', id)
-    await supabase.from('sim_tournament_players').delete().eq('tournament_id', id)
-    await supabase.from('sim_tournament_admins').delete().eq('tournament_id', id)
-    await supabase.from('sim_tournaments').delete().eq('id', id)
+    const r1 = await supabase.from('sim_matches').delete().eq('tournament_id', id)
+    const r2 = await supabase.from('sim_rounds').delete().eq('tournament_id', id)
+    const r3 = await supabase.from('sim_tournament_players').delete().eq('tournament_id', id)
+    const r4 = await supabase.from('sim_tournament_admins').delete().eq('tournament_id', id)
+    const r5 = await supabase.from('sim_tournaments').delete().eq('id', id)
+    const errors = [r1, r2, r3, r4, r5].map(r => r.error).filter(Boolean)
+    if (errors.length > 0) {
+      console.error('Delete errors:', errors)
+      setDeleting(false)
+      return
+    }
     navigate('/tournaments')
   }
 
