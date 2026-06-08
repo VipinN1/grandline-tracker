@@ -10,7 +10,7 @@ const INPUT = { width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px so
 const LABEL = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#7c6fa0', marginBottom: 5, display: 'block' }
 
 // ─── Swiss pairing algorithm ─────────────────────────────────────────────────
-function generatePairings(standings, usedMatchups) {
+function generatePairings(standings, usedMatchups, byeCounts = {}) {
   const pool = [...standings].sort((a, b) => b.wins !== a.wins ? b.wins - a.wins : Math.random() - 0.5)
   const paired = new Set()
   const pairings = []
@@ -34,6 +34,24 @@ function generatePairings(standings, usedMatchups) {
     paired.add(pool[i].user_id)
     if (partner) paired.add(partner.user_id)
   }
+
+  // Redistribute bye to player with fewest previous byes (fairness)
+  const byeIdx = pairings.findIndex(([, p2]) => p2 === null)
+  if (byeIdx !== -1) {
+    const currentByePlayer = pairings[byeIdx][0]
+    let bestIdx = -1, bestPos = -1, bestCount = byeCounts[currentByePlayer.user_id] ?? 0
+    pairings.forEach(([p1, p2], i) => {
+      if (i === byeIdx || !p2) return
+      if ((byeCounts[p1.user_id] ?? 0) < bestCount) { bestCount = byeCounts[p1.user_id] ?? 0; bestIdx = i; bestPos = 1 }
+      if ((byeCounts[p2.user_id] ?? 0) < bestCount) { bestCount = byeCounts[p2.user_id] ?? 0; bestIdx = i; bestPos = 2 }
+    })
+    if (bestIdx !== -1) {
+      const [p1, p2] = pairings[bestIdx]
+      if (bestPos === 1) { pairings[byeIdx] = [p1, null]; pairings[bestIdx] = [currentByePlayer, p2] }
+      else { pairings[byeIdx] = [p2, null]; pairings[bestIdx] = [p1, currentByePlayer] }
+    }
+  }
+
   return pairings
 }
 
@@ -62,7 +80,7 @@ function computeStandings(players, matches) {
       const o = s[id]; if (!o) return 0
       const t = o.wins + o.losses; return t > 0 ? o.wins / t : 0
     })
-    p.owr = rates.reduce((a, b) => a + b, 0) / rates.length
+    p.owr = rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0
   }
   return arr.sort((a, b) => b.wins !== a.wins ? b.wins - a.wins : b.owr - a.owr)
 }
@@ -179,9 +197,12 @@ export default function TournamentDetailPage({ session }) {
   const [selectedProfile, setSelectedProfile] = useState(null)
   const [joining, setJoining] = useState(false)
   const [startingRound, setStartingRound] = useState(false)
+  const [roundError, setRoundError] = useState(null)
   const [showWinner, setShowWinner] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showForceEndModal, setShowForceEndModal] = useState(false)
+  const [submittingMatches, setSubmittingMatches] = useState(new Set())
   const [decklistModal, setDecklistModal] = useState(false)
   const [decklistLeader, setDecklistLeader] = useState(null)
   const [decklistText, setDecklistText] = useState('')
@@ -279,12 +300,20 @@ export default function TournamentDetailPage({ session }) {
   async function join() {
     if (!session || isParticipant) return
     setJoining(true)
-    await supabase.from('sim_tournament_players').insert({ tournament_id: id, user_id: session.user.id })
+    const { data: existing } = await supabase
+      .from('sim_tournament_players').select('id')
+      .eq('tournament_id', id).eq('user_id', session.user.id).maybeSingle()
+    if (!existing) {
+      await supabase.from('sim_tournament_players').insert({ tournament_id: id, user_id: session.user.id })
+    }
     await loadPlayers()
     setJoining(false)
   }
 
   async function submitResult(match, report) {
+    if (submittingMatches.has(match.id)) return
+    setSubmittingMatches(prev => new Set([...prev, match.id]))
+
     const isP1 = session.user.id === match.player1_id
     const field = isP1 ? 'player1_reported' : 'player2_reported'
     const other = isP1 ? match.player2_reported : match.player1_reported
@@ -299,6 +328,7 @@ export default function TournamentDetailPage({ session }) {
     }
 
     await supabase.from('sim_matches').update(update).eq('id', match.id)
+    setSubmittingMatches(prev => { const n = new Set(prev); n.delete(match.id); return n })
   }
 
   async function resolveDispute(matchId, result) {
@@ -307,20 +337,28 @@ export default function TournamentDetailPage({ session }) {
 
   async function startRound() {
     setStartingRound(true)
+    setRoundError(null)
 
-    // Mark current round complete
     if (currentRound) {
       await supabase.from('sim_rounds').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', currentRound.id)
     }
 
     const nextNum = (currentRound?.round_number ?? 0) + 1
     const used = new Set(matches.map(m => [m.player1_id, m.player2_id].filter(Boolean).sort().join('|')))
-    const pairings = generatePairings(standings, used)
+    const byeCounts = matches.filter(m => m.result === 'bye').reduce((acc, m) => {
+      acc[m.player1_id] = (acc[m.player1_id] ?? 0) + 1; return acc
+    }, {})
+    const pairings = generatePairings(standings, used, byeCounts)
 
-    const { data: newRound } = await supabase.from('sim_rounds').insert({ tournament_id: id, round_number: nextNum }).select().single()
-    if (!newRound) { setStartingRound(false); return }
+    const { data: newRound, error: roundErr } = await supabase
+      .from('sim_rounds').insert({ tournament_id: id, round_number: nextNum }).select().single()
+    if (!newRound || roundErr) {
+      setRoundError('Failed to create round. Please try again.')
+      setStartingRound(false)
+      return
+    }
 
-    await supabase.from('sim_matches').insert(
+    const { error: matchErr } = await supabase.from('sim_matches').insert(
       pairings.map(([p1, p2]) => ({
         round_id: newRound.id,
         tournament_id: id,
@@ -330,6 +368,12 @@ export default function TournamentDetailPage({ session }) {
         status: p2 ? 'pending' : 'completed',
       }))
     )
+    if (matchErr) {
+      await supabase.from('sim_rounds').delete().eq('id', newRound.id)
+      setRoundError('Failed to create pairings. Please try again.')
+      setStartingRound(false)
+      return
+    }
 
     await supabase.from('sim_tournaments').update({ current_round: nextNum, status: 'active' }).eq('id', id)
     setStartingRound(false)
@@ -466,10 +510,16 @@ export default function TournamentDetailPage({ session }) {
                 {startingRound ? 'Starting...' : tournament.status === 'registration' ? `Start Round 1 (${players.length} players)` : `Start Round ${(currentRound?.round_number ?? 0) + 1}`}
               </button>
             )}
-            {/* Declare winner — only when 1 undefeated and round is done */}
+            {/* Declare winner — auto when exactly 1 undefeated */}
             {tournament.status === 'active' && allMatchesDone && undefeated.length === 1 && (
               <button onClick={() => declareWinner(undefeated[0].user_id)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit' }}>
                 🏆 Declare Winner: {undefeated[0].profiles?.username}
+              </button>
+            )}
+            {/* Force end — when round is done but winner can't be auto-determined */}
+            {tournament.status === 'active' && allMatchesDone && undefeated.length !== 1 && (
+              <button onClick={() => setShowForceEndModal(true)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.08)', color: '#fbbf24', cursor: 'pointer', fontFamily: 'inherit' }}>
+                🏆 End Tournament
               </button>
             )}
             {/* Status info */}
@@ -477,6 +527,9 @@ export default function TournamentDetailPage({ session }) {
               <span style={{ fontSize: 12, color: '#7c6fa0' }}>
                 {currentMatches.filter(m => m.status === 'pending').length} match{currentMatches.filter(m => m.status === 'pending').length !== 1 ? 'es' : ''} pending · {currentMatches.filter(m => m.status === 'disputed').length > 0 ? `${currentMatches.filter(m => m.status === 'disputed').length} disputed` : ''}
               </span>
+            )}
+            {roundError && (
+              <span style={{ fontSize: 12, color: '#f05252', flexBasis: '100%', marginTop: 4 }}>{roundError}</span>
             )}
             <button onClick={() => setShowDeleteConfirm(true)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }}>
               Delete Tournament
@@ -603,8 +656,8 @@ export default function TournamentDetailPage({ session }) {
                     {/* Result submission */}
                     {inMatch && m.status === 'pending' && !myReport && (
                       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                        <button onClick={() => submitResult(m, 'win')} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit' }}>I Won</button>
-                        <button onClick={() => submitResult(m, 'loss')} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>I Lost</button>
+                        <button onClick={() => submitResult(m, 'win')} disabled={submittingMatches.has(m.id)} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', cursor: submittingMatches.has(m.id) ? 'default' : 'pointer', fontFamily: 'inherit', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>I Won</button>
+                        <button onClick={() => submitResult(m, 'loss')} disabled={submittingMatches.has(m.id)} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: submittingMatches.has(m.id) ? 'default' : 'pointer', fontFamily: 'inherit', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>I Lost</button>
                       </div>
                     )}
                     {inMatch && m.status === 'pending' && myReport && (
@@ -729,6 +782,38 @@ export default function TournamentDetailPage({ session }) {
               {players.filter(p => !p.decklist_submitted).length} player{players.filter(p => !p.decklist_submitted).length !== 1 ? 's' : ''} did not submit a decklist.
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Force end tournament modal ───────────────────────────────────── */}
+      {showForceEndModal && (
+        <div onClick={() => setShowForceEndModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 16, width: 400, maxHeight: '80vh', overflow: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 4 }}>End Tournament</div>
+              <div style={{ fontSize: 12, color: '#7c6fa0' }}>Select the winner from the current standings.</div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {standings.map((s, i) => (
+                <div
+                  key={s.user_id}
+                  onClick={() => { declareWinner(s.user_id); setShowForceEndModal(false) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(251,191,36,0.3)'; e.currentTarget.style.background = 'rgba(251,191,36,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = 'rgba(139,92,246,0.05)' }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#3d2d6e', width: 20, textAlign: 'right', flexShrink: 0 }}>{i + 1}</div>
+                  <Avatar profile={s.profiles} size={28} radius={7} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{s.profiles?.username ?? 'Unknown'}</div>
+                    <div style={{ fontSize: 11, color: '#7c6fa0', fontFamily: 'monospace' }}>{s.wins}W · {s.losses}L</div>
+                  </div>
+                  <span style={{ fontSize: 11, color: '#fbbf24' }}>Declare 🏆</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setShowForceEndModal(false)} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          </div>
         </div>
       )}
 
