@@ -203,6 +203,8 @@ export default function TournamentDetailPage({ session }) {
   const [deleting, setDeleting] = useState(false)
   const [showForceEndModal, setShowForceEndModal] = useState(false)
   const [submittingMatches, setSubmittingMatches] = useState(new Set())
+  const [showDropConfirm, setShowDropConfirm] = useState(false)
+  const [droppingUserId, setDroppingUserId] = useState(null)
   const [decklistModal, setDecklistModal] = useState(false)
   const [decklistLeader, setDecklistLeader] = useState(null)
   const [decklistText, setDecklistText] = useState('')
@@ -211,6 +213,7 @@ export default function TournamentDetailPage({ session }) {
   // ── Derived ────────────────────────────────────────────────────────────────
   const myEntry = players.find(p => p.user_id === session?.user?.id)
   const isParticipant = !!myEntry
+  const hasDropped = !!myEntry?.dropped
   const currentRound = rounds.length > 0 ? rounds[rounds.length - 1] : null
   const currentMatches = currentRound ? matches.filter(m => m.round_id === currentRound.id) : []
   const standings = computeStandings(players, matches)
@@ -310,6 +313,27 @@ export default function TournamentDetailPage({ session }) {
     setJoining(false)
   }
 
+  async function dropPlayer(userId) {
+    await supabase.from('sim_tournament_players')
+      .update({ dropped: true })
+      .eq('tournament_id', id).eq('user_id', userId)
+
+    // Auto-forfeit any pending match this round for the dropped player
+    if (currentRound) {
+      const pendingMatch = currentMatches.find(m =>
+        (m.player1_id === userId || m.player2_id === userId) && m.status === 'pending'
+      )
+      if (pendingMatch) {
+        const result = pendingMatch.player1_id === userId ? 'player2_win' : 'player1_win'
+        await supabase.from('sim_matches').update({ result, status: 'completed' }).eq('id', pendingMatch.id)
+      }
+    }
+
+    await loadPlayers()
+    setDroppingUserId(null)
+    setShowDropConfirm(false)
+  }
+
   async function submitResult(match, report) {
     if (submittingMatches.has(match.id)) return
     setSubmittingMatches(prev => new Set([...prev, match.id]))
@@ -348,7 +372,9 @@ export default function TournamentDetailPage({ session }) {
     const byeCounts = matches.filter(m => m.result === 'bye').reduce((acc, m) => {
       acc[m.player1_id] = (acc[m.player1_id] ?? 0) + 1; return acc
     }, {})
-    const pairings = generatePairings(standings, used, byeCounts)
+    const droppedIds = new Set(players.filter(p => p.dropped).map(p => p.user_id))
+    const activeStandings = standings.filter(s => !droppedIds.has(s.user_id))
+    const pairings = generatePairings(activeStandings, used, byeCounts)
 
     const { data: newRound, error: roundErr } = await supabase
       .from('sim_rounds').insert({ tournament_id: id, round_number: nextNum }).select().single()
@@ -489,8 +515,16 @@ export default function TournamentDetailPage({ session }) {
                 {joining ? 'Joining...' : 'Join Tournament'}
               </button>
             )}
-            {session && regOpen && isParticipant && (
+            {session && isParticipant && !hasDropped && tournament.status !== 'completed' && (
               <span style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: 'rgba(52,211,153,0.08)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)' }}>Registered ✓</span>
+            )}
+            {session && isParticipant && !hasDropped && tournament.status === 'active' && (
+              <button onClick={() => { setDroppingUserId(session.user.id); setShowDropConfirm(true) }} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Drop
+              </button>
+            )}
+            {session && isParticipant && hasDropped && (
+              <span style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: 'rgba(148,163,184,0.08)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' }}>Dropped</span>
             )}
             {!session && regOpen && (
               <button onClick={() => navigate('/login')} style={{ fontSize: 12, fontWeight: 700, padding: '7px 18px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>Sign in to Join</button>
@@ -684,31 +718,41 @@ export default function TournamentDetailPage({ session }) {
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e', fontSize: 13 }}>No players yet</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr 60px 60px 80px', gap: 12, padding: '6px 14px', marginBottom: 4 }}>
-                {['#', 'Player', 'W', 'L', 'OWR'].map(h => (
+              <div style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${isAdmin && tournament.status === 'active' ? ' 60px' : ''}`, gap: 12, padding: '6px 14px', marginBottom: 4 }}>
+                {['#', 'Player', 'W', 'L', 'OWR', ...(isAdmin && tournament.status === 'active' ? [''] : [])].map(h => (
                   <div key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e' }}>{h}</div>
                 ))}
               </div>
               {standings.map((s, i) => {
                 const isWinner = tournament.winner_id === s.user_id
+                const playerEntry = players.find(p => p.user_id === s.user_id)
+                const isDropped = !!playerEntry?.dropped
                 return (
                   <div
                     key={s.user_id}
                     onClick={() => s.profiles && setSelectedProfile(s.profiles)}
-                    style={{ display: 'grid', gridTemplateColumns: '36px 1fr 60px 60px 80px', gap: 12, alignItems: 'center', padding: '10px 14px', background: isWinner ? 'rgba(251,191,36,0.06)' : 'rgba(139,92,246,0.05)', border: `1px solid ${isWinner ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, cursor: 'pointer', transition: 'all 0.1s' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = isWinner ? 'rgba(251,191,36,0.35)' : 'rgba(255,255,255,0.14)' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = isWinner ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.07)' }}
+                    style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${isAdmin && tournament.status === 'active' ? ' 60px' : ''}`, gap: 12, alignItems: 'center', padding: '10px 14px', background: isDropped ? 'rgba(255,255,255,0.02)' : isWinner ? 'rgba(251,191,36,0.06)' : 'rgba(139,92,246,0.05)', border: `1px solid ${isDropped ? 'rgba(255,255,255,0.04)' : isWinner ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, cursor: 'pointer', opacity: isDropped ? 0.5 : 1, transition: 'all 0.1s' }}
+                    onMouseEnter={e => { if (!isDropped) e.currentTarget.style.borderColor = isWinner ? 'rgba(251,191,36,0.35)' : 'rgba(255,255,255,0.14)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDropped ? 'rgba(255,255,255,0.04)' : isWinner ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.07)' }}
                   >
-                    <div style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? '#fbbf24' : '#3d2d6e' }}>{i + 1}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: i === 0 && !isDropped ? '#fbbf24' : '#3d2d6e' }}>{i + 1}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                       <Avatar profile={s.profiles} size={28} radius={7} />
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.profiles?.username ?? 'Unknown'}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: isDropped ? '#7c6fa0' : '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.profiles?.username ?? 'Unknown'}</span>
                       {isWinner && <span style={{ fontSize: 10, color: '#fbbf24' }}>🏆</span>}
-                      {s.losses === 0 && !isWinner && tournament.status === 'active' && <span style={{ fontSize: 10, color: '#34d399', flexShrink: 0 }}>undefeated</span>}
+                      {isDropped && <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', flexShrink: 0 }}>dropped</span>}
+                      {!isDropped && s.losses === 0 && !isWinner && tournament.status === 'active' && <span style={{ fontSize: 10, color: '#34d399', flexShrink: 0 }}>undefeated</span>}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>{s.wins}</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: s.losses > 0 ? '#f05252' : '#3d2d6e' }}>{s.losses}</div>
                     <div style={{ fontSize: 12, color: '#7c6fa0', fontFamily: 'monospace' }}>{s.wins + s.losses > 0 ? `${Math.round(s.owr * 100)}%` : '—'}</div>
+                    {isAdmin && tournament.status === 'active' && (
+                      <div onClick={e => e.stopPropagation()}>
+                        {!isDropped && (
+                          <button onClick={() => { setDroppingUserId(s.user_id); setShowDropConfirm(true) }} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Drop</button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -782,6 +826,28 @@ export default function TournamentDetailPage({ session }) {
               {players.filter(p => !p.decklist_submitted).length} player{players.filter(p => !p.decklist_submitted).length !== 1 ? 's' : ''} did not submit a decklist.
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Drop confirmation modal ──────────────────────────────────────── */}
+      {showDropConfirm && (
+        <div onClick={() => { setShowDropConfirm(false); setDroppingUserId(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(240,82,82,0.25)', borderRadius: 16, width: 360, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>
+              {droppingUserId === session?.user?.id ? 'Drop from Tournament?' : `Drop ${players.find(p => p.user_id === droppingUserId)?.profiles?.username ?? 'Player'}?`}
+            </div>
+            <div style={{ fontSize: 13, color: '#8a9bb0', lineHeight: 1.6 }}>
+              {droppingUserId === session?.user?.id
+                ? 'You will be removed from future pairings. Your current record will remain in the standings. This cannot be undone.'
+                : 'This player will be removed from future pairings. Their current record stays in standings. Any pending match this round will be forfeited.'}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => { setShowDropConfirm(false); setDroppingUserId(null) }} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={() => dropPlayer(droppingUserId)} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {droppingUserId === session?.user?.id ? 'Drop Me' : 'Drop Player'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
