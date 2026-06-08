@@ -180,6 +180,8 @@ export default function TournamentDetailPage({ session }) {
   const [joining, setJoining] = useState(false)
   const [startingRound, setStartingRound] = useState(false)
   const [showWinner, setShowWinner] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [decklistModal, setDecklistModal] = useState(false)
   const [decklistLeader, setDecklistLeader] = useState(null)
   const [decklistText, setDecklistText] = useState('')
@@ -341,6 +343,16 @@ export default function TournamentDetailPage({ session }) {
     }
   }
 
+  async function deleteTournament() {
+    setDeleting(true)
+    await supabase.from('sim_matches').delete().eq('tournament_id', id)
+    await supabase.from('sim_rounds').delete().eq('tournament_id', id)
+    await supabase.from('sim_tournament_players').delete().eq('tournament_id', id)
+    await supabase.from('sim_tournament_admins').delete().eq('tournament_id', id)
+    await supabase.from('sim_tournaments').delete().eq('id', id)
+    navigate('/tournaments')
+  }
+
   async function saveDecklist() {
     if (!decklistLeader) return
     setSavingDecklist(true)
@@ -438,7 +450,7 @@ export default function TournamentDetailPage({ session }) {
       </div>
 
       {/* Admin panel */}
-      {isAdmin && tournament.status !== 'completed' && (
+      {isAdmin && (
         <div style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#fbbf24', marginBottom: 10 }}>Admin Controls</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -460,6 +472,9 @@ export default function TournamentDetailPage({ session }) {
                 {currentMatches.filter(m => m.status === 'pending').length} match{currentMatches.filter(m => m.status === 'pending').length !== 1 ? 'es' : ''} pending · {currentMatches.filter(m => m.status === 'disputed').length > 0 ? `${currentMatches.filter(m => m.status === 'disputed').length} disputed` : ''}
               </span>
             )}
+            <button onClick={() => setShowDeleteConfirm(true)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }}>
+              Delete Tournament
+            </button>
           </div>
           {/* Disputed matches */}
           {disputedMatches.length > 0 && (
@@ -708,6 +723,24 @@ export default function TournamentDetailPage({ session }) {
               {players.filter(p => !p.decklist_submitted).length} player{players.filter(p => !p.decklist_submitted).length !== 1 ? 's' : ''} did not submit a decklist.
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Delete confirmation modal ────────────────────────────────────── */}
+      {showDeleteConfirm && (
+        <div onClick={() => setShowDeleteConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(240,82,82,0.3)', borderRadius: 16, width: 360, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>Delete Tournament</div>
+            <div style={{ fontSize: 13, color: '#8a9bb0', lineHeight: 1.6 }}>
+              Are you sure you want to delete <strong style={{ color: '#f0f2f5' }}>{tournament.name}</strong>? This will permanently remove all rounds, matches, and player registrations. This cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={deleteTournament} disabled={deleting} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.6 : 1 }}>
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
