@@ -1,5 +1,9 @@
 import { forwardRef } from 'react'
-import { getCardImageUrl } from '../lib/optcgapi'
+
+function proxyCardImageUrl(id) {
+  if (!id) return ''
+  return `/api/card-image?id=${encodeURIComponent(id)}`
+}
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -81,7 +85,7 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
         }}>
           <img
             crossOrigin="anonymous"
-            src={getCardImageUrl(tournament.leader_id)}
+            src={proxyCardImageUrl(tournament.leader_id)}
             alt={tournament.leader_name}
             style={{ width: '100%', aspectRatio: '63/88', objectFit: 'cover', objectPosition: 'top center', display: 'block' }}
           />
@@ -167,7 +171,7 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
                   {r.opponent_leader_id ? (
                     <img
                       crossOrigin="anonymous"
-                      src={getCardImageUrl(r.opponent_leader_id)}
+                      src={proxyCardImageUrl(r.opponent_leader_id)}
                       alt={r.opponent_leader_name ?? ''}
                       style={{ width: 90, height: 126, objectFit: 'cover', objectPosition: 'top center', borderRadius: 7, flexShrink: 0, display: 'block', border: `2px solid ${oppColor}66`, boxShadow: `0 4px 12px rgba(0,0,0,0.4)` }}
                     />
