@@ -204,10 +204,18 @@ export default function TournamentDetailPage({ session }) {
   useEffect(() => {
     loadAll()
     const channel = supabase.channel(`sim_tournament_${id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_matches', filter: `tournament_id=eq.${id}` }, loadMatches)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_tournament_players', filter: `tournament_id=eq.${id}` }, loadPlayers)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_rounds', filter: `tournament_id=eq.${id}` }, loadRounds)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_tournaments', filter: `id=eq.${id}` }, loadTournament)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_matches' }, payload => {
+        if (payload.new?.tournament_id === id || payload.old?.tournament_id === id) loadMatches()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_tournament_players' }, payload => {
+        if (payload.new?.tournament_id === id || payload.old?.tournament_id === id) loadPlayers()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_rounds' }, payload => {
+        if (payload.new?.tournament_id === id || payload.old?.tournament_id === id) loadRounds()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_tournaments' }, payload => {
+        if (payload.new?.id === id || payload.old?.id === id) loadTournament()
+      })
       .subscribe()
     return () => channel.unsubscribe()
   }, [id])
