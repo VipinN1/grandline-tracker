@@ -1,8 +1,12 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
-import TournamentShareCard from './TournamentShareCard'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+
+function cleanName(name) {
+  if (!name) return ''
+  return name.replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '').replace(/\s*\([^)]*\)$/, '').trim()
+}
 
 function CardPreview({ card, onClose }) {
   if (!card) return null
@@ -22,19 +26,176 @@ function CardPreview({ card, onClose }) {
 
 function pLabel(n) { if (n===1) return '1st'; if (n===2) return '2nd'; if (n===3) return '3rd'; return `${n}th` }
 function pStyle(n) {
-  if (n===1) return { background: 'rgba(251,191,36,0.12)', color: '#fbbf24' }
-  if (n===2) return { background: 'rgba(148,163,184,0.1)', color: '#94a3b8' }
-  if (n===3) return { background: 'rgba(251,146,60,0.1)', color: '#fb923c' }
-  return { background: 'rgba(255,255,255,0.04)', color: '#3d2d6e' }
+  if (n===1) return { background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.35)' }
+  if (n===2) return { background: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.3)' }
+  if (n===3) return { background: 'rgba(251,146,60,0.1)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.3)' }
+  return { background: 'rgba(255,255,255,0.04)', color: '#3d2d6e', border: '1px solid rgba(255,255,255,0.08)' }
 }
 
+// ─── Screenshot share overlay ─────────────────────────────────────────────────
+function ShareOverlay({ tournament, onClose, isMobile }) {
+  const color = COLORS[tournament.leader_color] ?? '#8b5cf6'
+  const rounds = (tournament.tournament_rounds ?? []).sort((a, b) => a.round_number - b.round_number)
+  const wentFirstWins = rounds.filter(r => r.went_first === true && r.result === 'win').length
+  const wentFirstTotal = rounds.filter(r => r.went_first === true).length
+  const wentSecondWins = rounds.filter(r => r.went_first === false && r.result === 'win').length
+  const wentSecondTotal = rounds.filter(r => r.went_first === false).length
+  const diceWins = rounds.filter(r => r.won_dice_roll === true && r.result === 'win').length
+  const diceWon = rounds.filter(r => r.won_dice_roll === true).length
+  const winRate = tournament.wins + tournament.losses > 0
+    ? Math.round(tournament.wins / (tournament.wins + tournament.losses) * 100) : 0
 
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: '#06030f', zIndex: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', padding: isMobile ? '20px 0 32px' : '28px 20px 40px' }}>
+
+      {/* Screenshot hint — above card, not part of it */}
+      <div style={{ textAlign: 'center', marginBottom: 18, flexShrink: 0 }}>
+        <div style={{ fontSize: 22, marginBottom: 8 }}>📸</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', marginBottom: 4 }}>Take a screenshot to share</div>
+        <div style={{ fontSize: 12, color: '#3d2d6e' }}>Crop below the card — close button won't be captured</div>
+      </div>
+
+      {/* The card */}
+      <div style={{
+        width: isMobile ? '100%' : 480,
+        maxWidth: '100%',
+        background: 'radial-gradient(ellipse 300px 240px at 0% 0%, rgba(124,58,237,0.3) 0%, transparent 60%), radial-gradient(ellipse 200px 160px at 100% 100%, rgba(168,85,247,0.15) 0%, transparent 65%), #0c0814',
+        border: `1.5px solid rgba(139,92,246,0.5)`,
+        borderRadius: isMobile ? 0 : 20,
+        overflow: 'hidden',
+        boxShadow: '0 0 0 1px rgba(139,92,246,0.15), 0 0 60px rgba(139,92,246,0.18), 0 20px 60px rgba(0,0,0,0.6)',
+        fontFamily: 'inherit',
+        flexShrink: 0,
+      }}>
+
+        {/* Leader art banner */}
+        <div style={{ position: 'relative', height: 200 }}>
+          <img
+            src={getCardImageUrl(tournament.leader_id)}
+            alt={tournament.leader_name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%', display: 'block' }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(12,8,20,0.85) 80%, #0c0814 100%)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${color}, ${color}88, transparent)` }} />
+          <div style={{ position: 'absolute', bottom: 18, left: 20 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+              {cleanName(tournament.leader_name)}
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', marginTop: 2 }}>{tournament.leader_id}</div>
+          </div>
+          {tournament.leader_color && (
+            <div style={{ position: 'absolute', top: 14, right: 14, fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: color + '28', color, border: `1px solid ${color}55` }}>
+              {tournament.leader_color}
+            </div>
+          )}
+        </div>
+
+        {/* Tournament info row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ width: 46, height: 46, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, ...pStyle(tournament.placement) }}>
+            {pLabel(tournament.placement)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tournament.name}</div>
+            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>{tournament.date}{tournament.player_count ? ` · ${tournament.player_count} players` : ''}</div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '-1px', lineHeight: 1 }}>
+              <span style={{ color: '#34d399' }}>{tournament.wins}W</span>
+              <span style={{ color: '#2a1f4a', margin: '0 4px', fontSize: 18 }}>·</span>
+              <span style={{ color: '#f05252' }}>{tournament.losses}L</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 3 }}>{winRate}% win rate</div>
+          </div>
+        </div>
+
+        {/* Round stats */}
+        {rounds.length > 0 && (
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#3d2d6e', marginBottom: 10 }}>Round Stats</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {[
+                { label: '1st WR', value: wentFirstTotal > 0 ? `${Math.round(wentFirstWins / wentFirstTotal * 100)}%` : '—', sub: `${wentFirstWins}/${wentFirstTotal} games` },
+                { label: '2nd WR', value: wentSecondTotal > 0 ? `${Math.round(wentSecondWins / wentSecondTotal * 100)}%` : '—', sub: `${wentSecondWins}/${wentSecondTotal} games` },
+                { label: 'Dice WR', value: diceWon > 0 ? `${Math.round(diceWins / diceWon * 100)}%` : '—', sub: `${diceWins}/${diceWon} won` },
+              ].map(s => (
+                <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 9, color: '#3d2d6e', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5, fontWeight: 600 }}>{s.label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace' }}>{s.value}</div>
+                  <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 3 }}>{s.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Round by round */}
+        {rounds.length > 0 && (
+          <div style={{ padding: '16px 20px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#3d2d6e', marginBottom: 10 }}>Round by Round</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {rounds.map(r => {
+                const oppColor = COLORS[r.opponent_leader_color] ?? '#94a3b8'
+                const isWin = r.result === 'win'
+                return (
+                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: isWin ? 'rgba(52,211,153,0.04)' : 'rgba(240,82,82,0.04)', border: `1px solid ${isWin ? 'rgba(52,211,153,0.12)' : 'rgba(240,82,82,0.1)'}`, borderRadius: 10, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#3d2d6e', width: 28, flexShrink: 0, fontFamily: 'monospace' }}>R{r.round_number}</div>
+                    {r.opponent_leader_id ? (
+                      <img src={getCardImageUrl(r.opponent_leader_id)} alt="" style={{ width: 34, height: 47, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: `1px solid ${oppColor}44` }} onError={e => { e.target.style.display = 'none' }} />
+                    ) : (
+                      <div style={{ width: 34, height: 47, borderRadius: 4, background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: oppColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {cleanName(r.opponent_leader_name) || 'Unknown'}
+                      </div>
+                      <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                        {r.won_dice_roll !== null && (
+                          <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, fontWeight: 700, background: r.won_dice_roll ? 'rgba(52,211,153,0.15)' : 'rgba(240,82,82,0.15)', color: r.won_dice_roll ? '#34d399' : '#f05252' }}>
+                            {r.won_dice_roll ? 'Dice W' : 'Dice L'}
+                          </span>
+                        )}
+                        {r.went_first !== null && (
+                          <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, fontWeight: 700, background: 'rgba(255,255,255,0.06)', color: r.went_first ? '#fbbf24' : '#a78bfa' }}>
+                            {r.went_first ? '1st' : '2nd'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: isWin ? 'rgba(52,211,153,0.15)' : 'rgba(240,82,82,0.15)', color: isWin ? '#34d399' : '#f05252', border: `1px solid ${isWin ? 'rgba(52,211,153,0.3)' : 'rgba(240,82,82,0.3)'}` }}>
+                      {isWin ? 'W' : 'L'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Footer watermark */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid rgba(139,92,246,0.15)' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6', letterSpacing: '-0.2px' }}>☠ PirateTracker</div>
+          <div style={{ fontSize: 10, color: '#2a1f4a' }}>piratetracker.vercel.app</div>
+        </div>
+      </div>
+
+      {/* Close button — below card, clearly outside the screenshot area */}
+      <button
+        onClick={onClose}
+        style={{ marginTop: 24, padding: '10px 32px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+      >
+        ✕ Close
+      </button>
+    </div>
+  )
+}
+
+// ─── Main modal ───────────────────────────────────────────────────────────────
 export default function TournamentModal({ tournament, onClose, zIndex = 200, isMobile = false, onDelete }) {
   const [selectedCard, setSelectedCard] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const cardRef = useRef(null)
+  const [showShare, setShowShare] = useState(false)
   if (!tournament) return null
 
   const color = COLORS[tournament.leader_color] ?? '#8b5cf6'
@@ -48,21 +209,6 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
   const diceWins = rounds.filter(r => r.won_dice_roll === true && r.result === 'win').length
   const diceWon = rounds.filter(r => r.won_dice_roll === true).length
 
-  const modalBox = {
-    background: '#110a1e',
-    border: '1px solid rgba(139,92,246,0.18)',
-    borderRadius: isMobile ? '16px 16px 0 0' : 16,
-    width: isMobile ? '100%' : 620,
-    maxHeight: isMobile ? '95vh' : '85vh',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-  }
-
-  function handleDelete() {
-    setShowConfirm(true)
-  }
-
   async function confirmDelete() {
     setShowConfirm(false)
     setDeleting(true)
@@ -74,85 +220,23 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
     onClose()
   }
 
-  async function handleExport() {
-    if (!cardRef.current) return
-    setExporting(true)
-    try {
-      const { default: html2canvas } = await import('html2canvas')
-
-      // Collect unique card IDs needed for the share card
-      const cardIds = [
-        tournament.leader_id,
-        ...rounds.filter(r => r.opponent_leader_id).map(r => r.opponent_leader_id),
-      ].filter(Boolean)
-
-      // Fetch each image through the same-origin proxy (/api/card-image) which
-      // re-serves optcgapi.com images with CORS headers, making canvas operations safe.
-      const dataUrls = {}
-      await Promise.allSettled(cardIds.map(id => new Promise(resolve => {
-        const origUrl = getCardImageUrl(id)
-        const img = new Image()
-        img.onload = () => {
-          try {
-            const c = document.createElement('canvas')
-            c.width = img.naturalWidth
-            c.height = img.naturalHeight
-            c.getContext('2d').drawImage(img, 0, 0)
-            dataUrls[origUrl] = c.toDataURL('image/jpeg', 0.92)
-          } catch { }
-          resolve()
-        }
-        img.onerror = resolve
-        img.src = `/api/card-image?id=${encodeURIComponent(id)}`
-      })))
-
-      // Swap img srcs in the hidden share card to data URLs before html2canvas runs
-      const imgs = Array.from(cardRef.current.querySelectorAll('img'))
-      const origSrcs = imgs.map(img => img.getAttribute('src'))
-
-      await Promise.all(imgs.map((img, i) => {
-        const dataUrl = dataUrls[origSrcs[i]]
-        if (!dataUrl) return Promise.resolve()
-        return new Promise(resolve => {
-          img.addEventListener('load', resolve, { once: true })
-          img.addEventListener('error', resolve, { once: true })
-          img.src = dataUrl
-        })
-      }))
-
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
-        backgroundColor: null,
-        logging: false,
-      })
-
-      imgs.forEach((img, i) => { img.src = origSrcs[i] })
-
-      const link = document.createElement('a')
-      link.download = `${tournament.name.replace(/[^a-z0-9]/gi, '_')}_result.png`
-      link.href = canvas.toDataURL('image/png')
-      link.click()
-    } catch (err) {
-      console.error('Export failed:', err)
-    }
-    setExporting(false)
-  }
+  if (showShare) return <ShareOverlay tournament={tournament} onClose={() => setShowShare(false)} isMobile={isMobile} />
 
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-        <div onClick={e => e.stopPropagation()} style={modalBox}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#110a1e', border: '1px solid rgba(139,92,246,0.18)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 620, maxHeight: isMobile ? '95vh' : '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header with leader art */}
           <div style={{ position: 'relative', height: 120, background: 'rgba(255,255,255,0.03)', flexShrink: 0 }}>
             <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(139,92,246,0.05) 100%)' }} />
             <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-            <button onClick={() => { handleExport() }} disabled={exporting} style={{ position: 'absolute', top: 12, right: 50, background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 6, color: exporting ? '#7c6fa0' : '#a78bfa', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: exporting ? 'default' : 'pointer', letterSpacing: '0.3px', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-              {exporting ? 'Saving…' : '↗ Share'}
+            <button onClick={() => setShowShare(true)} style={{ position: 'absolute', top: 12, right: 50, background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 6, color: '#a78bfa', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: 'pointer', letterSpacing: '0.3px', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+              ↗ Share
             </button>
             {onDelete !== false && (
-              <button onClick={handleDelete} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.5)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              <button onClick={() => setShowConfirm(true)} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.5)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                 {deleting ? 'Deleting…' : 'Delete Log'}
               </button>
             )}
@@ -180,8 +264,6 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
           </div>
 
           <div style={{ overflowY: 'auto', padding: 20 }}>
-
-            {/* Round stats */}
             {rounds.length > 0 && (
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 10 }}>Round Stats</div>
@@ -233,7 +315,6 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
               </div>
             )}
 
-            {/* Decklist */}
             {cards.length > 0 && (
               <>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 10 }}>
@@ -267,8 +348,8 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
           </div>
         </div>
       </div>
+
       {selectedCard && <CardPreview card={selectedCard} onClose={() => setSelectedCard(null)} />}
-      <TournamentShareCard ref={cardRef} tournament={tournament} />
 
       {showConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: zIndex + 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
@@ -276,15 +357,11 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
             <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(240,82,82,0.12)', border: '1px solid rgba(240,82,82,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, margin: '0 auto 16px' }}>🗑️</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 8 }}>Delete Tournament?</div>
             <div style={{ fontSize: 13, color: '#7c6fa0', lineHeight: 1.6, marginBottom: 24 }}>
-              This will permanently remove <span style={{ color: '#f0f2f5', fontWeight: 600 }}>{tournament.name}</span> and all associated round data. This cannot be undone.
+              This will permanently remove <span style={{ color: '#f0f2f5', fontWeight: 600 }}>{tournament.name}</span> and all associated round data.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowConfirm(false)} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Cancel
-              </button>
-              <button onClick={confirmDelete} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Yes, Delete
-              </button>
+              <button onClick={() => setShowConfirm(false)} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={confirmDelete} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Yes, Delete</button>
             </div>
           </div>
         </div>
