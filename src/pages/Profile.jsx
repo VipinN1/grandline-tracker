@@ -193,19 +193,34 @@ export default function Profile({ session }) {
       </div>
 
       {/* Stats row — 2×2 on mobile, 4×1 on desktop */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
-        {[
+      {(() => {
+        const favLeaderId = Object.entries(leaderCounts).sort((a, b) => b[1].count - a[1].count)[0]?.[0] ?? null
+        const stats = [
           { label: 'Tournaments', value: tournaments.length },
           { label: 'Top 8s', value: topEights },
           { label: 'Best Finish', value: bestFinish ? placementLabel(bestFinish) : '—' },
-          { label: 'Fav. Leader', value: Object.values(leaderCounts).sort((a, b) => b.count - a.count)[0]?.name.replace(/\s*\([^)]*\)$/, '').trim().split(' ').slice(-1)[0] ?? '—' },
-        ].map(s => (
-          <div key={s.label} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: isMobile ? '12px 14px' : '14px 16px' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#7c6fa0', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.5px' }}>{s.value}</div>
+          { label: 'Fav. Leader', value: null, leaderId: favLeaderId },
+        ]
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
+            {stats.map(s => (
+              <div key={s.label} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: isMobile ? '12px 14px' : '14px 16px', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#7c6fa0', marginBottom: 6, position: 'relative', zIndex: 1 }}>{s.label}</div>
+                {s.leaderId ? (
+                  <img
+                    src={getCardImageUrl(s.leaderId)}
+                    alt="Favourite leader"
+                    style={{ height: isMobile ? 70 : 90, borderRadius: 6, objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+                    onError={e => { e.target.style.display = 'none' }}
+                  />
+                ) : (
+                  <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.5px' }}>{s.value}</div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        )
+      })()}
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.07)', flexWrap: 'wrap' }}>
