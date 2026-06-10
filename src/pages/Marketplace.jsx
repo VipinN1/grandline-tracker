@@ -1760,6 +1760,190 @@ function MyListingsTab({ session, profile, isMobile }) {
   )
 }
 
+// ─── ApplyStorefrontModal ─────────────────────────────────────────────────────
+
+function ApplyStorefrontModal({ session, onClose, onSuccess, isMobile }) {
+  const [storeName, setStoreName] = useState('')
+  const [address, setAddress] = useState('')
+  const [contactInfo, setContactInfo] = useState('')
+  const [websiteUrl, setWebsiteUrl] = useState('')
+  const [logoFile, setLogoFile] = useState(null)
+  const [logoPreview, setLogoPreview] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  function handleLogoChange(e) {
+    const file = e.target.files?.[0]; if (!file) return
+    setLogoFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setLogoPreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
+  async function submit() {
+    if (!storeName.trim()) { setError('Store name is required.'); return }
+    setSaving(true); setError('')
+    let logo_url = null
+    if (logoFile) {
+      const ext = logoFile.name.split('.').pop() || 'jpg'
+      const path = `store-logos/apply-${session.user.id}-${Date.now()}.${ext}`
+      const { error: uploadErr } = await supabase.storage.from('card-photos').upload(path, logoFile, { upsert: true, contentType: logoFile.type })
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from('card-photos').getPublicUrl(path)
+        logo_url = urlData?.publicUrl ?? null
+      }
+    }
+    const { error: insertErr } = await supabase.from('storefronts').insert({
+      user_id: session.user.id, store_name: storeName.trim(),
+      address: address.trim(), contact_info: contactInfo.trim(),
+      website_url: websiteUrl.trim(), logo_url, status: 'pending',
+    })
+    setSaving(false)
+    if (insertErr) { setError('Submission failed: ' + insertErr.message); return }
+    onSuccess()
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 480, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Apply as Storefront</div>
+            <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Your application will be reviewed before going live</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+          <div style={{ marginBottom: 18 }}>
+            <label style={LABEL}>Store Logo</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 12, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                {logoPreview ? <img src={logoPreview} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 24 }}>🏪</span>}
+              </div>
+              <label style={{ fontSize: 12, fontWeight: 600, padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Upload Logo
+                <input type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
+              </label>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={LABEL}>Store Name *</label>
+            <input value={storeName} onChange={e => setStoreName(e.target.value)} style={{ ...INPUT, width: '100%' }} placeholder="e.g. Pirate's Cove Cards" />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={LABEL}>Address</label>
+            <input value={address} onChange={e => setAddress(e.target.value)} style={{ ...INPUT, width: '100%' }} placeholder="123 Main St, City, State" />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={LABEL}>Contact Info</label>
+            <input value={contactInfo} onChange={e => setContactInfo(e.target.value)} style={{ ...INPUT, width: '100%' }} placeholder="Phone or email" />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={LABEL}>Website / Social Link</label>
+            <input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} style={{ ...INPUT, width: '100%' }} placeholder="https://..." />
+          </div>
+          {error && <div style={{ fontSize: 12, color: '#f05252' }}>{error}</div>}
+        </div>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={submit} disabled={saving} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
+            {saving ? 'Submitting...' : 'Submit Application'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── MyStorefrontSection ──────────────────────────────────────────────────────
+
+function MyStorefrontSection({ session, isMobile }) {
+  const navigate = useNavigate()
+  const [storefront, setStorefront] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [showApply, setShowApply] = useState(false)
+  const [applied, setApplied] = useState(false)
+
+  useEffect(() => { load() }, [session])
+
+  async function load() {
+    if (!session) { setLoading(false); return }
+    const { data } = await supabase.from('storefronts').select('*').eq('user_id', session.user.id).single()
+    setStorefront(data ?? null)
+    setLoading(false)
+  }
+
+  const STATUS_COLORS = { pending: '#fbbf24', approved: '#34d399', rejected: '#f05252' }
+  const STATUS_LABELS = { pending: 'Pending review', approved: 'Live', rejected: 'Rejected' }
+
+  if (loading) return <div style={{ fontSize: 12, color: '#7c6fa0', padding: '12px 0' }}>Loading...</div>
+
+  if (applied && !storefront) return (
+    <div style={{ padding: '14px 16px', background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#34d399' }}>Application submitted!</div>
+      <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 4 }}>You'll be notified once it's reviewed.</div>
+    </div>
+  )
+
+  if (!storefront) return (
+    <>
+      <div style={{ padding: '14px 16px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>Become a Storefront</div>
+          <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 3 }}>List your store's inventory and reach buyers</div>
+        </div>
+        <button onClick={() => setShowApply(true)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+          Apply Now
+        </button>
+      </div>
+      {showApply && (
+        <ApplyStorefrontModal session={session} onClose={() => setShowApply(false)} onSuccess={() => { setShowApply(false); setApplied(true); load() }} isMobile={isMobile} />
+      )}
+    </>
+  )
+
+  return (
+    <div style={{ padding: '14px 16px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid rgba(139,92,246,0.2)', background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+        {storefront.logo_url ? <img src={storefront.logo_url} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 20 }}>🏪</span>}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{storefront.store_name}</div>
+        <div style={{ fontSize: 11, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: STATUS_COLORS[storefront.status] ?? '#7c6fa0', fontWeight: 600 }}>{STATUS_LABELS[storefront.status] ?? storefront.status}</span>
+          {storefront.status === 'pending' && <span style={{ color: '#7c6fa0' }}>· Awaiting approval</span>}
+        </div>
+      </div>
+      {storefront.status === 'approved' && (
+        <button onClick={() => navigate(`/storefront/${storefront.id}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+          Manage Store
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─── StoreCard ────────────────────────────────────────────────────────────────
+
+function StoreCard({ store, onClick }) {
+  return (
+    <div onClick={onClick} style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.15s' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)'; e.currentTarget.style.background = 'rgba(139,92,246,0.08)' }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)'; e.currentTarget.style.background = 'rgba(139,92,246,0.04)' }}>
+      <div style={{ height: 80, background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {store.logo_url
+          ? <img src={store.logo_url} alt={store.store_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <span style={{ fontSize: 40 }}>🏪</span>}
+      </div>
+      <div style={{ padding: '12px 14px' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{store.store_name}</div>
+        {store.address && <div style={{ fontSize: 11, color: '#7c6fa0', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📍 {store.address}</div>}
+        <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 4 }}>{store.inventory_count ?? 0} cards listed</div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Marketplace (main page) ──────────────────────────────────────────────────
 
 export default function Marketplace({ session }) {
@@ -1786,9 +1970,15 @@ export default function Marketplace({ session }) {
   const [wantDisplayCount, setWantDisplayCount] = useState(50)
   const [contactWant, setContactWant] = useState(null)
   const [showCreateWant, setShowCreateWant] = useState(false)
+  const [storefronts, setStorefronts] = useState([])
+  const [storefrontsLoading, setStorefrontsLoading] = useState(false)
+  const [pendingStorefronts, setPendingStorefronts] = useState([])
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [approvingStore, setApprovingStore] = useState(null)
 
   useEffect(() => { loadListings(); loadProfile() }, [])
   useEffect(() => { if (activeTab === 'wants') loadWants() }, [activeTab])
+  useEffect(() => { if (activeTab === 'stores') loadStorefronts() }, [activeTab, isAdmin])
 
   async function loadListings() {
     setLoading(true)
@@ -1822,6 +2012,35 @@ export default function Marketplace({ session }) {
     if (!session) return
     const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
     setProfile(data ?? null)
+    if (data?.username === 'Cipin') setIsAdmin(true)
+  }
+
+  async function loadStorefronts() {
+    setStorefrontsLoading(true)
+    const { data: approved } = await supabase
+      .from('storefronts')
+      .select('*')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+    // Fetch inventory counts
+    const stores = await Promise.all((approved ?? []).map(async s => {
+      const { count } = await supabase.from('store_inventory').select('*', { count: 'exact', head: true }).eq('storefront_id', s.id).eq('status', 'active')
+      return { ...s, inventory_count: count ?? 0 }
+    }))
+    setStorefronts(stores)
+    if (isAdmin) {
+      const { data: pending } = await supabase.from('storefronts').select('*, profiles(id, username)').eq('status', 'pending').order('created_at', { ascending: true })
+      setPendingStorefronts(pending ?? [])
+    }
+    setStorefrontsLoading(false)
+  }
+
+  async function approveStore(id, status) {
+    setApprovingStore(id)
+    await supabase.from('storefronts').update({ status }).eq('id', id)
+    setPendingStorefronts(prev => prev.filter(s => s.id !== id))
+    if (status === 'approved') loadStorefronts()
+    setApprovingStore(null)
   }
 
   function clearFilters() { setSearch(''); setColorFilter(''); setConditionFilter(''); setPriceMin(''); setPriceMax(''); setCityFilter('') }
@@ -1855,6 +2074,7 @@ export default function Marketplace({ session }) {
       <div style={{ display: 'flex', gap: 4, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
         <button onClick={() => setActiveTab('browse')} style={tabBtn(activeTab === 'browse')}>Browse</button>
         <button onClick={() => setActiveTab('wants')} style={{ ...tabBtn(activeTab === 'wants'), color: activeTab === 'wants' ? '#fff' : '#fbbf24', background: activeTab === 'wants' ? '#d97706' : 'transparent' }}>Looking For</button>
+        <button onClick={() => setActiveTab('stores')} style={{ ...tabBtn(activeTab === 'stores'), color: activeTab === 'stores' ? '#fff' : '#34d399', background: activeTab === 'stores' ? '#059669' : 'transparent' }}>Stores</button>
         {session ? (
           <button onClick={() => setActiveTab('mylistings')} style={tabBtn(activeTab === 'mylistings')}>My Listings</button>
         ) : (
@@ -2008,8 +2228,54 @@ export default function Marketplace({ session }) {
             )
           })()}
         </>
+      ) : activeTab === 'stores' ? (
+        <>
+          {/* Admin: pending applications */}
+          {isAdmin && pendingStorefronts.length > 0 && (
+            <div style={{ marginBottom: 24, padding: '16px 18px', background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#fbbf24', marginBottom: 12 }}>Pending Applications ({pendingStorefronts.length})</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {pendingStorefronts.map(s => (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{s.store_name}</div>
+                      <div style={{ fontSize: 11, color: '#7c6fa0' }}>by @{s.profiles?.username} · {s.address || 'No address'}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      <button onClick={() => navigate(`/storefront/${s.id}`)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>View</button>
+                      <button onClick={() => approveStore(s.id, 'rejected')} disabled={approvingStore === s.id} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.25)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Reject</button>
+                      <button onClick={() => approveStore(s.id, 'approved')} disabled={approvingStore === s.id} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(52,211,153,0.15)', color: '#34d399', cursor: 'pointer', fontFamily: 'inherit' }}>Approve</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {storefrontsLoading ? (
+            <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading stores...</div>
+          ) : storefronts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e' }}>
+              <div style={{ fontSize: 40, marginBottom: 14 }}>🏪</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No storefronts yet</div>
+              <div style={{ fontSize: 13 }}>Approved stores will appear here</div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 2 : isTablet ? 3 : 4}, 1fr)`, gap: isMobile ? 10 : 14 }}>
+              {storefronts.map(store => (
+                <StoreCard key={store.id} store={store} onClick={() => navigate(`/storefront/${store.id}`)} />
+              ))}
+            </div>
+          )}
+        </>
       ) : (
-        <MyListingsTab session={session} profile={profile} isMobile={isMobile} />
+        <>
+          <MyListingsTab session={session} profile={profile} isMobile={isMobile} />
+          <div style={{ marginTop: 32 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 14 }}>My Storefront</div>
+            <MyStorefrontSection session={session} isMobile={isMobile} />
+          </div>
+        </>
       )}
 
       {detailListing && (
