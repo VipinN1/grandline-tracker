@@ -2029,7 +2029,7 @@ export default function Marketplace({ session }) {
     }))
     setStorefronts(stores)
     if (isAdmin) {
-      const { data: pending } = await supabase.from('storefronts').select('*, profiles(id, username)').eq('status', 'pending').order('created_at', { ascending: true })
+      const { data: pending } = await supabase.from('storefronts').select('*').eq('status', 'pending').order('created_at', { ascending: true })
       setPendingStorefronts(pending ?? [])
     }
     setStorefrontsLoading(false)
@@ -2239,7 +2239,7 @@ export default function Marketplace({ session }) {
                   <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{s.store_name}</div>
-                      <div style={{ fontSize: 11, color: '#7c6fa0' }}>by @{s.profiles?.username} · {s.address || 'No address'}</div>
+                      <div style={{ fontSize: 11, color: '#7c6fa0' }}>{s.address || 'No address'} · Applied {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                       <button onClick={() => navigate(`/storefront/${s.id}`)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>View</button>

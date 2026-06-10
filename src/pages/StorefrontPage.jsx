@@ -591,7 +591,7 @@ export default function StorefrontPage({ session }) {
 
   async function load() {
     setLoading(true)
-    const { data: sf } = await supabase.from('storefronts').select('*, profiles(id, username, avatar_url)').eq('id', id).single()
+    const { data: sf } = await supabase.from('storefronts').select('*').eq('id', id).single()
     if (!sf) { setLoading(false); return }
     setStorefront(sf)
     setLoading(false)
@@ -656,7 +656,7 @@ export default function StorefrontPage({ session }) {
         <div style={{ marginBottom: 20, padding: '14px 18px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Admin · {storefront.status === 'pending' ? 'Pending Application' : 'Rejected'}</div>
-            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>Applied by @{storefront.profiles?.username}</div>
+            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>Applied {new Date(storefront.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {storefront.status !== 'rejected' && (
