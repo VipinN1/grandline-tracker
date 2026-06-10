@@ -12,6 +12,26 @@ const CONDITIONS = ['Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily
 const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
 const CARD_TYPES = ['Leader', 'Character', 'Event', 'Stage']
 const COLOR_HEX = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+const BOOSTER_SETS = ['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','EB01','EB02','EB03','EB04','PRB01','PRB02']
+
+function pillStyle(isActive, accentColor) {
+  return {
+    padding: '3px 9px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+    cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${isActive ? (accentColor ?? 'rgba(139,92,246,0.5)') : 'rgba(139,92,246,0.3)'}`,
+    background: isActive ? (accentColor ? `${accentColor}33` : 'rgba(139,92,246,0.3)') : 'rgba(15,8,30,0.85)',
+    color: isActive ? (accentColor ?? '#a78bfa') : '#7c6fa0', transition: 'all 0.15s',
+  }
+}
+
+function getAltArtType(card) {
+  const name = (card.card_name ?? '').toLowerCase()
+  const rarity = (card.card_rarity ?? '').toLowerCase()
+  if (/\bsp\b/.test(name) || rarity === 'sp') return 'sp'
+  if (/\bmanga\b/.test(name) || rarity === 'manga') return 'manga'
+  if (/\btr\b/.test(name) || rarity === 'tr') return 'tr'
+  if (/parallel/.test(name) || rarity === 'parallel') return 'parallel'
+  return ''
+}
 
 const INPUT = {
   background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)',
@@ -226,6 +246,9 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
   const [error, setError] = useState('')
   const [filterColor, setFilterColor] = useState([])
   const [filterType, setFilterType] = useState('')
+  const [filterSource, setFilterSource] = useState('')
+  const [filterAltArt, setFilterAltArt] = useState('')
+  const [filterCost, setFilterCost] = useState(null)
   const debounceRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -247,6 +270,12 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
         let results = await searchCards(val)
         if (filterColor.length > 0) results = results.filter(c => filterColor.includes(c.card_color))
         if (filterType) results = results.filter(c => c.card_type === filterType)
+        const id = (c) => c.card_set_id ?? ''
+        if (filterSource === 'ST') results = results.filter(c => /^ST/i.test(id(c)))
+        else if (filterSource === 'Promos') results = results.filter(c => /^P-/i.test(id(c)))
+        else if (filterSource) results = results.filter(c => id(c).toUpperCase().startsWith(filterSource))
+        if (filterAltArt) results = results.filter(c => getAltArtType(c) === filterAltArt)
+        if (filterCost !== null) results = results.filter(c => String(c.card_cost ?? '') === String(filterCost))
         setCardResults(results)
       } catch { setCardResults([]) }
       setCardSearching(false)
@@ -296,22 +325,55 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
 
         {step === 1 ? (
           <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-              {CARD_COLORS.map(c => {
-                const active = filterColor.includes(c)
-                return (
-                  <button key={c} onClick={() => setFilterColor(prev => active ? prev.filter(x => x !== c) : [...prev, c])}
-                    style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, border: `1px solid ${COLOR_HEX[c]}55`, background: active ? `${COLOR_HEX[c]}22` : 'transparent', color: active ? COLOR_HEX[c] : '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
-                    {c}
-                  </button>
-                )
-              })}
-              {CARD_TYPES.map(t => (
-                <button key={t} onClick={() => setFilterType(filterType === t ? '' : t)}
-                  style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(139,92,246,0.25)', background: filterType === t ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterType === t ? '#a78bfa' : '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
-                  {t}
-                </button>
-              ))}
+            <div style={{ background: 'rgba(139,92,246,0.03)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+              {/* Color */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                {[['', 'All'], ...CARD_COLORS.map(c => [c, c])].map(([val, label]) => {
+                  const isActive = val === '' ? filterColor.length === 0 : filterColor.includes(val)
+                  return (
+                    <button key={val || 'c-all'} onClick={() => {
+                      if (val === '') { setFilterColor([]); return }
+                      setFilterColor(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val])
+                    }} style={pillStyle(isActive, COLOR_HEX[val])}>
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+              {/* Type */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {[['', 'All Types'], ['Leader', 'Leader'], ['Character', 'Character'], ['Event', 'Event'], ['Stage', 'Stage']].map(([val, label]) => (
+                  <button key={val || 't-all'} onClick={() => setFilterType(val)} style={pillStyle(filterType === val, null)}>{label}</button>
+                ))}
+              </div>
+              {/* Source */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                <button onClick={() => setFilterSource('')} style={pillStyle(filterSource === '', null)}>All</button>
+                <select
+                  value={['', 'ST', 'Promos'].includes(filterSource) ? '' : filterSource}
+                  onChange={e => setFilterSource(e.target.value)}
+                  style={{ padding: '2px 7px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.3)' : 'rgba(15,8,30,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.3)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
+                >
+                  <option value="">Booster Sets</option>
+                  {BOOSTER_SETS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <button onClick={() => setFilterSource('ST')} style={pillStyle(filterSource === 'ST', null)}>Starter Decks</button>
+                <button onClick={() => setFilterSource('Promos')} style={pillStyle(filterSource === 'Promos', null)}>Promos</button>
+              </div>
+              {/* Alt Art */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
+                  const ac = { parallel: '#e879f9', sp: '#34d399', manga: '#38bdf8', tr: '#f97316' }[val]
+                  return <button key={val || 'a-all'} onClick={() => setFilterAltArt(val)} style={pillStyle(filterAltArt === val, ac)}>{label}</button>
+                })}
+              </div>
+              {/* Cost */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                <button onClick={() => setFilterCost(null)} style={pillStyle(filterCost === null, null)}>All Costs</button>
+                {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
+                  <button key={n} onClick={() => setFilterCost(filterCost === n ? null : n)} style={pillStyle(filterCost === n, null)}>{n}</button>
+                ))}
+              </div>
             </div>
             <div style={{ position: 'relative' }} ref={dropdownRef}>
               <input type="text" placeholder="Search card by name or ID..." value={cardQuery} onChange={handleCardQuery} onFocus={() => cardResults.length > 0 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%' }} />
