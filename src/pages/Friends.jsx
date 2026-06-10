@@ -29,6 +29,7 @@ export default function Friends({ session }) {
   const [myTournaments, setMyTournaments] = useState([])
   const [adminGrants, setAdminGrants] = useState([]) // tournament_ids friend has admin on
   const [adminLoading, setAdminLoading] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const { isMobile } = useWindowSize()
 
   useEffect(() => {
@@ -37,12 +38,14 @@ export default function Friends({ session }) {
   }, [session])
 
   async function loadAll() {
-    const [{ data: friendsData }, { data: requestsData }] = await Promise.all([
+    const [{ data: friendsData }, { data: requestsData }, { data: profile }] = await Promise.all([
       supabase.from('friends').select('*, profiles!friends_friend_id_fkey(*)').eq('user_id', session.user.id).eq('status', 'accepted'),
       supabase.from('friends').select('*, profiles!friends_user_id_fkey(*)').eq('friend_id', session.user.id).eq('status', 'pending'),
+      supabase.from('profiles').select('username').eq('id', session.user.id).single(),
     ])
     setFriends(friendsData ?? [])
     setPendingRequests(requestsData ?? [])
+    if (profile?.username === 'Cipin') setIsAdmin(true)
     setLoading(false)
   }
 
@@ -153,13 +156,15 @@ export default function Friends({ session }) {
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{f.profiles?.username}</div>
                     {f.profiles?.location && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>{f.profiles.location}</div>}
                   </div>
-                  <button
-                    onClick={e => openAdminModal(e, f)}
-                    title="Manage tournament admin"
-                    style={{ flexShrink: 0, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, color: '#a78bfa', transition: 'all 0.15s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.25)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.12)' }}
-                  >🛡</button>
+                  {isAdmin && (
+                    <button
+                      onClick={e => openAdminModal(e, f)}
+                      title="Manage tournament admin"
+                      style={{ flexShrink: 0, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, color: '#a78bfa', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.25)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.12)' }}
+                    >🛡</button>
+                  )}
                 </div>
               </div>
             ))}
