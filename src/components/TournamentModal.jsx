@@ -97,7 +97,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tournament.name}</div>
-            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>{tournament.date}{tournament.player_count ? ` · ${tournament.player_count} players` : ''}</div>
+            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>{tournament.date}{tournament.player_count ? ` · ${tournament.player_count} players` : ''}{tournament.location ? ` · ${tournament.location}` : ''}</div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '-1px', lineHeight: 1 }}>
@@ -254,7 +254,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{tournament.name}</div>
-              <div style={{ fontSize: 11, color: '#7c6fa0' }}>{tournament.date} · {tournament.player_count} players</div>
+              <div style={{ fontSize: 11, color: '#7c6fa0' }}>{tournament.date} · {tournament.player_count} players{tournament.location ? ` · ${tournament.location}` : ''}</div>
             </div>
             <div style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, fontFamily: 'monospace' }}>
               <span style={{ color: '#34d399' }}>{tournament.wins}W</span>

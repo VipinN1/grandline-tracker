@@ -258,7 +258,7 @@ export default function Profile({ session }) {
               </div>
               <div>
                 <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#f0f2f5' }}>{t.name}</div>
-                <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>{t.date} · {t.player_count} players</div>
+                <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>{t.date} · {t.player_count} players{t.location ? ` · ${t.location}` : ''}</div>
               </div>
               {!isMobile && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 12px 6px 8px' }}>
