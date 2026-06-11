@@ -58,6 +58,7 @@ const AUTH_LINKS = [
   { to: '/decklists', label: 'Decklists' },
   { to: '/friends', label: 'Friends' },
   { to: '/profile', label: 'Profile' },
+  { to: '/bounty', label: '☠ Bounty' },
   { to: '/community', label: 'Community' },
   { to: '/tournaments', label: 'Tournaments' },
   { to: '/marketplace', label: 'Market' },
@@ -174,6 +175,7 @@ export default function Navbar({ session }) {
           <>
             <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
               <NavLink to="/deck-builder" style={({ isActive }) => tabStyle(isActive)}>Deck Builder</NavLink>
+              <NavLink to="/bounty" style={({ isActive }) => tabStyle(isActive)}>☠ Bounty</NavLink>
               <NavLink to="/community" style={({ isActive }) => tabStyle(isActive)}>Community</NavLink>
               <NavLink to="/tournaments" style={({ isActive }) => tabStyle(isActive)}>Tournaments</NavLink>
               <NavLink to="/marketplace" style={({ isActive }) => tabStyle(isActive)}>Market</NavLink>
@@ -253,6 +255,7 @@ export default function Navbar({ session }) {
             <>
               {[
                 { to: '/deck-builder', label: 'Deck Builder' },
+                { to: '/bounty', label: '☠ Bounty Board' },
                 { to: '/community', label: 'Community' },
                 { to: '/tournaments', label: 'Tournaments' },
                 { to: '/marketplace', label: 'Market' },

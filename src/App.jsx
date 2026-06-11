@@ -20,6 +20,7 @@ import LiveTournament from './pages/LiveTournament'
 import Signup from './pages/Signup'
 import Home from './pages/Home'
 import StorefrontPage from './pages/StorefrontPage'
+import BountyBoard from './pages/BountyBoard'
 
 function ProtectedRoute({ session, children }) {
   if (!session) return <Navigate to="/login" replace />
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="/tournaments" element={<TournamentsPage session={session} />} />
           <Route path="/tournaments/:id" element={<TournamentDetailPage session={session} />} />
           <Route path="/storefront/:id" element={<StorefrontPage session={session} />} />
+          <Route path="/bounty" element={<BountyBoard session={session} />} />
         </Route>
       </Routes>
     </BrowserRouter>
