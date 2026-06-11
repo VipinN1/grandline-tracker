@@ -64,10 +64,10 @@ export default function BountyBoard({ session }) {
   }
 
   // ── Weekly meta ──────────────────────────────────────────────────────────────
-  const weekAgo = new Date()
-  weekAgo.setDate(weekAgo.getDate() - 7)
-  const weekAgoStr = weekAgo.toISOString().split('T')[0]
-  const weeklyTournaments = tournaments.filter(t => t.date >= weekAgoStr)
+  const monthAgo = new Date()
+  monthAgo.setDate(monthAgo.getDate() - 30)
+  const monthAgoStr = monthAgo.toISOString().split('T')[0]
+  const weeklyTournaments = tournaments.filter(t => t.date >= monthAgoStr)
 
   const playMap = {}
   weeklyTournaments.forEach(t => {
@@ -181,10 +181,10 @@ export default function BountyBoard({ session }) {
         {/* This Week's Meta */}
         <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 18 }}>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#7c6fa0', marginBottom: 14 }}>
-            This Week's Meta
+            Meta — Last 30 Days
           </div>
           {topWeekly.length === 0 ? (
-            <div style={{ fontSize: 12, color: '#3d2d6e', textAlign: 'center', padding: '20px 0' }}>No activity this week</div>
+            <div style={{ fontSize: 12, color: '#3d2d6e', textAlign: 'center', padding: '20px 0' }}>No activity in the last 30 days</div>
           ) : topWeekly.map(l => (
             <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <img
