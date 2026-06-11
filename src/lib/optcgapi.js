@@ -395,5 +395,7 @@ export function getCardImageUrl(cardOrId) {
     const id = cardOrId.card_image_id ?? cardOrId.card_set_id ?? ''
     return `https://optcgapi.com/media/static/Card_Images/${id}.jpg`
   }
+  const cached = getCache()[cardOrId]
+  if (cached?.card_image) return cached.card_image
   return `https://optcgapi.com/media/static/Card_Images/${cardOrId}.jpg`
 }

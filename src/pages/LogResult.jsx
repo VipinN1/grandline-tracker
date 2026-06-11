@@ -10,11 +10,12 @@ const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a7
 // Extracts the variant-specific image ID from a card object.
 // card_image URL is the most reliable source (e.g. ".../Card_Images/OP01-001_p1.jpg" → "OP01-001_p1").
 function getLeaderStorageId(card) {
+  if (card?.card_image_id) return card.card_image_id
   if (card?.card_image) {
     const m = card.card_image.match(/Card_Images\/(.+?)\.jpg/i)
     if (m?.[1]) return m[1]
   }
-  return card?.card_image_id ?? card?.card_set_id ?? ''
+  return card?.card_set_id ?? ''
 }
 
 // Returns the clean base card ID for display (strips variant suffixes like "_p1_9XMhMTI").
