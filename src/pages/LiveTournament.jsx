@@ -409,32 +409,37 @@ function RoundHistory({ rounds }) {
       <div style={{ fontSize: 13, fontWeight: 700, color: '#7c6fa0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 14 }}>Round History</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {rounds.map(r => (
-          <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#7c6fa0', minWidth: 60 }}>R{r.round_number}</div>
+          <div key={r.id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#7c6fa0', minWidth: 60 }}>R{r.round_number}</div>
 
-            {r.opponent_leader_id && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                <img src={getCardImageUrl(r.opponent_leader_id)} alt={r.opponent_leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
-                <div style={{ fontSize: 12, color: COLORS[r.opponent_leader_color] ?? '#7c6fa0' }}>{r.opponent_leader_name}</div>
+              {r.opponent_leader_id && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+                  <img src={getCardImageUrl(r.opponent_leader_id)} alt={r.opponent_leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
+                  <div style={{ fontSize: 12, color: COLORS[r.opponent_leader_color] ?? '#7c6fa0' }}>{r.opponent_leader_name}</div>
+                </div>
+              )}
+              {!r.opponent_leader_id && <div style={{ flex: 1, fontSize: 12, color: '#3d2d6e' }}>Unknown leader</div>}
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {r.won_dice_roll !== null && (
+                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: r.won_dice_roll ? 'rgba(52,211,153,0.1)' : 'rgba(240,82,82,0.1)', color: r.won_dice_roll ? '#34d399' : '#f05252' }}>
+                    {r.won_dice_roll ? '🎲 Won' : '🎲 Lost'}
+                  </span>
+                )}
+                {r.went_first !== null && (
+                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'rgba(255,255,255,0.06)', color: r.went_first ? '#fbbf24' : '#a78bfa' }}>
+                    {r.went_first ? '1st' : '2nd'}
+                  </span>
+                )}
+                <span style={{ fontSize: 13, fontWeight: 700, color: r.result === 'win' ? '#34d399' : '#f05252', minWidth: 24, textAlign: 'right' }}>
+                  {r.result === 'win' ? 'W' : 'L'}
+                </span>
               </div>
-            )}
-            {!r.opponent_leader_id && <div style={{ flex: 1, fontSize: 12, color: '#3d2d6e' }}>Unknown leader</div>}
-
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              {r.won_dice_roll !== null && (
-                <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: r.won_dice_roll ? 'rgba(52,211,153,0.1)' : 'rgba(240,82,82,0.1)', color: r.won_dice_roll ? '#34d399' : '#f05252' }}>
-                  {r.won_dice_roll ? '🎲 Won' : '🎲 Lost'}
-                </span>
-              )}
-              {r.went_first !== null && (
-                <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'rgba(255,255,255,0.06)', color: r.went_first ? '#fbbf24' : '#a78bfa' }}>
-                  {r.went_first ? '1st' : '2nd'}
-                </span>
-              )}
-              <span style={{ fontSize: 13, fontWeight: 700, color: r.result === 'win' ? '#34d399' : '#f05252', minWidth: 24, textAlign: 'right' }}>
-                {r.result === 'win' ? 'W' : 'L'}
-              </span>
             </div>
+            {r.notes && (
+              <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 6, paddingLeft: 72, fontStyle: 'italic' }}>{r.notes}</div>
+            )}
           </div>
         ))}
       </div>
@@ -608,6 +613,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
                           won_dice_roll: r.won_dice_roll,
                           went_first: r.went_first,
                           result: r.result,
+                          notes: r.notes || null,
                         }))
                       )
                     }
