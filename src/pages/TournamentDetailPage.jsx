@@ -192,6 +192,8 @@ export default function TournamentDetailPage({ session }) {
   const [players, setPlayers] = useState([])
   const [rounds, setRounds] = useState([])
   const [matches, setMatches] = useState([])
+  const [matchMessages, setMatchMessages] = useState([])
+  const matchesRef = useRef([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [activeTab, setActiveTab] = useState('pairings')
@@ -242,6 +244,11 @@ export default function TournamentDetailPage({ session }) {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sim_tournaments' }, payload => {
         if (payload.new?.id === id || payload.old?.id === id) loadTournament()
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sim_match_messages' }, payload => {
+        const msg = payload.new
+        if (!matchesRef.current.some(m => m.id === msg.match_id)) return
+        setMatchMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg])
       })
       .subscribe()
     return () => channel.unsubscribe()
@@ -297,7 +304,20 @@ export default function TournamentDetailPage({ session }) {
 
   async function loadMatches() {
     const { data } = await supabase.from('sim_matches').select('*').eq('tournament_id', id)
-    setMatches(data ?? [])
+    const result = data ?? []
+    matchesRef.current = result
+    setMatches(result)
+    await loadMatchMessages(result.map(m => m.id))
+  }
+
+  async function loadMatchMessages(matchIds) {
+    if (!matchIds?.length) return
+    const { data } = await supabase
+      .from('sim_match_messages')
+      .select('*')
+      .in('match_id', matchIds)
+      .order('created_at', { ascending: true })
+    setMatchMessages(data ?? [])
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -711,6 +731,7 @@ export default function TournamentDetailPage({ session }) {
                     player1Id={m.player1_id}
                     player2Id={m.player2_id}
                     isAdmin={isAdmin}
+                    messages={matchMessages.filter(msg => msg.match_id === m.id)}
                     getProfile={uid => players.find(p => p.user_id === uid)?.profiles}
                   />
                 </div>

@@ -1,56 +1,33 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function MatchChat({ matchId, currentUserId, player1Id, player2Id, isAdmin, getProfile }) {
+export default function MatchChat({ matchId, currentUserId, player1Id, player2Id, isAdmin, messages, getProfile }) {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState([])
   const [hasNew, setHasNew] = useState(false)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const bottomRef = useRef(null)
-  const channelRef = useRef(null)
+  const prevLenRef = useRef(0)
 
   const canChat = currentUserId && (currentUserId === player1Id || currentUserId === player2Id || isAdmin)
 
-  // Don't render for bye matches or non-participants
   if (!player2Id || !canChat) return null
 
+  // Detect incoming messages while closed
   useEffect(() => {
-    loadMessages()
+    if (messages.length > prevLenRef.current) {
+      if (!open) setHasNew(true)
+      prevLenRef.current = messages.length
+    }
+  }, [messages.length])
 
-    channelRef.current = supabase.channel(`match_chat_${matchId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'sim_match_messages',
-        filter: `match_id=eq.${matchId}`
-      }, payload => {
-        setMessages(prev => {
-          if (prev.some(m => m.id === payload.new.id)) return prev
-          return [...prev, payload.new]
-        })
-        if (!open) setHasNew(true)
-      })
-      .subscribe()
-
-    return () => { channelRef.current?.unsubscribe() }
-  }, [matchId])
-
+  // Scroll to bottom when opened or new messages arrive while open
   useEffect(() => {
     if (open) {
       setHasNew(false)
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     }
   }, [open, messages.length])
-
-  async function loadMessages() {
-    const { data } = await supabase
-      .from('sim_match_messages')
-      .select('*')
-      .eq('match_id', matchId)
-      .order('created_at', { ascending: true })
-    if (data) setMessages(data)
-  }
 
   async function send() {
     const trimmed = text.trim()
@@ -75,8 +52,8 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
         onClick={() => setOpen(o => !o)}
         style={{
           background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-          display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0', color: '#7c6fa0',
-          fontSize: 12, fontWeight: 600
+          display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0',
+          color: '#7c6fa0', fontSize: 12, fontWeight: 600
         }}
       >
         <span style={{ position: 'relative' }}>
@@ -95,7 +72,6 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
 
       {open && (
         <div style={{ marginTop: 8 }}>
-          {/* Message list */}
           <div style={{
             maxHeight: 180, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6,
             padding: '8px 10px', background: 'rgba(0,0,0,0.2)', borderRadius: 8,
@@ -111,7 +87,8 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
               return (
                 <div key={msg.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                   <div style={{
-                    width: 22, height: 22, borderRadius: 6, background: isMe ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.07)',
+                    width: 22, height: 22, borderRadius: 6,
+                    background: isMe ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.07)',
                     border: `1px solid ${isMe ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.1)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 8, fontWeight: 700, color: isMe ? '#a78bfa' : '#7c6fa0',
@@ -135,7 +112,6 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
             <input
               value={text}
@@ -155,7 +131,8 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
                 padding: '7px 14px', borderRadius: 7, border: 'none', fontFamily: 'inherit',
                 background: text.trim() ? '#8b5cf6' : 'rgba(139,92,246,0.15)',
                 color: text.trim() ? '#fff' : '#3d2d6e',
-                fontSize: 12, fontWeight: 700, cursor: text.trim() && !sending ? 'pointer' : 'default',
+                fontSize: 12, fontWeight: 700,
+                cursor: text.trim() && !sending ? 'pointer' : 'default',
                 transition: 'all 0.15s'
               }}
             >
