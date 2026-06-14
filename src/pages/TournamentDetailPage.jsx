@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { searchLeaders, getCardImageUrl } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
 import ProfilePopover from '../components/ProfilePopover'
+import MatchChat from '../components/MatchChat'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 const INPUT = { width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }
@@ -704,6 +705,14 @@ export default function TournamentDetailPage({ session }) {
                       <span style={{ fontSize: 11, color: '#f97316', flexShrink: 0 }}>Awaiting admin</span>
                     )}
                   </div>
+                  <MatchChat
+                    matchId={m.id}
+                    currentUserId={session?.user?.id}
+                    player1Id={m.player1_id}
+                    player2Id={m.player2_id}
+                    isAdmin={isAdmin}
+                    getProfile={uid => players.find(p => p.user_id === uid)?.profiles}
+                  />
                 </div>
               )
             })
