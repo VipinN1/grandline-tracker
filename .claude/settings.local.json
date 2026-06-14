@@ -17,7 +17,8 @@
       "Bash(Head -50)",
       "PowerShell(Head *)",
       "Bash(Get-ChildItem *)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\siris\\\\OneDrive\\\\Desktop\\\\New folder \\(5\\)\\\\grandline-tracker\\\\src\" -Recurse -Force | Select-Object -Property FullName | ForEach-Object { $_.FullName.Substring\\($_.FullName.LastIndexOf\\('\\\\src'\\)\\) })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\siris\\\\OneDrive\\\\Desktop\\\\New folder \\(5\\)\\\\grandline-tracker\\\\src\" -Recurse -Force | Select-Object -Property FullName | ForEach-Object { $_.FullName.Substring\\($_.FullName.LastIndexOf\\('\\\\src'\\)\\) })",
+      "Bash(xargs grep -l \"bracket\\\\|seeding\\\\|matchup\\\\|pairing\\\\|drop\\\\|bye\\\\|advance\")"
     ]
   }
 }

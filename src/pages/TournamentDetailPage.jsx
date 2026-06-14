@@ -12,7 +12,9 @@ const LABEL = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', lette
 
 // ─── Swiss pairing algorithm ─────────────────────────────────────────────────
 function generatePairings(standings, usedMatchups, byeCounts = {}) {
-  const pool = [...standings].sort((a, b) => b.wins !== a.wins ? b.wins - a.wins : Math.random() - 0.5)
+  // Pre-shuffle to randomize within same-win-count groups, then stable sort by wins
+  const shuffled = [...standings].sort(() => Math.random() - 0.5)
+  const pool = shuffled.sort((a, b) => b.wins - a.wins)
   const paired = new Set()
   const pairings = []
 
@@ -37,14 +39,21 @@ function generatePairings(standings, usedMatchups, byeCounts = {}) {
   }
 
   // Redistribute bye to player with fewest previous byes (fairness)
+  // Also verify the swap doesn't introduce a rematch for the displaced player.
   const byeIdx = pairings.findIndex(([, p2]) => p2 === null)
   if (byeIdx !== -1) {
     const currentByePlayer = pairings[byeIdx][0]
     let bestIdx = -1, bestPos = -1, bestCount = byeCounts[currentByePlayer.user_id] ?? 0
     pairings.forEach(([p1, p2], i) => {
       if (i === byeIdx || !p2) return
-      if ((byeCounts[p1.user_id] ?? 0) < bestCount) { bestCount = byeCounts[p1.user_id] ?? 0; bestIdx = i; bestPos = 1 }
-      if ((byeCounts[p2.user_id] ?? 0) < bestCount) { bestCount = byeCounts[p2.user_id] ?? 0; bestIdx = i; bestPos = 2 }
+      if ((byeCounts[p1.user_id] ?? 0) < bestCount) {
+        const newKey = [currentByePlayer.user_id, p2.user_id].sort().join('|')
+        if (!usedMatchups.has(newKey)) { bestCount = byeCounts[p1.user_id] ?? 0; bestIdx = i; bestPos = 1 }
+      }
+      if ((byeCounts[p2.user_id] ?? 0) < bestCount) {
+        const newKey = [currentByePlayer.user_id, p1.user_id].sort().join('|')
+        if (!usedMatchups.has(newKey)) { bestCount = byeCounts[p2.user_id] ?? 0; bestIdx = i; bestPos = 2 }
+      }
     })
     if (bestIdx !== -1) {
       const [p1, p2] = pairings[bestIdx]
@@ -222,10 +231,10 @@ export default function TournamentDetailPage({ session }) {
   const currentRound = rounds.length > 0 ? rounds[rounds.length - 1] : null
   const currentMatches = currentRound ? matches.filter(m => m.round_id === currentRound.id) : []
   const standings = computeStandings(players, matches)
-  const undefeated = standings.filter(s => s.losses === 0)
+  const droppedPlayerIds = new Set(players.filter(p => p.dropped).map(p => p.user_id))
+  const undefeated = standings.filter(s => s.losses === 0 && !droppedPlayerIds.has(s.user_id))
   const regOpen = tournament?.status === 'registration' &&
-    tournament?.registration_deadline &&
-    new Date() < new Date(tournament.registration_deadline)
+    (!tournament?.registration_deadline || new Date() < new Date(tournament.registration_deadline))
   const allMatchesDone = currentMatches.length > 0 &&
     currentMatches.every(m => m.status === 'completed')
   const disputedMatches = currentMatches.filter(m => m.status === 'disputed')
@@ -352,14 +361,15 @@ export default function TournamentDetailPage({ session }) {
       return
     }
 
-    // Auto-forfeit any pending match this round for the dropped player
+    // Auto-forfeit any pending or disputed match this round for the dropped player
     if (currentRound) {
-      const pendingMatch = currentMatches.find(m =>
-        (m.player1_id === userId || m.player2_id === userId) && m.status === 'pending'
+      const openMatch = currentMatches.find(m =>
+        (m.player1_id === userId || m.player2_id === userId) &&
+        (m.status === 'pending' || m.status === 'disputed')
       )
-      if (pendingMatch) {
-        const result = pendingMatch.player1_id === userId ? 'player2_win' : 'player1_win'
-        await supabase.from('sim_matches').update({ result, status: 'completed' }).eq('id', pendingMatch.id)
+      if (openMatch) {
+        const result = openMatch.player1_id === userId ? 'player2_win' : 'player1_win'
+        await supabase.from('sim_matches').update({ result, status: 'completed' }).eq('id', openMatch.id)
       }
     }
 
@@ -575,9 +585,15 @@ export default function TournamentDetailPage({ session }) {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Start / Next round button */}
             {(tournament.status === 'registration' || (tournament.status === 'active' && allMatchesDone && disputedMatches.length === 0)) && (
-              <button onClick={startRound} disabled={startingRound || players.length < 2} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: players.length < 2 ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: players.length < 2 ? '#3d2d6e' : '#fff', cursor: players.length < 2 ? 'default' : 'pointer', fontFamily: 'inherit' }}>
-                {startingRound ? 'Starting...' : tournament.status === 'registration' ? `Start Round 1 (${players.length} players)` : `Start Round ${(currentRound?.round_number ?? 0) + 1}`}
-              </button>
+              (() => {
+                const activePlayers = players.filter(p => !p.dropped)
+                const notEnough = activePlayers.length < 2
+                return (
+                  <button onClick={startRound} disabled={startingRound || notEnough} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: notEnough ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: notEnough ? '#3d2d6e' : '#fff', cursor: notEnough ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                    {startingRound ? 'Starting...' : tournament.status === 'registration' ? `Start Round 1 (${activePlayers.length} players)` : `Start Round ${(currentRound?.round_number ?? 0) + 1}`}
+                  </button>
+                )
+              })()
             )}
             {/* Declare winner — auto when exactly 1 undefeated */}
             {tournament.status === 'active' && allMatchesDone && undefeated.length === 1 && (
