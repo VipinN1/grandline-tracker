@@ -1465,9 +1465,99 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
   )
 }
 
+// ─── WantDetailModal ──────────────────────────────────────────────────────────
+
+function WantDetailModal({ want, currentUser, session, onClose, onContact, isMobile }) {
+  const [posterProfile, setPosterProfile] = useState(null)
+  const isOwner = want?.user_id === currentUser?.id
+  const poster = want?.profiles
+
+  if (!want) return null
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(251,191,36,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(251,191,36,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'rgba(251,191,36,0.9)', color: '#0f1117', letterSpacing: '0.4px' }}>WTB</span>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{want.card_name}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+        </div>
+
+        <div style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+            <img
+              src={want.photo_url ?? `https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
+              alt={want.card_name}
+              style={{ width: isMobile ? '100%' : 160, maxWidth: 180, maxHeight: 230, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', background: '#1a1025', flexShrink: 0 }}
+              onError={e => {
+                if (want.photo_url && e.target.src === want.photo_url) {
+                  e.target.src = `https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`
+                } else {
+                  e.target.style.display = 'none'
+                }
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {want.max_price ? (
+                <div style={{ fontSize: 26, fontWeight: 700, color: '#fbbf24', marginBottom: 6, fontFamily: "'Space Mono', monospace" }}>Up to ${Number(want.max_price).toFixed(2)}</div>
+              ) : (
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>Price negotiable</div>
+              )}
+              {want.quantity > 1 && (
+                <div style={{ fontSize: 13, color: '#fbbf24', marginBottom: 6 }}>Quantity: {want.quantity}</div>
+              )}
+              <div style={{ fontSize: 12, color: '#7c6fa0', marginBottom: 3 }}>
+                {want.card_color && <span style={{ color: COLORS[want.card_color] ?? '#7c6fa0' }}>{want.card_color}</span>}
+              </div>
+              {want.card_id && <div style={{ fontSize: 11, color: '#3d2d6e', fontFamily: 'monospace', marginBottom: 3 }}>{want.card_id}</div>}
+              {want.set_name && <div style={{ fontSize: 12, color: '#7c6fa0', marginBottom: 3 }}>{want.set_name}</div>}
+            </div>
+          </div>
+
+          {want.notes && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#3d2d6e', marginBottom: 6 }}>Notes</div>
+              <div style={{ fontSize: 13, color: '#b0bac8', lineHeight: 1.6 }}>{want.notes}</div>
+            </div>
+          )}
+
+          <div
+            style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.12)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}
+          >
+            <Avatar profile={poster} size={40} radius={10} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{poster?.username ?? 'Unknown'}</div>
+              {poster?.location && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>📍 {poster.location}</div>}
+            </div>
+            <div style={{ fontSize: 11, color: '#3d2d6e' }}>
+              {new Date(want.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </div>
+          </div>
+
+          {!isOwner && (
+            <button
+              onClick={() => { onClose(); onContact(want) }}
+              style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: currentUser ? 'linear-gradient(135deg, #d97706, #fbbf24)' : 'rgba(255,255,255,0.05)', color: currentUser ? '#0f1117' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              {currentUser ? 'I Have This!' : 'Sign in to Offer'}
+            </button>
+          )}
+          {isOwner && (
+            <div style={{ padding: '10px 20px', borderRadius: 8, background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', color: '#fbbf24', fontSize: 13, fontWeight: 700, textAlign: 'center', letterSpacing: '0.5px' }}>
+              Your want
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── WantCard ─────────────────────────────────────────────────────────────────
 
-function WantCard({ want, currentUser, onContact }) {
+function WantCard({ want, currentUser, onDetail, onContact }) {
   const [hovered, setHovered] = useState(false)
   const isOwner = want.user_id === currentUser?.id
   const poster = want.profiles
@@ -1475,9 +1565,10 @@ function WantCard({ want, currentUser, onContact }) {
 
   return (
     <div
+      onClick={() => onDetail(want)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ background: 'rgba(251,191,36,0.03)', border: `1px solid ${hovered ? 'rgba(251,191,36,0.3)' : 'rgba(251,191,36,0.12)'}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.15s', transform: hovered ? 'translateY(-2px)' : 'none' }}
+      style={{ background: 'rgba(251,191,36,0.03)', border: `1px solid ${hovered ? 'rgba(251,191,36,0.3)' : 'rgba(251,191,36,0.12)'}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.15s', transform: hovered ? 'translateY(-2px)' : 'none', cursor: 'pointer' }}
     >
       <div style={{ position: 'relative', background: '#1a1025', height: 180, overflow: 'hidden' }}>
         <img
@@ -1530,7 +1621,7 @@ function WantCard({ want, currentUser, onContact }) {
           </div>
         ) : (
           <button
-            onClick={() => onContact(want)}
+            onClick={e => { e.stopPropagation(); onContact(want) }}
             style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: currentUser ? 'none' : '1px solid rgba(251,191,36,0.25)', background: currentUser ? 'linear-gradient(135deg, #d97706, #fbbf24)' : 'transparent', color: currentUser ? '#0f1117' : '#fbbf24', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
           >
             {currentUser ? 'I Have This!' : 'Sign in to Offer'}
@@ -1969,6 +2060,7 @@ export default function Marketplace({ session }) {
   const [wantSearch, setWantSearch] = useState('')
   const [wantDisplayCount, setWantDisplayCount] = useState(50)
   const [contactWant, setContactWant] = useState(null)
+  const [detailWant, setDetailWant] = useState(null)
   const [showCreateWant, setShowCreateWant] = useState(false)
   const [storefronts, setStorefronts] = useState([])
   const [storefrontsLoading, setStorefrontsLoading] = useState(false)
@@ -2213,6 +2305,7 @@ export default function Marketplace({ session }) {
                       key={want.id}
                       want={want}
                       currentUser={session?.user}
+                      onDetail={w => setDetailWant(w)}
                       onContact={w => session ? setContactWant(w) : navigate('/login')}
                     />
                   ))}
@@ -2296,6 +2389,17 @@ export default function Marketplace({ session }) {
           currentUser={session?.user}
           otherUser={messageListing.profiles}
           onClose={() => setMessageListing(null)}
+          isMobile={isMobile}
+        />
+      )}
+
+      {detailWant && (
+        <WantDetailModal
+          want={detailWant}
+          currentUser={session?.user}
+          session={session}
+          onClose={() => setDetailWant(null)}
+          onContact={w => session ? setContactWant(w) : navigate('/login')}
           isMobile={isMobile}
         />
       )}
