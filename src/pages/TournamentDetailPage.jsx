@@ -208,6 +208,8 @@ export default function TournamentDetailPage({ session }) {
   const [submittingMatches, setSubmittingMatches] = useState(new Set())
   const [showDropConfirm, setShowDropConfirm] = useState(false)
   const [droppingUserId, setDroppingUserId] = useState(null)
+  const [droppingPlayer, setDroppingPlayer] = useState(false)
+  const [dropError, setDropError] = useState(null)
   const [decklistModal, setDecklistModal] = useState(false)
   const [decklistLeader, setDecklistLeader] = useState(null)
   const [decklistText, setDecklistText] = useState('')
@@ -335,9 +337,20 @@ export default function TournamentDetailPage({ session }) {
   }
 
   async function dropPlayer(userId) {
-    await supabase.from('sim_tournament_players')
+    setDroppingPlayer(true)
+    setDropError(null)
+
+    const { error: dropErr } = await supabase
+      .from('sim_tournament_players')
       .update({ dropped: true })
-      .eq('tournament_id', id).eq('user_id', userId)
+      .eq('tournament_id', id)
+      .eq('user_id', userId)
+
+    if (dropErr) {
+      setDropError('Failed to drop player. Check Supabase RLS policies.')
+      setDroppingPlayer(false)
+      return
+    }
 
     // Auto-forfeit any pending match this round for the dropped player
     if (currentRound) {
@@ -351,6 +364,7 @@ export default function TournamentDetailPage({ session }) {
     }
 
     await loadPlayers()
+    setDroppingPlayer(false)
     setDroppingUserId(null)
     setShowDropConfirm(false)
   }
@@ -862,7 +876,7 @@ export default function TournamentDetailPage({ session }) {
 
       {/* ── Drop confirmation modal ──────────────────────────────────────── */}
       {showDropConfirm && (
-        <div onClick={() => { setShowDropConfirm(false); setDroppingUserId(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={() => { if (droppingPlayer) return; setShowDropConfirm(false); setDroppingUserId(null); setDropError(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(240,82,82,0.25)', borderRadius: 16, width: 360, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>
               {droppingUserId === session?.user?.id ? 'Drop from Tournament?' : `Drop ${players.find(p => p.user_id === droppingUserId)?.profiles?.username ?? 'Player'}?`}
@@ -872,10 +886,11 @@ export default function TournamentDetailPage({ session }) {
                 ? 'You will be removed from future pairings. Your current record will remain in the standings. This cannot be undone.'
                 : 'This player will be removed from future pairings. Their current record stays in standings. Any pending match this round will be forfeited.'}
             </div>
+            {dropError && <div style={{ fontSize: 12, color: '#f05252', background: 'rgba(240,82,82,0.08)', border: '1px solid rgba(240,82,82,0.2)', borderRadius: 6, padding: '8px 10px' }}>{dropError}</div>}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setShowDropConfirm(false); setDroppingUserId(null) }} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-              <button onClick={() => dropPlayer(droppingUserId)} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                {droppingUserId === session?.user?.id ? 'Drop Me' : 'Drop Player'}
+              <button onClick={() => { setShowDropConfirm(false); setDroppingUserId(null); setDropError(null) }} disabled={droppingPlayer} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: droppingPlayer ? 'default' : 'pointer', fontFamily: 'inherit', opacity: droppingPlayer ? 0.5 : 1 }}>Cancel</button>
+              <button onClick={() => dropPlayer(droppingUserId)} disabled={droppingPlayer} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: droppingPlayer ? 'default' : 'pointer', fontFamily: 'inherit', opacity: droppingPlayer ? 0.7 : 1 }}>
+                {droppingPlayer ? 'Dropping...' : droppingUserId === session?.user?.id ? 'Drop Me' : 'Drop Player'}
               </button>
             </div>
           </div>
