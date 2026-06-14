@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function MatchChat({ matchId, currentUserId, player1Id, player2Id, isAdmin, messages, getProfile }) {
+export default function MatchChat({ matchId, currentUserId, player1Id, player2Id, isAdmin, messages, getProfile, onMessageSent }) {
   const [open, setOpen] = useState(false)
   const [hasNew, setHasNew] = useState(false)
   const [text, setText] = useState('')
@@ -33,11 +33,12 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
     const trimmed = text.trim()
     if (!trimmed || !currentUserId || sending) return
     setSending(true)
-    await supabase.from('sim_match_messages').insert({
-      match_id: matchId,
-      user_id: currentUserId,
-      message: trimmed
-    })
+    const { data } = await supabase
+      .from('sim_match_messages')
+      .insert({ match_id: matchId, user_id: currentUserId, message: trimmed })
+      .select()
+      .single()
+    if (data) onMessageSent?.(data)
     setText('')
     setSending(false)
   }

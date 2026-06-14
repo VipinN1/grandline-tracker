@@ -272,6 +272,7 @@ export default function TournamentDetailPage({ session }) {
   async function loadAll() {
     setLoading(true)
     await Promise.all([loadTournament(), loadPlayers(), loadRounds(), loadMatches()])
+    await loadMatchMessages(matchesRef.current.map(m => m.id))
     setLoading(false)
   }
 
@@ -307,7 +308,6 @@ export default function TournamentDetailPage({ session }) {
     const result = data ?? []
     matchesRef.current = result
     setMatches(result)
-    await loadMatchMessages(result.map(m => m.id))
   }
 
   async function loadMatchMessages(matchIds) {
@@ -733,6 +733,7 @@ export default function TournamentDetailPage({ session }) {
                     isAdmin={isAdmin}
                     messages={matchMessages.filter(msg => msg.match_id === m.id)}
                     getProfile={uid => players.find(p => p.user_id === uid)?.profiles}
+                    onMessageSent={msg => setMatchMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg])}
                   />
                 </div>
               )
