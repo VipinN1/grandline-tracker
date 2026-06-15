@@ -37,6 +37,8 @@ export default function CardScanner({ onClose }) {
   const [status, setStatus] = useState('Starting camera…')
   const [result, setResult] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [debug, setDebug] = useState({ passes: 0, text: '', dims: '' })
+  const [showDebug, setShowDebug] = useState(true)
 
   // Grab the bottom strip of the framing guide (where the card number prints),
   // upscaled, as a canvas for OCR.
@@ -57,12 +59,13 @@ export default function CardScanner({ onClose }) {
     const guideX = (vw - guideW) / 2
     const guideY = (vh - guideH) / 2
 
-    // Bottom ~22% of the card — the collector-number band.
-    const stripH = guideH * 0.22
+    // Bottom ~42% of the card — generous band so the collector number is
+    // captured even when the card isn't aligned perfectly to the guide.
+    const stripH = guideH * 0.42
     const stripY = guideY + guideH - stripH
 
-    // Upscale to a fixed width to help OCR on small text.
-    const targetW = 1000
+    // Upscale to help OCR on small text.
+    const targetW = 1280
     const scale = targetW / guideW
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(guideW * scale)
@@ -73,6 +76,21 @@ export default function CardScanner({ onClose }) {
       guideX, stripY, guideW, stripH,
       0, 0, canvas.width, canvas.height,
     )
+
+    // Grayscale + contrast boost — markedly improves OCR on photographed text.
+    try {
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const d = img.data
+      for (let i = 0; i < d.length; i += 4) {
+        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+        // Push toward black/white around mid-gray.
+        const v = g < 120 ? Math.max(0, g - 40) : Math.min(255, g + 40)
+        d[i] = d[i + 1] = d[i + 2] = v
+      }
+      ctx.putImageData(img, 0, 0)
+    } catch {
+      // getImageData can throw on tainted canvas — fall back to the raw frame.
+    }
     return canvas
   }, [])
 
@@ -90,17 +108,28 @@ export default function CardScanner({ onClose }) {
   }, [])
 
   const scanOnce = useCallback(async () => {
-    if (!runningRef.current || busyRef.current) return
+    if (busyRef.current) return
     const worker = workerRef.current
+    const video = videoRef.current
+    const dims = video ? `${video.videoWidth}×${video.videoHeight}` : 'no video'
     const canvas = captureNumberStrip()
-    if (!worker || !canvas) return
+    if (!worker || !canvas) {
+      setDebug(d => ({ ...d, dims, text: '(no frame — camera not ready)' }))
+      return
+    }
 
     busyRef.current = true
     try {
       const { data } = await worker.recognize(canvas)
-      const candidates = extractCardIds(data.text).filter(id => !triedRef.current.has(id))
+      const text = (data.text ?? '').replace(/\s+/g, ' ').trim()
+      const candidates = extractCardIds(data.text)
+      setDebug(d => ({
+        passes: d.passes + 1,
+        dims,
+        text: `${text || '(nothing read)'}${candidates.length ? `  →  [${candidates.join(', ')}]` : ''}`,
+      }))
       for (const id of candidates) {
-        if (!runningRef.current) break
+        if (triedRef.current.has(id)) continue
         triedRef.current.add(id)
         try {
           const card = await getCard(id)
@@ -109,8 +138,8 @@ export default function CardScanner({ onClose }) {
           // Not a real card (OCR noise) — keep scanning.
         }
       }
-    } catch {
-      // Transient OCR failure — ignore and let the loop retry.
+    } catch (e) {
+      setDebug(d => ({ ...d, dims, text: `OCR error: ${e?.message ?? e}` }))
     } finally {
       busyRef.current = false
     }
@@ -149,7 +178,11 @@ export default function CardScanner({ onClose }) {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
         audio: false,
       })
       streamRef.current = stream
@@ -239,6 +272,18 @@ export default function CardScanner({ onClose }) {
           </div>
         )}
 
+        {/* Debug readout — shows what OCR is reading. Tap to hide. */}
+        {showDebug && (phase === 'scanning' || phase === 'starting') && (
+          <button onClick={() => setShowDebug(false)} style={debugBox}>
+            <div style={{ opacity: 0.7, marginBottom: 4 }}>
+              passes: {debug.passes} · video: {debug.dims || '—'} · tap to hide
+            </div>
+            <div style={{ color: '#7CFC9A', wordBreak: 'break-word' }}>
+              {debug.text || '(waiting for first pass…)'}
+            </div>
+          </button>
+        )}
+
         {/* Result */}
         {phase === 'found' && result && (
           <div style={resultWrap}>
@@ -295,6 +340,11 @@ export default function CardScanner({ onClose }) {
             <button onClick={scanAgain} style={primaryBtn}>Scan another</button>
             <button onClick={onClose} style={ghostBtn}>Done</button>
           </>
+        ) : phase === 'scanning' ? (
+          <>
+            <button onClick={scanOnce} style={primaryBtn}>Capture</button>
+            <button onClick={onClose} style={ghostBtn}>Close</button>
+          </>
         ) : (
           <button onClick={onClose} style={ghostBtn}>Close</button>
         )}
@@ -321,10 +371,19 @@ const guideBox = {
   boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)',
 }
 const guideStrip = {
-  position: 'absolute', left: 0, right: 0, bottom: 0, height: '22%',
+  position: 'absolute', left: 0, right: 0, bottom: 0, height: '42%',
   borderTop: '2px dashed rgba(236,72,153,0.8)',
   background: 'rgba(236,72,153,0.08)',
   borderRadius: '0 0 12px 12px',
+}
+const debugBox = {
+  position: 'absolute', left: 10, right: 10,
+  bottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+  zIndex: 5, textAlign: 'left',
+  background: 'rgba(0,0,0,0.78)', border: '1px solid rgba(255,255,255,0.15)',
+  borderRadius: 8, padding: '8px 10px', color: '#e0e0e0',
+  fontSize: 11, lineHeight: 1.4, fontFamily: 'monospace',
+  cursor: 'pointer', maxHeight: 100, overflow: 'auto',
 }
 const resultWrap = {
   position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
