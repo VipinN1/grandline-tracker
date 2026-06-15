@@ -153,6 +153,32 @@ export async function getCard(cardId) {
   return card
 }
 
+// Return every art variant sharing a card_set_id (base + Parallel / SP / TR / Manga…).
+// Each variant carries its own card_image_id / card_name / rarity.
+export async function getCardVariants(cardId) {
+  const id = cardId.toUpperCase()
+  try {
+    const res = await fetch(`${BASE}/sets/card/${id}/`)
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        const cache = getCache()
+        data.forEach(c => { if (c.card_image_id) cache[c.card_image_id] = c })
+        if (data[0] && !cache[id]) cache[id] = data[0]
+        setCache(cache)
+        return data
+      }
+    }
+  } catch { /* fall through */ }
+
+  try {
+    const single = await getCard(id)
+    return single ? [single] : []
+  } catch {
+    return []
+  }
+}
+
 export async function enrichCards(cards) {
   await getSTCards()
 

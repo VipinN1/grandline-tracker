@@ -1,27 +1,59 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createWorker, createScheduler, PSM } from 'tesseract.js'
-import { getCard } from '../lib/optcgapi'
+import { getCardVariants, searchCards } from '../lib/optcgapi'
 import CardImage from './CardImage'
 
 // One Piece card IDs: OP14-120, ST01-001, P-001, EB02-052.
-// Allow optional spaces around the hyphen (OCR sometimes inserts them).
 const CARD_ID_RE = /([A-Z]{1,3}\d{0,3})\s*-\s*(\d{2,4})/g
-const OCR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
-const WORKER_COUNT = 2 // OCR jobs processed in parallel in the background
+// Uppercase + digits + hyphen + space — covers both the set number and the card name.
+const OCR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- '
+const WORKER_COUNT = 2
+const BURST_FRAMES = 5
+const BURST_GAP = 130 // ms between burst frames
 
 let snapSeq = 0
 
 function extractCardIds(text) {
-  const ids = new Set()
+  const ids = []
   const upper = (text ?? '').toUpperCase()
   let m
   CARD_ID_RE.lastIndex = 0
   while ((m = CARD_ID_RE.exec(upper)) !== null) {
-    const prefix = m[1]
     const num = m[2].length < 3 ? m[2].padStart(3, '0') : m[2]
-    ids.add(`${prefix}-${num}`)
+    ids.push(`${m[1]}-${num}`)
   }
-  return [...ids]
+  return ids
+}
+
+// SP / TR are printed in a labelled box — used to pick the right art variant.
+function detectRarityHint(text) {
+  const u = (text ?? '').toUpperCase()
+  if (/\bSP\b/.test(u)) return 'SP'
+  if (/\bTR\b/.test(u)) return 'TR'
+  return null
+}
+
+// Candidate name lines from a full-card OCR pass (largest alpha lines first).
+function nameLines(text) {
+  return (text ?? '')
+    .split('\n')
+    .map(l => l.replace(/[^A-Z ]/gi, ' ').replace(/\s+/g, ' ').trim())
+    .filter(l => l.replace(/[^A-Z]/gi, '').length >= 4)
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 2)
+}
+
+function pickVariant(variants, hint) {
+  if (!variants.length) return null
+  if (hint) {
+    const match = variants.find(v => (v.card_name ?? '').toUpperCase().includes(hint))
+    if (match) return match
+  }
+  // Base art = image id with no variant suffix (equals the set id).
+  const base = variants.find(v =>
+    v.card_image_id && v.card_set_id &&
+    v.card_image_id.toUpperCase() === v.card_set_id.toUpperCase())
+  return base ?? variants[0]
 }
 
 export default function CardScanner({ onClose }) {
@@ -32,114 +64,156 @@ export default function CardScanner({ onClose }) {
   const [phase, setPhase] = useState('starting') // starting | ready | denied | error
   const [status, setStatus] = useState('Starting camera…')
   const [errorMsg, setErrorMsg] = useState('')
-  const [snaps, setSnaps] = useState([]) // { id, thumb, status, card, scannedId }
+  const [snaps, setSnaps] = useState([]) // { id, thumb, status, card, scannedId, matchBy }
   const [flash, setFlash] = useState(false)
 
   const updateSnap = useCallback((id, patch) => {
     setSnaps(s => s.map(x => (x.id === id ? { ...x, ...patch } : x)))
   }, [])
 
-  // Capture the framing guide region from the live video into:
-  //  - strip: bottom band, grayscaled/contrasted, upscaled — primary OCR input
-  //  - full: whole card, raw — fallback OCR input when the band misses
-  //  - thumb: small JPEG dataURL for the results list
-  const captureFrames = useCallback(() => {
+  // Geometry of the framing guide in the live video's pixel space.
+  const guideRect = useCallback(() => {
     const video = videoRef.current
     if (!video || !video.videoWidth) return null
-
     const vw = video.videoWidth
     const vh = video.videoHeight
-    let guideW = vw * 0.84
-    let guideH = guideW / 0.714
-    if (guideH > vh * 0.9) {
-      guideH = vh * 0.9
-      guideW = guideH * 0.714
-    }
-    const guideX = (vw - guideW) / 2
-    const guideY = (vh - guideH) / 2
-
-    // Primary OCR strip — bottom 45% where the collector number lives.
-    const stripH = guideH * 0.45
-    const stripY = guideY + guideH - stripH
-    const sScale = 1100 / guideW
-    const strip = document.createElement('canvas')
-    strip.width = Math.round(guideW * sScale)
-    strip.height = Math.round(stripH * sScale)
-    const sctx = strip.getContext('2d')
-    sctx.drawImage(video, guideX, stripY, guideW, stripH, 0, 0, strip.width, strip.height)
-    try {
-      const img = sctx.getImageData(0, 0, strip.width, strip.height)
-      const d = img.data
-      for (let i = 0; i < d.length; i += 4) {
-        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
-        const v = g < 120 ? Math.max(0, g - 40) : Math.min(255, g + 40)
-        d[i] = d[i + 1] = d[i + 2] = v
-      }
-      sctx.putImageData(img, 0, 0)
-    } catch { /* tainted canvas — use raw frame */ }
-
-    // Fallback OCR input — whole card (raw), used only if the band finds nothing.
-    const fScale = 850 / guideW
-    const full = document.createElement('canvas')
-    full.width = Math.round(guideW * fScale)
-    full.height = Math.round(guideH * fScale)
-    full.getContext('2d').drawImage(video, guideX, guideY, guideW, guideH, 0, 0, full.width, full.height)
-
-    // Thumbnail for the list.
-    const tScale = 130 / guideW
-    const t = document.createElement('canvas')
-    t.width = Math.round(guideW * tScale)
-    t.height = Math.round(guideH * tScale)
-    t.getContext('2d').drawImage(video, guideX, guideY, guideW, guideH, 0, 0, t.width, t.height)
-    const thumb = t.toDataURL('image/jpeg', 0.6)
-
-    return { strip, full, thumb }
+    let w = vw * 0.84
+    let h = w / 0.714
+    if (h > vh * 0.9) { h = vh * 0.9; w = h * 0.714 }
+    return { vw, vh, w, h, x: (vw - w) / 2, y: (vh - h) / 2 }
   }, [])
 
-  // OCR + lookup a single snap in the background.
-  const processSnap = useCallback(async (id, strip, full) => {
-    const scheduler = schedulerRef.current
-    if (!scheduler) return
-    try {
-      let { data } = await scheduler.addJob('recognize', strip)
-      let candidates = extractCardIds(data.text)
-      if (candidates.length === 0 && full) {
-        const r2 = await scheduler.addJob('recognize', full)
-        candidates = extractCardIds(r2.data.text)
-      }
-      for (const cid of candidates) {
-        try {
-          const card = await getCard(cid)
-          if (card) { updateSnap(id, { status: 'done', card, scannedId: cid }); return }
-        } catch { /* OCR noise — try next candidate */ }
-      }
-      updateSnap(id, { status: 'failed' })
-    } catch {
-      updateSnap(id, { status: 'failed' })
-    }
-  }, [updateSnap])
+  // Grab one frame: a high-zoom grayscaled number band, a raw full card, and a
+  // focus score (gradient energy) so we can favour the sharpest frames.
+  const grabFrame = useCallback((wantThumb) => {
+    const video = videoRef.current
+    const g = guideRect()
+    if (!video || !g) return null
 
-  const snap = useCallback(() => {
+    // Number band — bottom 45%, grayscale + contrast, upscaled.
+    const stripH = g.h * 0.45
+    const stripY = g.y + g.h - stripH
+    const sScale = 1100 / g.w
+    const num = document.createElement('canvas')
+    num.width = Math.round(g.w * sScale)
+    num.height = Math.round(stripH * sScale)
+    const nctx = num.getContext('2d')
+    nctx.drawImage(video, g.x, stripY, g.w, stripH, 0, 0, num.width, num.height)
+
+    let focus = 0
+    try {
+      const img = nctx.getImageData(0, 0, num.width, num.height)
+      const d = img.data
+      let prev = 0
+      for (let i = 0; i < d.length; i += 4) {
+        const gr = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+        const v = gr < 120 ? Math.max(0, gr - 40) : Math.min(255, gr + 40)
+        d[i] = d[i + 1] = d[i + 2] = v
+        if (i > 0) focus += Math.abs(v - prev)
+        prev = v
+      }
+      nctx.putImageData(img, 0, 0)
+    } catch { /* tainted canvas — keep raw */ }
+
+    // Full card (raw) for the name fallback.
+    const fScale = 850 / g.w
+    const full = document.createElement('canvas')
+    full.width = Math.round(g.w * fScale)
+    full.height = Math.round(g.h * fScale)
+    full.getContext('2d').drawImage(video, g.x, g.y, g.w, g.h, 0, 0, full.width, full.height)
+
+    let thumb = null
+    if (wantThumb) {
+      const tScale = 130 / g.w
+      const t = document.createElement('canvas')
+      t.width = Math.round(g.w * tScale)
+      t.height = Math.round(g.h * tScale)
+      t.getContext('2d').drawImage(video, g.x, g.y, g.w, g.h, 0, 0, t.width, t.height)
+      thumb = t.toDataURL('image/jpeg', 0.6)
+    }
+    return { num, full, focus, thumb }
+  }, [guideRect])
+
+  const ocr = useCallback(async (canvas) => {
+    const scheduler = schedulerRef.current
+    if (!scheduler || !canvas) return ''
+    try {
+      const { data } = await scheduler.addJob('recognize', canvas)
+      return data.text ?? ''
+    } catch {
+      return ''
+    }
+  }, [])
+
+  // Stage 1: vote the set number across the sharpest frames → variants → pick art.
+  // Stage 2: full-card OCR on the sharpest frame → re-read number, else name search.
+  const resolveSnap = useCallback(async (id, frames) => {
+    const ranked = [...frames].sort((a, b) => b.focus - a.focus)
+    const rarityHints = []
+
+    // Stage 1 — number band, top 3 frames, voted.
+    const votes = new Map()
+    for (const f of ranked.slice(0, 3)) {
+      const text = await ocr(f.num)
+      const hint = detectRarityHint(text)
+      if (hint) rarityHints.push(hint)
+      for (const cid of extractCardIds(text)) votes.set(cid, (votes.get(cid) ?? 0) + 1)
+    }
+    const byVotes = [...votes.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0])
+    for (const cid of byVotes) {
+      const variants = await getCardVariants(cid)
+      if (variants.length) {
+        const card = pickVariant(variants, rarityHints[0] ?? null)
+        updateSnap(id, { status: 'done', card, scannedId: cid, matchBy: 'number' })
+        return
+      }
+    }
+
+    // Stage 2 — full card OCR on the sharpest frame.
+    const fullText = await ocr(ranked[0]?.full)
+    const fullHint = detectRarityHint(fullText)
+    for (const cid of extractCardIds(fullText)) {
+      const variants = await getCardVariants(cid)
+      if (variants.length) {
+        const card = pickVariant(variants, fullHint ?? rarityHints[0] ?? null)
+        updateSnap(id, { status: 'done', card, scannedId: cid, matchBy: 'number' })
+        return
+      }
+    }
+    // Name search fallback.
+    for (const line of nameLines(fullText)) {
+      let results = []
+      try { results = await searchCards(line) } catch { /* ignore */ }
+      const hit = results.find(r => r.card_set_id)
+      if (hit) {
+        updateSnap(id, { status: 'done', card: hit, scannedId: hit.card_set_id, matchBy: 'name' })
+        return
+      }
+    }
+
+    updateSnap(id, { status: 'failed' })
+  }, [ocr, updateSnap])
+
+  const snap = useCallback(async () => {
     if (phase !== 'ready') return
-    const frames = captureFrames()
-    if (!frames) return
+    const first = grabFrame(true)
+    if (!first) return
     const id = ++snapSeq
-    setSnaps(s => [{ id, thumb: frames.thumb, status: 'pending', card: null, scannedId: null }, ...s])
+    setSnaps(s => [{ id, thumb: first.thumb, status: 'pending', card: null, scannedId: null }, ...s])
     setFlash(true)
     setTimeout(() => setFlash(false), 130)
-    processSnap(id, frames.strip, frames.full)
-  }, [phase, captureFrames, processSnap])
 
-  const retrySnap = useCallback((item) => {
-    // No stored frame to re-OCR — clear it so the user can re-shoot.
-    setSnaps(s => s.filter(x => x.id !== item.id))
-  }, [])
+    const frames = [first]
+    for (let i = 1; i < BURST_FRAMES; i++) {
+      await new Promise(r => setTimeout(r, BURST_GAP))
+      const f = grabFrame(false)
+      if (f) frames.push(f)
+    }
+    resolveSnap(id, frames)
+  }, [phase, grabFrame, resolveSnap])
 
-  const removeSnap = useCallback((id) => {
-    setSnaps(s => s.filter(x => x.id !== id))
-  }, [])
+  const removeSnap = useCallback((id) => setSnaps(s => s.filter(x => x.id !== id)), [])
 
-  // Boot: camera + OCR worker pool.
   const start = useCallback(async () => {
     setPhase('starting')
     setStatus('Starting camera…')
@@ -153,11 +227,7 @@ export default function CardScanner({ onClose }) {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false,
       })
       streamRef.current = stream
@@ -220,7 +290,6 @@ export default function CardScanner({ onClose }) {
 
   return (
     <div style={overlay}>
-      {/* Header */}
       <div style={header}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Scan Cards</div>
         <button onClick={onClose} style={doneBtn}>
@@ -228,7 +297,6 @@ export default function CardScanner({ onClose }) {
         </button>
       </div>
 
-      {/* Camera viewport */}
       <div style={viewport}>
         <video
           ref={videoRef}
@@ -253,7 +321,6 @@ export default function CardScanner({ onClose }) {
           <div style={loadingPill}><span style={spinnerDot} />{status}</div>
         )}
 
-        {/* Shutter */}
         {(phase === 'ready' || phase === 'starting') && (
           <div style={shutterWrap}>
             <button
@@ -270,7 +337,6 @@ export default function CardScanner({ onClose }) {
           </div>
         )}
 
-        {/* Denied / error */}
         {(phase === 'denied' || phase === 'error') && (
           <div style={messageWrap}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
@@ -287,11 +353,10 @@ export default function CardScanner({ onClose }) {
         )}
       </div>
 
-      {/* Results filmstrip */}
       <div style={strip}>
         {snaps.length === 0 ? (
           <div style={emptyHint}>
-            Snapped cards appear here. Keep snapping — they identify in the background.
+            Snap each card — they identify in the background while you keep shooting.
           </div>
         ) : (
           <>
@@ -302,7 +367,7 @@ export default function CardScanner({ onClose }) {
             </div>
             <div style={stripScroll}>
               {snaps.map(item => (
-                <SnapTile key={item.id} item={item} onRemove={removeSnap} onRetry={retrySnap} />
+                <SnapTile key={item.id} item={item} onRemove={removeSnap} />
               ))}
             </div>
           </>
@@ -312,7 +377,7 @@ export default function CardScanner({ onClose }) {
   )
 }
 
-function SnapTile({ item, onRemove, onRetry }) {
+function SnapTile({ item, onRemove }) {
   return (
     <div style={tile}>
       <button onClick={() => onRemove(item.id)} style={tileClose} aria-label="Remove">✕</button>
@@ -327,15 +392,13 @@ function SnapTile({ item, onRemove, onRetry }) {
           <>
             <img src={item.thumb} alt="snap" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: item.status === 'failed' ? 0.4 : 0.75 }} />
             {item.status === 'pending' && <div style={tileSpinner}><span style={spinnerDot} /></div>}
-            {item.status === 'failed' && (
-              <button onClick={() => onRetry(item)} style={tileFailed}>Not found · retry</button>
-            )}
+            {item.status === 'failed' && <div style={tileFailed}>Not found</div>}
           </>
         )}
       </div>
-      <div style={tileLabel}>
+      <div style={tileLabel} title={item.status === 'done' ? item.card.card_name : ''}>
         {item.status === 'done'
-          ? (item.card.card_set_id ?? item.scannedId)
+          ? (item.card.card_name ?? item.scannedId)
           : item.status === 'pending' ? 'scanning…' : '—'}
       </div>
     </div>
@@ -361,8 +424,7 @@ const viewport = {
   display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0,
 }
 const flashOverlay = {
-  position: 'absolute', inset: 0, background: '#fff', opacity: 0.7,
-  animation: 'none', zIndex: 6, pointerEvents: 'none',
+  position: 'absolute', inset: 0, background: '#fff', opacity: 0.7, zIndex: 6, pointerEvents: 'none',
 }
 const guideWrap = {
   position: 'absolute', inset: 0, display: 'flex',
@@ -397,9 +459,7 @@ const shutterBtn = {
   background: 'rgba(255,255,255,0.15)', border: '4px solid #fff',
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
-const shutterInner = {
-  width: 54, height: 54, borderRadius: '50%', background: '#fff',
-}
+const shutterInner = { width: 54, height: 54, borderRadius: '50%', background: '#fff' }
 const shutterHint = {
   fontSize: 12, color: '#e0d6ff', fontWeight: 500,
   background: 'rgba(12,8,20,0.6)', padding: '4px 12px', borderRadius: 12,
@@ -419,9 +479,7 @@ const emptyHint = {
 const stripHeader = {
   fontSize: 11.5, fontWeight: 600, padding: '0 4px 8px', display: 'flex', gap: 2,
 }
-const stripScroll = {
-  display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4,
-}
+const stripScroll = { display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }
 const tile = {
   position: 'relative', flexShrink: 0, width: 76, display: 'flex', flexDirection: 'column', gap: 4,
 }
@@ -440,8 +498,8 @@ const tileSpinner = {
   background: 'rgba(0,0,0,0.3)',
 }
 const tileFailed = {
-  position: 'absolute', inset: 0, border: 'none', background: 'rgba(0,0,0,0.45)',
-  color: '#ffb4b4', fontSize: 10, fontWeight: 600, cursor: 'pointer',
+  position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+  color: '#ffb4b4', fontSize: 10, fontWeight: 600,
   display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, textAlign: 'center',
 }
 const tileLabel = {
