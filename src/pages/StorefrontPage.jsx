@@ -12,7 +12,7 @@ const CONDITIONS = ['Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily
 const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
 const CARD_TYPES = ['Leader', 'Character', 'Event', 'Stage']
 const COLOR_HEX = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
-const BOOSTER_SETS = ['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','EB01','EB02','EB03','EB04','PRB01','PRB02']
+const BOOSTER_SETS = ['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','OP16','EB01','EB02','EB03','EB04','PRB01','PRB02']
 
 function pillStyle(isActive, accentColor) {
   return {
