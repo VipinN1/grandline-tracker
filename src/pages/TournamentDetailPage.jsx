@@ -385,18 +385,21 @@ export default function TournamentDetailPage({ session }) {
 
     const isP1 = session.user.id === match.player1_id
     const field = isP1 ? 'player1_reported' : 'player2_reported'
-    const other = isP1 ? match.player2_reported : match.player1_reported
-    const update = { [field]: report }
 
-    if (other) {
-      const p1r = isP1 ? report : other
-      const p2r = isP1 ? other : report
-      if (p1r === 'win' && p2r === 'loss') { update.result = 'player1_win'; update.status = 'completed' }
-      else if (p1r === 'loss' && p2r === 'win') { update.result = 'player2_win'; update.status = 'completed' }
-      else update.status = 'disputed'
+    await supabase.from('sim_matches').update({ [field]: report }).eq('id', match.id)
+
+    // Re-read from DB to avoid race condition where both players submit simultaneously
+    const { data: fresh } = await supabase.from('sim_matches').select('player1_reported,player2_reported,status').eq('id', match.id).single()
+    if (fresh && fresh.status !== 'completed' && fresh.player1_reported && fresh.player2_reported) {
+      const p1r = fresh.player1_reported
+      const p2r = fresh.player2_reported
+      let finalUpdate = null
+      if (p1r === 'win' && p2r === 'loss') finalUpdate = { result: 'player1_win', status: 'completed' }
+      else if (p1r === 'loss' && p2r === 'win') finalUpdate = { result: 'player2_win', status: 'completed' }
+      else finalUpdate = { status: 'disputed' }
+      await supabase.from('sim_matches').update(finalUpdate).eq('id', match.id)
     }
 
-    await supabase.from('sim_matches').update(update).eq('id', match.id)
     setSubmittingMatches(prev => { const n = new Set(prev); n.delete(match.id); return n })
   }
 
@@ -753,6 +756,12 @@ export default function TournamentDetailPage({ session }) {
                     )}
                     {m.status === 'disputed' && !isAdmin && (
                       <span style={{ fontSize: 11, color: '#f97316', flexShrink: 0 }}>Awaiting admin</span>
+                    )}
+                    {isAdmin && m.status !== 'completed' && m.result !== 'bye' && (
+                      <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+                        <button onClick={() => resolveDispute(m.id, 'player1_win')} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: 'rgba(139,92,246,0.18)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>▲ {p1?.username ?? 'P1'}</button>
+                        <button onClick={() => resolveDispute(m.id, 'player2_win')} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: 'rgba(139,92,246,0.18)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>▲ {p2?.username ?? 'P2'}</button>
+                      </div>
                     )}
                   </div>
                   <MatchChat
