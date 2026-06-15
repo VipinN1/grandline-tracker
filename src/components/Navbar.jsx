@@ -1,7 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
+
+// Lazy-loaded so tesseract.js stays out of the main bundle until a scan starts.
+const CardScanner = lazy(() => import('./CardScanner'))
 
 const LOGO_STYLE = {
   fontSize: 15,
@@ -73,8 +76,14 @@ export default function Navbar({ session }) {
   const navigate = useNavigate()
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scanOpen, setScanOpen] = useState(false)
   const [unreadMktCount, setUnreadMktCount] = useState(0)
   const { isMobile } = useWindowSize()
+
+  function openScanner() {
+    setMenuOpen(false)
+    setScanOpen(true)
+  }
 
   const username = session?.user?.user_metadata?.username ?? 'Me'
   const initials = username.slice(0, 2).toUpperCase()
@@ -126,6 +135,21 @@ export default function Navbar({ session }) {
         : initials
       }
     </div>
+  )
+
+  const scanMenuButton = (
+    <button
+      onClick={openScanner}
+      style={{
+        fontSize: 16, fontWeight: 700, padding: '16px 24px', textAlign: 'left',
+        color: '#a78bfa', background: 'rgba(139,92,246,0.08)', border: 'none',
+        borderBottom: '1px solid rgba(139,92,246,0.08)', cursor: 'pointer',
+        fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+      }}
+    >
+      <span style={{ fontSize: 18 }}>📷</span>
+      Scan Card
+    </button>
   )
 
   return (
@@ -200,6 +224,7 @@ export default function Navbar({ session }) {
         <div style={{ position: 'fixed', top: 52, left: 0, right: 0, bottom: 0, background: '#0c0814', zIndex: 49, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
           {session ? (
             <>
+              {scanMenuButton}
               {AUTH_LINKS.map(link => (
                 <NavLink
                   key={link.to}
@@ -253,6 +278,7 @@ export default function Navbar({ session }) {
             </>
           ) : (
             <>
+              {scanMenuButton}
               {[
                 { to: '/deck-builder', label: 'Deck Builder' },
                 { to: '/bounty', label: '☠ Bounty Board' },
@@ -303,6 +329,12 @@ export default function Navbar({ session }) {
             </>
           )}
         </div>
+      )}
+
+      {isMobile && scanOpen && (
+        <Suspense fallback={null}>
+          <CardScanner onClose={() => setScanOpen(false)} />
+        </Suspense>
       )}
     </>
   )
