@@ -149,6 +149,13 @@ export default function Navbar({ session }) {
     >
       <span style={{ fontSize: 18 }}>📷</span>
       Scan Card
+      <span style={{
+        fontSize: 9, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase',
+        color: '#f59e0b', background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.35)',
+        borderRadius: 5, padding: '2px 5px', lineHeight: 1,
+      }}>
+        Beta
+      </span>
     </button>
   )
 
