@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import SelectDecklistModal from '../components/SelectDecklistModal'
 import { useWindowSize } from '../hooks/useWindowSize'
+import LiveTournament from './LiveTournament'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -249,7 +250,7 @@ function RoundRow({ round, index, onChange, onRemove }) {
   )
 }
 
-export default function LogResult({ session }) {
+function PastTournamentForm({ session }) {
   const navigate = useNavigate()
 
   const [tournamentName, setTournamentName] = useState('')
@@ -595,6 +596,55 @@ export default function LogResult({ session }) {
           onSelect={deck => { setAttachedDecklist(deck); setDecklistRaw(''); setParsedCards([]) }}
         />
       )}
+    </div>
+  )
+}
+
+const MODES = [
+  { value: 'live', label: 'Live Tournament', icon: '🟢', desc: 'Track rounds in real time during an event', color: '#34d399' },
+  { value: 'past', label: 'Past Tournament', icon: '📋', desc: 'Record a finished event to your history', color: '#a78bfa' },
+]
+
+function ModeToggle({ mode, setMode, isMobile }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: isMobile ? 16 : 20 }}>
+      {MODES.map(m => {
+        const active = mode === m.value
+        return (
+          <button
+            key={m.value}
+            onClick={() => setMode(m.value)}
+            style={{
+              flex: 1, textAlign: 'left', padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12,
+              border: `1px solid ${active ? m.color + '66' : 'rgba(255,255,255,0.08)'}`,
+              background: active ? m.color + '1a' : 'rgba(255,255,255,0.03)',
+              cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15 }}>{m.icon}</span>
+              <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: active ? '#f0f2f5' : '#7c6fa0' }}>{m.label}</span>
+            </div>
+            {!isMobile && (
+              <div style={{ fontSize: 12, color: active ? '#b8add4' : '#3d2d6e', marginTop: 4 }}>{m.desc}</div>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+export default function LogResult({ session }) {
+  const [mode, setMode] = useState('past')
+  const { isMobile } = useWindowSize()
+
+  return (
+    <div>
+      <ModeToggle mode={mode} setMode={setMode} isMobile={isMobile} />
+      {mode === 'live'
+        ? <LiveTournament session={session} />
+        : <PastTournamentForm session={session} />}
     </div>
   )
 }

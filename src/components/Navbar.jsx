@@ -36,25 +36,6 @@ function tabStyle(isActive) {
   }
 }
 
-function liveTabStyle(isActive) {
-  return {
-    fontSize: 13,
-    fontWeight: 600,
-    padding: '5px 12px',
-    borderRadius: 20,
-    cursor: 'pointer',
-    border: isActive ? '1px solid rgba(52,211,153,0.4)' : '1px solid rgba(52,211,153,0.2)',
-    background: isActive ? 'rgba(52,211,153,0.12)' : 'rgba(52,211,153,0.06)',
-    color: '#34d399',
-    fontFamily: 'inherit',
-    textDecoration: 'none',
-    transition: 'all 0.15s',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-  }
-}
-
 const AUTH_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/log', label: 'Log Result' },
@@ -68,10 +49,6 @@ const AUTH_LINKS = [
   { to: '/deck-builder', label: 'Deck Builder' },
   { to: '/about', label: 'About' },
 ]
-
-const LIVE_DOT = (
-  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
-)
 
 export default function Navbar({ session }) {
   const navigate = useNavigate()
@@ -191,10 +168,6 @@ export default function Navbar({ session }) {
                   </span>
                 </NavLink>
               ))}
-              <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
-                {LIVE_DOT}
-                Live
-              </NavLink>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
               {avatarEl}
@@ -212,10 +185,6 @@ export default function Navbar({ session }) {
               <NavLink to="/tournaments" style={({ isActive }) => tabStyle(isActive)}>Tournaments</NavLink>
               <NavLink to="/marketplace" style={({ isActive }) => tabStyle(isActive)}>Market</NavLink>
               <NavLink to="/about" style={({ isActive }) => tabStyle(isActive)}>About</NavLink>
-              <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
-                {LIVE_DOT}
-                Live
-              </NavLink>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
               <button onClick={() => navigate('/login')} style={{ fontSize: 13, fontWeight: 600, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '5px 10px' }}>
@@ -260,25 +229,6 @@ export default function Navbar({ session }) {
                   )}
                 </NavLink>
               ))}
-              <NavLink
-                to="/live"
-                onClick={() => setMenuOpen(false)}
-                style={({ isActive }) => ({
-                  fontSize: 16,
-                  fontWeight: 600,
-                  padding: '16px 24px',
-                  color: '#34d399',
-                  textDecoration: 'none',
-                  borderBottom: '1px solid rgba(139,92,246,0.08)',
-                  background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                })}
-              >
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite' }} />
-                Live
-              </NavLink>
               <div style={{ padding: '16px 24px', marginTop: 'auto', borderTop: '1px solid rgba(139,92,246,0.08)' }}>
                 <button onClick={handleSignOut} style={{ fontSize: 15, fontWeight: 600, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                   Sign out
@@ -309,19 +259,6 @@ export default function Navbar({ session }) {
                   {link.label}
                 </NavLink>
               ))}
-              <NavLink
-                to="/live"
-                onClick={() => setMenuOpen(false)}
-                style={({ isActive }) => ({
-                  fontSize: 16, fontWeight: 600, padding: '16px 24px', color: '#34d399',
-                  textDecoration: 'none', borderBottom: '1px solid rgba(139,92,246,0.08)',
-                  background: isActive ? 'rgba(52,211,153,0.08)' : 'transparent',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                })}
-              >
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'livePulse 1.5s ease-in-out infinite' }} />
-                Live
-              </NavLink>
               <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(139,92,246,0.08)', marginTop: 'auto' }}>
                 <button
                   onClick={() => { setMenuOpen(false); navigate('/signup') }}
