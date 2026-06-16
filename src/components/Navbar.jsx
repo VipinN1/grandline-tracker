@@ -66,6 +66,7 @@ const AUTH_LINKS = [
   { to: '/tournaments', label: 'Tournaments' },
   { to: '/marketplace', label: 'Market' },
   { to: '/deck-builder', label: 'Deck Builder' },
+  { to: '/about', label: 'About' },
 ]
 
 const LIVE_DOT = (
@@ -210,6 +211,7 @@ export default function Navbar({ session }) {
               <NavLink to="/community" style={({ isActive }) => tabStyle(isActive)}>Community</NavLink>
               <NavLink to="/tournaments" style={({ isActive }) => tabStyle(isActive)}>Tournaments</NavLink>
               <NavLink to="/marketplace" style={({ isActive }) => tabStyle(isActive)}>Market</NavLink>
+              <NavLink to="/about" style={({ isActive }) => tabStyle(isActive)}>About</NavLink>
               <NavLink to="/live" style={({ isActive }) => liveTabStyle(isActive)}>
                 {LIVE_DOT}
                 Live
@@ -292,6 +294,7 @@ export default function Navbar({ session }) {
                 { to: '/community', label: 'Community' },
                 { to: '/tournaments', label: 'Tournaments' },
                 { to: '/marketplace', label: 'Market' },
+                { to: '/about', label: 'About' },
               ].map(link => (
                 <NavLink
                   key={link.to}
