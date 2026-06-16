@@ -11,58 +11,69 @@ const INPUT = { width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px so
 const LABEL = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#7c6fa0', marginBottom: 5, display: 'block' }
 
 // ─── Swiss pairing algorithm ─────────────────────────────────────────────────
+// Find a complete pairing of `pool` (assumed even length) that minimizes the
+// number of rematches. Players are processed in standings order and candidates
+// tried nearest-first, so among equal-rematch solutions the one pairing the
+// closest records is chosen — i.e. zero rematches whenever one is achievable.
+function bestMatching(pool, usedMatchups) {
+  let best = null
+  let bestCost = Infinity
+  let nodes = 0
+  const NODE_LIMIT = 200000 // safety cap; the first full dive always sets `best`
+
+  const recurse = (remaining, acc, cost) => {
+    if (cost >= bestCost || nodes++ > NODE_LIMIT) return
+    if (remaining.length < 2) { best = acc.slice(); bestCost = cost; return }
+    const first = remaining[0]
+    const rest = remaining.slice(1)
+    for (let i = 0; i < rest.length; i++) {
+      const cand = rest[i]
+      const key = [first.user_id, cand.user_id].sort().join('|')
+      const c = usedMatchups.has(key) ? 1 : 0
+      acc.push([first, cand])
+      recurse(rest.filter((_, idx) => idx !== i), acc, cost + c)
+      acc.pop()
+      if (bestCost === 0) return // can't beat zero rematches
+    }
+  }
+
+  recurse(pool, [], 0)
+  return best ?? []
+}
+
 function generatePairings(standings, usedMatchups, byeCounts = {}) {
-  // Pre-shuffle to randomize within same-win-count groups, then stable sort by wins
-  const shuffled = [...standings].sort(() => Math.random() - 0.5)
-  const pool = shuffled.sort((a, b) => b.wins - a.wins)
-  const paired = new Set()
-  const pairings = []
+  // Shuffle to randomize within same-win-count groups, then stable sort by wins
+  const pool = [...standings]
+    .sort(() => Math.random() - 0.5)
+    .sort((a, b) => b.wins - a.wins)
 
-  for (let i = 0; i < pool.length; i++) {
-    if (paired.has(pool[i].user_id)) continue
-    let partner = null
-    // Prefer no rematch
-    for (let j = i + 1; j < pool.length; j++) {
-      if (paired.has(pool[j].user_id)) continue
-      const key = [pool[i].user_id, pool[j].user_id].sort().join('|')
-      if (!usedMatchups.has(key)) { partner = pool[j]; break }
-    }
-    // Fall back to any available
-    if (!partner) {
-      for (let j = i + 1; j < pool.length; j++) {
-        if (!paired.has(pool[j].user_id)) { partner = pool[j]; break }
-      }
-    }
-    pairings.push([pool[i], partner ?? null])
-    paired.add(pool[i].user_id)
-    if (partner) paired.add(partner.user_id)
-  }
+  if (pool.length === 0) return []
+  if (pool.length % 2 === 0) return bestMatching(pool, usedMatchups)
 
-  // Redistribute bye to player with fewest previous byes (fairness)
-  // Also verify the swap doesn't introduce a rematch for the displaced player.
-  const byeIdx = pairings.findIndex(([, p2]) => p2 === null)
-  if (byeIdx !== -1) {
-    const currentByePlayer = pairings[byeIdx][0]
-    let bestIdx = -1, bestPos = -1, bestCount = byeCounts[currentByePlayer.user_id] ?? 0
-    pairings.forEach(([p1, p2], i) => {
-      if (i === byeIdx || !p2) return
-      if ((byeCounts[p1.user_id] ?? 0) < bestCount) {
-        const newKey = [currentByePlayer.user_id, p2.user_id].sort().join('|')
-        if (!usedMatchups.has(newKey)) { bestCount = byeCounts[p1.user_id] ?? 0; bestIdx = i; bestPos = 1 }
-      }
-      if ((byeCounts[p2.user_id] ?? 0) < bestCount) {
-        const newKey = [currentByePlayer.user_id, p1.user_id].sort().join('|')
-        if (!usedMatchups.has(newKey)) { bestCount = byeCounts[p2.user_id] ?? 0; bestIdx = i; bestPos = 2 }
-      }
-    })
-    if (bestIdx !== -1) {
-      const [p1, p2] = pairings[bestIdx]
-      if (bestPos === 1) { pairings[byeIdx] = [p1, null]; pairings[bestIdx] = [currentByePlayer, p2] }
-      else { pairings[byeIdx] = [p2, null]; pairings[bestIdx] = [p1, currentByePlayer] }
+  // Odd field: one player sits out. Prefer the lowest-standing player with the
+  // fewest previous byes — but only if the rest can still be paired without a
+  // rematch. Try bye candidates in fairness order and take the first that allows
+  // a zero-rematch field (falling back to the lowest-rematch option otherwise).
+  const byeCandidates = [...pool].sort((a, b) => {
+    const ba = byeCounts[a.user_id] ?? 0, bb = byeCounts[b.user_id] ?? 0
+    if (ba !== bb) return ba - bb              // fewest byes first
+    return pool.indexOf(b) - pool.indexOf(a)   // then lowest standing
+  })
+
+  let chosen = null
+  let chosenCost = Infinity
+  for (const bye of byeCandidates) {
+    const rest = pool.filter(p => p.user_id !== bye.user_id)
+    const match = bestMatching(rest, usedMatchups)
+    const cost = match.reduce((n, [p1, p2]) =>
+      n + (usedMatchups.has([p1.user_id, p2.user_id].sort().join('|')) ? 1 : 0), 0)
+    if (cost < chosenCost) {
+      chosen = [...match, [bye, null]]
+      chosenCost = cost
+      if (cost === 0) break // fairest bye that needs no rematches
     }
   }
-
-  return pairings
+  return chosen
 }
 
 // ─── Standings computation ───────────────────────────────────────────────────
@@ -215,6 +226,7 @@ export default function TournamentDetailPage({ session }) {
   const [deleting, setDeleting] = useState(false)
   const [showForceEndModal, setShowForceEndModal] = useState(false)
   const [submittingMatches, setSubmittingMatches] = useState(new Set())
+  const [reportErrors, setReportErrors] = useState({})
   const [showDropConfirm, setShowDropConfirm] = useState(false)
   const [droppingUserId, setDroppingUserId] = useState(null)
   const [droppingPlayer, setDroppingPlayer] = useState(false)
@@ -319,6 +331,16 @@ export default function TournamentDetailPage({ session }) {
     const result = data ?? []
     matchesRef.current = result
     setMatches(result)
+
+    // Safety net: finalize any match where both players reported but the result
+    // never got recorded — e.g. a reporter went offline mid-submit. This runs for
+    // every connected client on every realtime change, so resolution no longer
+    // depends on one (often mobile) client completing uninterrupted.
+    for (const m of result) {
+      if (m.status === 'pending' && m.result !== 'bye' && m.player1_reported && m.player2_reported) {
+        resolveIfReady(m.id)
+      }
+    }
   }
 
   async function loadMatchMessages(matchIds) {
@@ -379,6 +401,27 @@ export default function TournamentDetailPage({ session }) {
     setShowDropConfirm(false)
   }
 
+  // Finalize a match once both players have reported. Idempotent and safe to
+  // call from any client: it re-reads fresh state and only writes while the
+  // match is still pending, so concurrent callers and admin actions don't clash.
+  async function resolveIfReady(matchId) {
+    const { data: fresh, error } = await supabase
+      .from('sim_matches')
+      .select('player1_reported,player2_reported,status')
+      .eq('id', matchId)
+      .single()
+    if (error || !fresh || fresh.status !== 'pending') return
+    if (!fresh.player1_reported || !fresh.player2_reported) return
+
+    const { player1_reported: p1r, player2_reported: p2r } = fresh
+    let finalUpdate
+    if (p1r === 'win' && p2r === 'loss') finalUpdate = { result: 'player1_win', status: 'completed' }
+    else if (p1r === 'loss' && p2r === 'win') finalUpdate = { result: 'player2_win', status: 'completed' }
+    else finalUpdate = { status: 'disputed' }
+    // `.eq('status', 'pending')` makes redundant/concurrent resolves no-ops.
+    await supabase.from('sim_matches').update(finalUpdate).eq('id', matchId).eq('status', 'pending')
+  }
+
   async function submitResult(match, report) {
     if (submittingMatches.has(match.id)) return
     setSubmittingMatches(prev => new Set([...prev, match.id]))
@@ -386,21 +429,19 @@ export default function TournamentDetailPage({ session }) {
     const isP1 = session.user.id === match.player1_id
     const field = isP1 ? 'player1_reported' : 'player2_reported'
 
-    await supabase.from('sim_matches').update({ [field]: report }).eq('id', match.id)
-
-    // Re-read from DB to avoid race condition where both players submit simultaneously
-    const { data: fresh } = await supabase.from('sim_matches').select('player1_reported,player2_reported,status').eq('id', match.id).single()
-    if (fresh && fresh.status !== 'completed' && fresh.player1_reported && fresh.player2_reported) {
-      const p1r = fresh.player1_reported
-      const p2r = fresh.player2_reported
-      let finalUpdate = null
-      if (p1r === 'win' && p2r === 'loss') finalUpdate = { result: 'player1_win', status: 'completed' }
-      else if (p1r === 'loss' && p2r === 'win') finalUpdate = { result: 'player2_win', status: 'completed' }
-      else finalUpdate = { status: 'disputed' }
-      await supabase.from('sim_matches').update(finalUpdate).eq('id', match.id)
+    try {
+      const { error } = await supabase.from('sim_matches').update({ [field]: report }).eq('id', match.id)
+      if (error) throw error
+      setReportErrors(prev => { const n = { ...prev }; delete n[match.id]; return n })
+      // Resolve now if the opponent already reported. If this step is interrupted
+      // (mobile tab suspend, dropped request), the loadMatches sweep is the backstop.
+      await resolveIfReady(match.id)
+    } catch (e) {
+      console.error('Failed to submit result', e)
+      setReportErrors(prev => ({ ...prev, [match.id]: 'Could not submit — check your connection and try again.' }))
+    } finally {
+      setSubmittingMatches(prev => { const n = new Set(prev); n.delete(match.id); return n })
     }
-
-    setSubmittingMatches(prev => { const n = new Set(prev); n.delete(match.id); return n })
   }
 
   async function resolveDispute(matchId, result) {
@@ -650,7 +691,7 @@ export default function TournamentDetailPage({ session }) {
       <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setActiveTab(t)} style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: activeTab === t ? 'rgba(139,92,246,0.05)' : 'transparent', color: activeTab === t ? '#f0f2f5' : '#7c6fa0', borderBottom: activeTab === t ? '2px solid #8b5cf6' : '2px solid transparent', transition: 'all 0.1s', textTransform: 'capitalize' }}>
-            {t === 'pairings' ? `Round ${tournament.current_round || '—'}` : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === 'pairings' ? `Round ${currentRound?.round_number ?? tournament.current_round ?? '—'}` : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -764,6 +805,9 @@ export default function TournamentDetailPage({ session }) {
                       </div>
                     )}
                   </div>
+                  {reportErrors[m.id] && (
+                    <div style={{ fontSize: 11, color: '#f05252', marginTop: 8 }}>{reportErrors[m.id]}</div>
+                  )}
                   <MatchChat
                     matchId={m.id}
                     currentUserId={session?.user?.id}
