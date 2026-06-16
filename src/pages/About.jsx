@@ -16,7 +16,7 @@ const EYEBROW = {
 }
 
 const FEATURES = [
-  { icon: '🃏', label: 'Deck Builder', desc: 'Full card search and filters — build any deck and export the list.' },
+  { icon: '🃏', label: 'Deck Builder', desc: 'Full card search and filters, build any deck and export the list.' },
   { icon: '🏆', label: 'Tournaments', desc: 'Run real Swiss events with live pairings, standings, and match reporting.' },
   { icon: '☠', label: 'Bounty Board', desc: 'Earn your bounty from real wins, losses, and placements. Climb the ranks.' },
   { icon: '🏪', label: 'Marketplace', desc: 'Browse, buy, and sell singles with price and condition filters.' },
@@ -50,8 +50,8 @@ export default function About() {
         <div style={EYEBROW}>What is this?</div>
         <div style={{ fontSize: 14, color: '#b8add4', lineHeight: 1.7 }}>
           PirateTracker brings everything an OPTCG player needs into one place. Build and save your
-          decks, run and play in live Swiss tournaments, track your competitive bounty as you win,
-          buy and sell singles on the marketplace, and talk meta with the community — all themed
+          decks, run and play in live tournaments, track your competitive bounty as you win,
+          buy and sell singles on the marketplace, and talk meta with the community, all themed
           around the world of One Piece. No account is needed to get started, and the core tools
           stay free.
         </div>
@@ -76,7 +76,7 @@ export default function About() {
         <div style={EYEBROW}>Who we are</div>
         <div style={{ fontSize: 14, color: '#b8add4', lineHeight: 1.7, marginBottom: 18 }}>
           PirateTracker is an independent project built and maintained by a small crew of One Piece
-          Card Game fans who wanted better tools for their local scene — and ended up building them
+          Card Game fans who wanted better tools for their local scene and ended up building them
           for everyone.
         </div>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
