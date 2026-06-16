@@ -147,6 +147,8 @@ export default function CardScanner({ onClose }) {
   const [errorMsg, setErrorMsg] = useState('')
   const [snaps, setSnaps] = useState([]) // { id, thumb, status, card, scannedId, matchBy }
   const [flash, setFlash] = useState(false)
+  const [torchSupported, setTorchSupported] = useState(false)
+  const [torchOn, setTorchOn] = useState(false)
 
   const updateSnap = useCallback((id, patch) => {
     setSnaps(s => s.map(x => (x.id === id ? { ...x, ...patch } : x)))
@@ -351,6 +353,19 @@ export default function CardScanner({ onClose }) {
 
   const removeSnap = useCallback((id) => setSnaps(s => s.filter(x => x.id !== id)), [])
 
+  const toggleTorch = useCallback(async () => {
+    const track = streamRef.current?.getVideoTracks?.()[0]
+    if (!track) return
+    const next = !torchOn
+    try {
+      await track.applyConstraints({ advanced: [{ torch: next }] })
+      setTorchOn(next)
+    } catch {
+      // Device refused the torch constraint — drop the control so it isn't offered.
+      setTorchSupported(false)
+    }
+  }, [torchOn])
+
   const start = useCallback(async () => {
     setPhase('starting')
     setStatus('Starting camera…')
@@ -373,6 +388,10 @@ export default function CardScanner({ onClose }) {
         video.srcObject = stream
         await video.play().catch(() => {})
       }
+      // Torch is only exposed on some (mostly Android) back-camera tracks.
+      const track = stream.getVideoTracks()[0]
+      setTorchSupported(!!track?.getCapabilities?.().torch)
+      setTorchOn(false)
     } catch (err) {
       if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') setPhase('denied')
       else { setPhase('error'); setErrorMsg(err?.message ?? 'Could not access the camera.') }
@@ -447,6 +466,17 @@ export default function CardScanner({ onClose }) {
         />
 
         {flash && <div style={flashOverlay} />}
+
+        {phase === 'ready' && torchSupported && (
+          <button
+            onClick={toggleTorch}
+            style={{ ...torchBtn, ...(torchOn ? torchBtnOn : null) }}
+            aria-label={torchOn ? 'Turn flashlight off' : 'Turn flashlight on'}
+            aria-pressed={torchOn}
+          >
+            {torchOn ? '🔦' : '💡'}
+          </button>
+        )}
 
         {(phase === 'ready' || phase === 'starting') && (
           <div style={guideWrap} aria-hidden>
@@ -594,6 +624,17 @@ const guideStrip = {
   position: 'absolute', left: 0, right: 0, bottom: 0, height: '45%',
   borderTop: '2px dashed rgba(236,72,153,0.8)',
   background: 'rgba(236,72,153,0.08)', borderRadius: '0 0 12px 12px',
+}
+const torchBtn = {
+  position: 'absolute', top: 14, right: 14, zIndex: 6,
+  width: 44, height: 44, borderRadius: '50%', padding: 0, fontSize: 20, lineHeight: 1,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+  background: 'rgba(12,8,20,0.7)', border: '1px solid rgba(255,255,255,0.18)',
+  backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+}
+const torchBtnOn = {
+  background: 'rgba(251,191,36,0.22)', border: '1px solid rgba(251,191,36,0.7)',
+  boxShadow: '0 0 14px rgba(251,191,36,0.5)',
 }
 const loadingPill = {
   position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
