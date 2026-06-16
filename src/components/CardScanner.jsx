@@ -3,8 +3,6 @@ import { createWorker, createScheduler, PSM } from 'tesseract.js'
 import { getCardVariants, searchCards } from '../lib/optcgapi'
 import CardImage from './CardImage'
 
-// One Piece card IDs: OP14-120, ST01-001, P-001, EB02-052.
-const CARD_ID_RE = /([A-Z]{1,3}\d{0,3})\s*-\s*(\d{2,4})/g
 // Uppercase + digits + hyphen + space — covers both the set number and the card name.
 const OCR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- '
 const WORKER_COUNT = 2
@@ -13,14 +11,59 @@ const BURST_GAP = 130 // ms between burst frames
 
 let snapSeq = 0
 
+// Known One Piece set prefixes. OCR'd prefixes are snapped to this list, which
+// both corrects misreads (0P14→OP14, 5T01→ST01) and rejects garbage before it
+// ever costs an API call.
+const SET_PREFIXES = (() => {
+  const s = new Set(['P'])
+  const add = (p, n) => { for (let i = 1; i <= n; i++) s.add(p + String(i).padStart(2, '0')) }
+  add('OP', 20); add('ST', 30); add('EB', 10); add('PRB', 6)
+  return s
+})()
+
+// Characters Tesseract routinely swaps, applied per-zone: digits where we expect
+// a number, letters where we expect the set code.
+const AS_DIGIT = { O: '0', Q: '0', D: '0', U: '0', I: '1', L: '1', T: '7', S: '5', B: '8', Z: '2', G: '6', A: '4' }
+const AS_LETTER = { '0': 'O', '1': 'I', '5': 'S', '8': 'B', '2': 'Z', '6': 'G', '4': 'A' }
+// Letters that are really digits when they land in the number field.
+const NUMISH = 'OISBZGAQDULT'
+
+function confusable(a, b) {
+  return a === b || AS_DIGIT[a] === b || AS_LETTER[a] === b || AS_DIGIT[b] === a || AS_LETTER[b] === a
+}
+
+// Snap an OCR'd prefix to a known set code, allowing per-character OCR confusion.
+// Returns null for anything that can't be a real set (so we never query it).
+function snapPrefix(raw) {
+  const up = raw.toUpperCase()
+  if (SET_PREFIXES.has(up)) return up
+  for (const p of SET_PREFIXES) {
+    if (p.length !== up.length) continue
+    let ok = true
+    for (let i = 0; i < p.length; i++) { if (!confusable(up[i], p[i])) { ok = false; break } }
+    if (ok) return p
+  }
+  return null
+}
+
+// Pull every plausible card ID out of an OCR string — tolerant of missing or
+// garbled separators (OP14 120, OP14·120, OP14120) and digit/letter confusion.
 function extractCardIds(text) {
   const ids = []
-  const upper = (text ?? '').toUpperCase()
+  if (!text) return ids
+  const cleaned = text.toUpperCase()
+    .replace(/[‐-―–—_~/|\\·•.:]+/g, '-') // unify separator variants → '-'
+    .replace(/[^A-Z0-9\- ]/g, ' ')
+  // No trailing lookahead: the number is often glued to the rarity/block boxes
+  // ("OP08-052R2"), and snapPrefix + the 3-digit clamp already keep this tight.
+  const re = new RegExp(`([A-Z0-9]{1,4})[ \\-]{0,2}([0-9${NUMISH}]{2,4})`, 'g')
   let m
-  CARD_ID_RE.lastIndex = 0
-  while ((m = CARD_ID_RE.exec(upper)) !== null) {
-    const num = m[2].length < 3 ? m[2].padStart(3, '0') : m[2]
-    ids.push(`${m[1]}-${num}`)
+  while ((m = re.exec(cleaned)) !== null) {
+    const prefix = snapPrefix(m[1])
+    if (!prefix) continue
+    const num = m[2].split('').map(c => AS_DIGIT[c] ?? c).join('')
+    if (!/^\d+$/.test(num)) continue
+    ids.push(`${prefix}-${num.length < 3 ? num.padStart(3, '0') : num.slice(0, 3)}`)
   }
   return ids
 }
@@ -55,6 +98,44 @@ function pickVariant(variants, hint) {
     v.card_image_id.toUpperCase() === v.card_set_id.toUpperCase())
   return base ?? variants[0]
 }
+
+// Same classifier the deck builder / marketplace use, so labels stay consistent.
+function getAltArtType(card) {
+  const name = (card.card_name ?? '').toLowerCase()
+  const rarity = (card.card_rarity ?? '').toLowerCase()
+  if (/\bsp\b/.test(name) || rarity === 'sp') return 'sp'
+  if (/\btr\b/.test(name) || rarity === 'tr') return 'tr'
+  if (/\bmanga\b/.test(name) || rarity === 'manga') return 'manga'
+  if (/parallel|alt[\s_]art|alternate[\s_]art/.test(name) || rarity === 'parallel' || rarity === 'p') return 'parallel'
+  return null
+}
+
+function variantLabel(v) {
+  switch (getAltArtType(v)) {
+    case 'sp': return 'SP'
+    case 'tr': return 'TR'
+    case 'manga': return 'Manga'
+    case 'parallel': return 'Alt art ★'
+    default: return 'Base'
+  }
+}
+
+// Build chooser options with unique, human labels (numbering any duplicates).
+function variantOptions(variants) {
+  const totals = {}
+  variants.forEach(v => { const l = variantLabel(v); totals[l] = (totals[l] ?? 0) + 1 })
+  const seen = {}
+  return variants.map(v => {
+    const base = variantLabel(v)
+    let label = base
+    if (totals[base] > 1) { seen[base] = (seen[base] ?? 0) + 1; label = `${base} ${seen[base]}` }
+    return { value: v.card_image_id ?? v.card_set_id, label, variant: v }
+  })
+}
+
+// Full variant lists keyed by set number, so repeat scans of the same card (a
+// playset) reuse the result instead of re-hitting the API.
+const variantsMemo = new Map()
 
 export default function CardScanner({ onClose }) {
   const videoRef = useRef(null)
@@ -115,6 +196,30 @@ export default function CardScanner({ onClose }) {
       nctx.putImageData(img, 0, 0)
     } catch { /* tainted canvas — keep raw */ }
 
+    // Bottom-RIGHT corner — where OPTCG prints the set number + rarity (e.g.
+    // "OP08-052  R  ②"). A tight, high-signal crop that dodges the effect text
+    // and the SAMPLE watermark, both of which swamp the full band.
+    const cornerW = g.w * 0.5
+    const cornerH = g.h * 0.11
+    const cornerX = g.x + g.w * 0.49
+    const cornerY = g.y + g.h - cornerH - g.h * 0.012
+    const cScale = 1000 / cornerW
+    const corner = document.createElement('canvas')
+    corner.width = Math.round(cornerW * cScale)
+    corner.height = Math.round(cornerH * cScale)
+    const cctx = corner.getContext('2d')
+    cctx.drawImage(video, cornerX, cornerY, cornerW, cornerH, 0, 0, corner.width, corner.height)
+    try {
+      const cimg = cctx.getImageData(0, 0, corner.width, corner.height)
+      const cd = cimg.data
+      for (let i = 0; i < cd.length; i += 4) {
+        const gr = 0.299 * cd[i] + 0.587 * cd[i + 1] + 0.114 * cd[i + 2]
+        const v = gr < 120 ? Math.max(0, gr - 40) : Math.min(255, gr + 40)
+        cd[i] = cd[i + 1] = cd[i + 2] = v
+      }
+      cctx.putImageData(cimg, 0, 0)
+    } catch { /* tainted canvas — keep raw */ }
+
     // Full card (raw) for the name fallback.
     const fScale = 850 / g.w
     const full = document.createElement('canvas')
@@ -131,7 +236,7 @@ export default function CardScanner({ onClose }) {
       t.getContext('2d').drawImage(video, g.x, g.y, g.w, g.h, 0, 0, t.width, t.height)
       thumb = t.toDataURL('image/jpeg', 0.6)
     }
-    return { num, full, focus, thumb }
+    return { num, corner, full, focus, thumb }
   }, [guideRect])
 
   const ocr = useCallback(async (canvas) => {
@@ -145,38 +250,69 @@ export default function CardScanner({ onClose }) {
     }
   }, [])
 
-  // Stage 1: vote the set number across the sharpest frames → variants → pick art.
-  // Stage 2: full-card OCR on the sharpest frame → re-read number, else name search.
+  // All art variants for a number, memoised so repeat scans don't re-hit the API.
+  const loadVariants = useCallback(async (cid) => {
+    const cached = variantsMemo.get(cid)
+    if (cached) return cached
+    const variants = await getCardVariants(cid)
+    if (variants.length) variantsMemo.set(cid, variants)
+    return variants
+  }, [])
+
+  // Manual art switch from the snap tile.
+  const selectVariant = useCallback((id, variant) => {
+    updateSnap(id, { card: variant })
+  }, [updateSnap])
+
+  // Stage 1: vote the set number across the 2 sharpest corner crops (primary,
+  //          weighted) plus the wider bottom band, then resolve to the full
+  //          variant list and cap API calls to the top voted candidates.
+  // Stage 2: full-card OCR fallback → re-read number, else name search.
   const resolveSnap = useCallback(async (id, frames) => {
     const ranked = [...frames].sort((a, b) => b.focus - a.focus)
     const rarityHints = []
-
-    // Stage 1 — number band, top 3 frames, voted.
     const votes = new Map()
-    for (const f of ranked.slice(0, 3)) {
-      const text = await ocr(f.num)
+    const addVotes = (ids, weight) => {
+      for (const cid of ids) votes.set(cid, (votes.get(cid) ?? 0) + weight)
+    }
+
+    // Bottom-right corner crop on the 2 sharpest frames — the set number lives
+    // here, so it's the primary, heaviest-weighted source. SP/TR rarity also
+    // prints here, so detect the art hint from the same text.
+    for (const f of ranked.slice(0, 2)) {
+      const text = await ocr(f.corner)
       const hint = detectRarityHint(text)
       if (hint) rarityHints.push(hint)
-      for (const cid of extractCardIds(text)) votes.set(cid, (votes.get(cid) ?? 0) + 1)
+      addVotes(extractCardIds(text), 2)
     }
-    const byVotes = [...votes.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0])
-    for (const cid of byVotes) {
-      const variants = await getCardVariants(cid)
+    // Wider bottom band on the sharpest frame as a backup voter (handles slight
+    // mis-framing where the number drifts out of the corner crop).
+    const bandText = await ocr(ranked[0]?.num)
+    const bandHint = detectRarityHint(bandText)
+    if (bandHint) rarityHints.push(bandHint)
+    addVotes(extractCardIds(bandText), 1)
+
+    const ordered = [...votes.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 4)
+    const hint = rarityHints[0] ?? null
+
+    // Resolve to the FULL variant list (so the user can switch art). Memoised by
+    // number, so repeat scans of the same card cost no extra API calls. Top
+    // voted candidates only.
+    for (const cid of ordered) {
+      const variants = await loadVariants(cid)
       if (variants.length) {
-        const card = pickVariant(variants, rarityHints[0] ?? null)
-        updateSnap(id, { status: 'done', card, scannedId: cid, matchBy: 'number' })
+        updateSnap(id, { status: 'done', card: pickVariant(variants, hint), variants, scannedId: cid, matchBy: 'number' })
         return
       }
     }
 
-    // Stage 2 — full card OCR on the sharpest frame.
+    // Stage 2 — full card OCR fallback.
     const fullText = await ocr(ranked[0]?.full)
     const fullHint = detectRarityHint(fullText)
     for (const cid of extractCardIds(fullText)) {
-      const variants = await getCardVariants(cid)
+      const variants = await loadVariants(cid)
       if (variants.length) {
-        const card = pickVariant(variants, fullHint ?? rarityHints[0] ?? null)
-        updateSnap(id, { status: 'done', card, scannedId: cid, matchBy: 'number' })
+        updateSnap(id, { status: 'done', card: pickVariant(variants, fullHint ?? hint), variants, scannedId: cid, matchBy: 'number' })
         return
       }
     }
@@ -186,13 +322,14 @@ export default function CardScanner({ onClose }) {
       try { results = await searchCards(line) } catch { /* ignore */ }
       const hit = results.find(r => r.card_set_id)
       if (hit) {
-        updateSnap(id, { status: 'done', card: hit, scannedId: hit.card_set_id, matchBy: 'name' })
+        const variants = variantsMemo.get(hit.card_set_id) ?? [hit]
+        updateSnap(id, { status: 'done', card: pickVariant(variants, fullHint ?? hint), variants, scannedId: hit.card_set_id, matchBy: 'name' })
         return
       }
     }
 
     updateSnap(id, { status: 'failed' })
-  }, [ocr, updateSnap])
+  }, [ocr, updateSnap, loadVariants])
 
   const snap = useCallback(async () => {
     if (phase !== 'ready') return
@@ -367,7 +504,7 @@ export default function CardScanner({ onClose }) {
             </div>
             <div style={stripScroll}>
               {snaps.map(item => (
-                <SnapTile key={item.id} item={item} onRemove={removeSnap} />
+                <SnapTile key={item.id} item={item} onRemove={removeSnap} onSelectVariant={selectVariant} />
               ))}
             </div>
           </>
@@ -377,7 +514,10 @@ export default function CardScanner({ onClose }) {
   )
 }
 
-function SnapTile({ item, onRemove }) {
+function SnapTile({ item, onRemove, onSelectVariant }) {
+  const options = item.status === 'done' && item.variants?.length > 1 ? variantOptions(item.variants) : null
+  const selectedId = item.card?.card_image_id ?? item.scannedId
+
   return (
     <div style={tile}>
       <button onClick={() => onRemove(item.id)} style={tileClose} aria-label="Remove">✕</button>
@@ -401,6 +541,21 @@ function SnapTile({ item, onRemove }) {
           ? (item.card.card_name ?? item.scannedId)
           : item.status === 'pending' ? 'scanning…' : '—'}
       </div>
+      {options && (
+        <select
+          value={selectedId}
+          onChange={e => {
+            const opt = options.find(o => o.value === e.target.value)
+            if (opt) onSelectVariant(item.id, opt.variant)
+          }}
+          style={tileSelect}
+          aria-label="Choose art"
+        >
+          {options.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      )}
     </div>
   )
 }
@@ -505,4 +660,9 @@ const tileFailed = {
 const tileLabel = {
   fontSize: 10, fontWeight: 600, color: '#a78bfa', textAlign: 'center',
   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+}
+const tileSelect = {
+  width: '100%', marginTop: 2, fontSize: 10, fontFamily: 'inherit', fontWeight: 600,
+  color: '#e0d6ff', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)',
+  borderRadius: 6, padding: '3px 4px', cursor: 'pointer', outline: 'none',
 }
