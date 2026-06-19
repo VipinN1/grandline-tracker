@@ -29,7 +29,9 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); from collections import Counter; print\\(Counter\\(c.get\\('rarity'\\) for c in d\\)\\); print\\('--- sample variant names ---'\\); [print\\(c['card_set_id'], '|', repr\\(c.get\\('rarity'\\)\\), '|', c['card_name'], '|', c['card_image_id']\\) for c in d if c['card_set_id'] in \\('OP05-051','OP05-119'\\) ]\")",
       "Bash(node -e ' *)",
       "Bash(curl -s \"https://optcgapi.com/api/sets/filtered/?card_name=Nami\")",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Read(//c/Users/siris/.claude/image-cache/dbff26a8-0cb2-441b-b083-c93526612376/**)",
+      "Bash(identify \"C:\\\\Users\\\\siris\\\\.claude\\\\image-cache\\\\dbff26a8-0cb2-441b-b083-c93526612376\\\\1.png\")"
     ]
   }
 }
