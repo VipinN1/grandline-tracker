@@ -22,6 +22,7 @@ import Home from './pages/Home'
 import StorefrontPage from './pages/StorefrontPage'
 import BountyBoard from './pages/BountyBoard'
 import About from './pages/About'
+import ResetPassword from './pages/ResetPassword'
 
 function ProtectedRoute({ session, children }) {
   if (!session) return <Navigate to="/login" replace />
@@ -56,7 +57,12 @@ export default function App() {
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setSession(session)
+        window.location.replace('/reset-password')
+        return
+      }
       setSession(session)
     })
 
@@ -77,6 +83,7 @@ export default function App() {
         {/* Auth pages — full screen, no app shell */}
         <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/signup" element={session ? <Navigate to="/" replace /> : <Signup />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* App shell routes */}
         <Route element={<AppLayout session={session} isMobile={isMobile} />}>

@@ -28,6 +28,8 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
 
   async function handleLogin() {
     setLoading(true)
@@ -35,6 +37,21 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) setError(error.message)
     setLoading(false)
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError('Enter your email above first.')
+      return
+    }
+    setResetLoading(true)
+    setError('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    setResetLoading(false)
+    if (error) setError(error.message)
+    else setResetSent(true)
   }
 
   return (
@@ -85,6 +102,20 @@ export default function Login() {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
+
+            {resetSent ? (
+              <div style={{ fontSize: 12, color: '#a78bfa', textAlign: 'center' }}>
+                Password reset email sent — check your inbox.
+              </div>
+            ) : (
+              <button
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                style={{ background: 'none', border: 'none', color: '#7c6fa0', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center', width: '100%' }}
+              >
+                {resetLoading ? 'Sending...' : 'Forgot password?'}
+              </button>
+            )}
           </div>
         </div>
 
