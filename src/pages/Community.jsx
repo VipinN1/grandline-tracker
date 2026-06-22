@@ -285,7 +285,7 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
           ) : comments.length === 0 ? (
             <div style={{ fontSize: 12, color: '#3d2d6e' }}>No comments yet. Be the first!</div>
           ) : (
-            {comments.map(c => <CommentBox key={c.id} comment={c} session={session} onProfileClick={onProfileClick} />)}
+            comments.map(c => <CommentBox key={c.id} comment={c} session={session} onProfileClick={onProfileClick} />)
           )}
         </div>
       )}
