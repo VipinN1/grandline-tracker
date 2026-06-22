@@ -74,7 +74,7 @@ function DeckPanel({ decklist }) {
   )
 }
 
-function CommentBox({ comment, session, depth = 0 }) {
+function CommentBox({ comment, session, depth = 0, onProfileClick }) {
   const navigate = useNavigate()
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
@@ -125,12 +125,12 @@ function CommentBox({ comment, session, depth = 0 }) {
   return (
     <div style={{ marginLeft: depth > 0 ? 20 : 0, marginTop: depth > 0 ? 8 : 0 }}>
       <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ width: 26, height: 26, borderRadius: 7, background: '#8b5cf622', border: '1px solid #8b5cf644', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#8b5cf6', flexShrink: 0, marginTop: 2, overflow: 'hidden' }}>
+        <div onClick={() => comment.profiles && onProfileClick?.(comment.profiles)} style={{ width: 26, height: 26, borderRadius: 7, background: '#8b5cf622', border: '1px solid #8b5cf644', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#8b5cf6', flexShrink: 0, marginTop: 2, overflow: 'hidden', cursor: comment.profiles ? 'pointer' : 'default' }}>
           {comment.profiles?.avatar_url ? <img src={comment.profiles.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '8px 12px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', marginBottom: 3 }}>{comment.profiles?.username ?? 'Unknown'}</div>
+            <div onClick={() => comment.profiles && onProfileClick?.(comment.profiles)} style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', marginBottom: 3, cursor: comment.profiles ? 'pointer' : 'default' }} onMouseEnter={e => { if (comment.profiles) e.currentTarget.style.color = '#8b5cf6' }} onMouseLeave={e => e.currentTarget.style.color = '#f0f2f5'}>{comment.profiles?.username ?? 'Unknown'}</div>
             <div style={{ fontSize: 13, color: '#b0bac8', lineHeight: 1.5 }}>{comment.body}</div>
           </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 4, paddingLeft: 2, alignItems: 'center' }}>
@@ -146,7 +146,7 @@ function CommentBox({ comment, session, depth = 0 }) {
           )}
           {replies.length > 0 && (
             <div style={{ marginTop: 8, paddingLeft: 4, borderLeft: '2px solid rgba(139,92,246,0.2)' }}>
-              {replies.map(r => <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} />)}
+              {replies.map(r => <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} onProfileClick={onProfileClick} />)}
             </div>
           )}
         </div>
@@ -238,7 +238,7 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
           <div style={{ fontSize: 11, color: '#3d2d6e' }}>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
         </div>
         {session?.user?.id === post.user_id && (
-          <button onClick={handleDelete} style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: confirmDelete ? 'rgba(240,82,82,0.15)' : 'transparent', border: `1px solid ${confirmDelete ? '#f05252' : 'rgba(255,255,255,0.1)'}`, color: confirmDelete ? '#f05252' : '#3d2d6e', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+          <button onClick={handleDelete} style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: confirmDelete ? 'rgba(240,82,82,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${confirmDelete ? '#f05252' : 'rgba(255,255,255,0.15)'}`, color: confirmDelete ? '#f05252' : '#94a3b8', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
             {confirmDelete ? 'Confirm?' : 'Delete Post'}
           </button>
         )}
@@ -285,7 +285,7 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
           ) : comments.length === 0 ? (
             <div style={{ fontSize: 12, color: '#3d2d6e' }}>No comments yet. Be the first!</div>
           ) : (
-            comments.map(c => <CommentBox key={c.id} comment={c} session={session} />)
+            {comments.map(c => <CommentBox key={c.id} comment={c} session={session} onProfileClick={onProfileClick} />)}
           )}
         </div>
       )}
