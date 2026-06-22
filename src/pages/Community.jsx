@@ -155,7 +155,7 @@ function CommentBox({ comment, session, depth = 0 }) {
   )
 }
 
-function PostCard({ post, session, onProfileClick }) {
+function PostCard({ post, session, onProfileClick, onDelete }) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
   const [liked, setLiked] = useState(false)
@@ -164,6 +164,7 @@ function PostCard({ post, session, onProfileClick }) {
   const [commentText, setCommentText] = useState('')
   const [showComments, setShowComments] = useState(false)
   const [loadingComments, setLoadingComments] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const initials = post.profiles?.username?.slice(0, 2).toUpperCase() ?? '??'
   const username = session?.user?.user_metadata?.username ?? 'Me'
@@ -209,6 +210,13 @@ function PostCard({ post, session, onProfileClick }) {
     }
   }
 
+  async function handleDelete() {
+    if (!confirmDelete) { setConfirmDelete(true); setTimeout(() => setConfirmDelete(false), 3000); return }
+    await supabase.from('posts').delete().eq('id', post.id)
+    // notify parent to remove post from list
+    onDelete?.(post.id)
+  }
+
   return (
     <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '18px 20px' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -229,6 +237,11 @@ function PostCard({ post, session, onProfileClick }) {
           </div>
           <div style={{ fontSize: 11, color: '#3d2d6e' }}>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
         </div>
+        {session?.user?.id === post.user_id && (
+          <button onClick={handleDelete} style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: confirmDelete ? 'rgba(240,82,82,0.15)' : 'transparent', border: `1px solid ${confirmDelete ? '#f05252' : 'rgba(255,255,255,0.1)'}`, color: confirmDelete ? '#f05252' : '#3d2d6e', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+            {confirmDelete ? 'Confirm?' : 'Delete Post'}
+          </button>
+        )}
       </div>
 
       <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 8, letterSpacing: '-0.2px' }}>{post.title}</div>
@@ -523,7 +536,7 @@ export default function Community({ session }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {posts.map(post => <PostCard key={post.id} post={post} session={session} onProfileClick={setSelectedProfile} />)}
+          {posts.map(post => <PostCard key={post.id} post={post} session={session} onProfileClick={setSelectedProfile} onDelete={id => setPosts(prev => prev.filter(p => p.id !== id))} />)}
         </div>
       )}
 
