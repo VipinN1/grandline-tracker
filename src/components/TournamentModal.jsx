@@ -148,12 +148,13 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 
           {/* Big gradient leader name — fills the lower-right empty space */}
           {leaderName && (
-            <div ref={nameBoxRef} style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)', width: isMobile ? '54%' : 212, textAlign: 'center', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
+            <div ref={nameBoxRef} style={{ position: 'absolute', right: 18, bottom: 9, width: isMobile ? '54%' : 212, textAlign: 'center', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
               <div ref={nameTextRef} style={{
                 display: 'inline-block', whiteSpace: 'nowrap',
                 fontSize: nameFontSize, fontWeight: 800, lineHeight: 1.0, letterSpacing: '-1px',
                 backgroundImage: nameGradient, WebkitBackgroundClip: 'text', backgroundClip: 'text',
                 WebkitTextFillColor: 'transparent', color: 'transparent',
+                WebkitTextStroke: '1px rgba(167,139,250,0.85)',
               }}>
                 {leaderName}
               </div>
