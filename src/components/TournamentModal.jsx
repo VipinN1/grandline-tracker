@@ -126,20 +126,20 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                 <span style={{ fontSize: 11, color: '#7c6fa0' }}>{winRate}%</span>
               </div>
             </div>
-
-            {/* Big gradient leader name */}
-            {leaderName && (
-              <div style={{ flexShrink: 0, maxWidth: '46%', marginLeft: 'auto', textAlign: 'right', filter: `drop-shadow(0 0 14px ${color}55)` }}>
-                <div style={{
-                  fontSize: nameFontSize, fontWeight: 800, lineHeight: 1.02, letterSpacing: '-1px',
-                  backgroundImage: nameGradient, WebkitBackgroundClip: 'text', backgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent', color: 'transparent',
-                }}>
-                  {leaderName}
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Big gradient leader name — fills the lower-right empty space */}
+          {leaderName && (
+            <div style={{ position: 'absolute', right: 18, bottom: 12, maxWidth: '52%', textAlign: 'right', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
+              <div style={{
+                fontSize: nameFontSize, fontWeight: 800, lineHeight: 1.0, letterSpacing: '-1px',
+                backgroundImage: nameGradient, WebkitBackgroundClip: 'text', backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent', color: 'transparent',
+              }}>
+                {leaderName}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Brand bar — kept high so screenshots can't crop it out */}
