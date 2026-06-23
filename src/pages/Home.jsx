@@ -24,7 +24,7 @@ export default function Home() {
           Pirate<span style={{ background: 'linear-gradient(90deg, #a78bfa, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Tracker</span>
         </div>
         <div style={{ fontSize: 15, color: '#7c6fa0', maxWidth: 460, margin: '0 auto', lineHeight: 1.6 }}>
-          Build decks, browse the community, track live tournaments, and explore the card marketplace — no account needed to get started.
+          Build decks, browse the community, track your tournaments, and explore the card marketplace — no account needed to get started.
         </div>
       </div>
 
@@ -50,15 +50,15 @@ export default function Home() {
 
           <div style={CARD_STYLE}>
             <div style={{ fontSize: 22 }}>🏆</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Live Tournament</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Track Your Tournaments</div>
             <div style={{ fontSize: 13, color: '#7c6fa0', lineHeight: 1.5 }}>
-              Track rounds in real time during your next event. One session per visit.
+              Log event results round by round and build a complete history with win-rate and matchup stats.
             </div>
             <button
-              onClick={() => navigate('/live')}
+              onClick={() => navigate('/log')}
               style={{ marginTop: 4, padding: '9px 16px', borderRadius: 8, border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.08)', color: '#34d399', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}
             >
-              Start Live →
+              Track a Tournament →
             </button>
           </div>
 
