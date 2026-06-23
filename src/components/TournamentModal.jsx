@@ -119,23 +119,6 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
           <div style={{ fontSize: 9.5, color: '#4a3a6e' }}>piratetracker.vercel.app</div>
         </div>
 
-        {/* Stats strip */}
-        {hasRounds && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            {[
-              { label: 'Going 1st', value: wentFirstTotal > 0 ? `${Math.round(wentFirstWins / wentFirstTotal * 100)}%` : '—', sub: `${wentFirstWins}/${wentFirstTotal}` },
-              { label: 'Going 2nd', value: wentSecondTotal > 0 ? `${Math.round(wentSecondWins / wentSecondTotal * 100)}%` : '—', sub: `${wentSecondWins}/${wentSecondTotal}` },
-              { label: 'Dice Won', value: diceWon > 0 ? `${Math.round(diceWins / diceWon * 100)}%` : '—', sub: `${diceWins}/${diceWon}` },
-            ].map((s, i) => (
-              <div key={s.label} style={{ padding: '7px 6px', textAlign: 'center', borderLeft: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                <div style={{ fontSize: 7.5, color: '#3d2d6e', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 3, fontWeight: 700 }}>{s.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace', lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: 8.5, color: '#3d2d6e', marginTop: 2 }}>{s.sub}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Round-by-round table */}
         {hasRounds && (
           <div style={{ padding: '12px 14px 14px' }}>
@@ -169,10 +152,17 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                     </div>
                   </div>
                   {/* Dice */}
-                  <div style={{ width: 38, flexShrink: 0, textAlign: 'center', fontSize: 13, lineHeight: 1 }}>
-                    {r.won_dice_roll === null
-                      ? <span style={{ color: '#2a1f4a' }}>—</span>
-                      : <span title={r.won_dice_roll ? 'Won dice' : 'Lost dice'} style={{ color: r.won_dice_roll ? '#34d399' : '#5a4a7a', filter: r.won_dice_roll ? 'none' : 'grayscale(0.6)' }}>🎲</span>}
+                  <div style={{ width: 38, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                    {r.won_dice_roll === null ? (
+                      <span style={{ color: '#2a1f4a', fontSize: 13 }}>—</span>
+                    ) : (
+                      <span
+                        title={r.won_dice_roll ? 'Won dice' : 'Lost dice'}
+                        style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '2px 6px', borderRadius: 5, fontSize: 9, fontWeight: 800, fontFamily: 'monospace', background: r.won_dice_roll ? 'rgba(52,211,153,0.16)' : 'rgba(240,82,82,0.16)', color: r.won_dice_roll ? '#34d399' : '#f05252' }}
+                      >
+                        🎲{r.won_dice_roll ? 'W' : 'L'}
+                      </span>
+                    )}
                   </div>
                   {/* Order */}
                   <div style={{ width: 38, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
@@ -193,6 +183,23 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Stats strip — at the bottom */}
+        {hasRounds && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            {[
+              { label: 'Going 1st', value: wentFirstTotal > 0 ? `${Math.round(wentFirstWins / wentFirstTotal * 100)}%` : '—', sub: `${wentFirstWins}/${wentFirstTotal}` },
+              { label: 'Going 2nd', value: wentSecondTotal > 0 ? `${Math.round(wentSecondWins / wentSecondTotal * 100)}%` : '—', sub: `${wentSecondWins}/${wentSecondTotal}` },
+              { label: 'Dice Won', value: diceWon > 0 ? `${Math.round(diceWins / diceWon * 100)}%` : '—', sub: `${diceWins}/${diceWon}` },
+            ].map((s, i) => (
+              <div key={s.label} style={{ padding: '7px 6px', textAlign: 'center', borderLeft: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                <div style={{ fontSize: 7.5, color: '#3d2d6e', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 3, fontWeight: 700 }}>{s.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace', lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 8.5, color: '#3d2d6e', marginTop: 2 }}>{s.sub}</div>
+              </div>
+            ))}
           </div>
         )}
       </div>
