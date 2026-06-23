@@ -45,140 +45,153 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
   const winRate = tournament.wins + tournament.losses > 0
     ? Math.round(tournament.wins / (tournament.wins + tournament.losses) * 100) : 0
 
+  const hasRounds = rounds.length > 0
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#06030f', zIndex: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', padding: isMobile ? '20px 0 32px' : '28px 20px 40px' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#06030f', zIndex: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', padding: isMobile ? '18px 0 28px' : '24px 20px 36px' }}>
 
       {/* Screenshot hint — above card, not part of it */}
-      <div style={{ textAlign: 'center', marginBottom: 18, flexShrink: 0 }}>
-        <div style={{ fontSize: 22, marginBottom: 8 }}>📸</div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', marginBottom: 4 }}>Take a screenshot to share</div>
-        <div style={{ fontSize: 12, color: '#3d2d6e' }}>Crop below the card — close button won't be captured</div>
+      <div style={{ textAlign: 'center', marginBottom: 16, flexShrink: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>📸 Screenshot to share</div>
+        <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 3 }}>Crop below the card — the close button won't be captured</div>
       </div>
 
       {/* The card */}
       <div style={{
-        width: isMobile ? '100%' : 480,
+        width: isMobile ? '100%' : 440,
         maxWidth: '100%',
-        background: 'radial-gradient(ellipse 300px 240px at 0% 0%, rgba(124,58,237,0.3) 0%, transparent 60%), radial-gradient(ellipse 200px 160px at 100% 100%, rgba(168,85,247,0.15) 0%, transparent 65%), #0c0814',
-        border: `1.5px solid rgba(139,92,246,0.5)`,
-        borderRadius: isMobile ? 0 : 20,
+        background: 'radial-gradient(ellipse 280px 220px at 0% 0%, rgba(124,58,237,0.28) 0%, transparent 62%), radial-gradient(ellipse 200px 160px at 100% 100%, rgba(168,85,247,0.14) 0%, transparent 66%), #0c0814',
+        border: `1.5px solid rgba(139,92,246,0.45)`,
+        borderRadius: isMobile ? 0 : 18,
         overflow: 'hidden',
-        boxShadow: '0 0 0 1px rgba(139,92,246,0.15), 0 0 60px rgba(139,92,246,0.18), 0 20px 60px rgba(0,0,0,0.6)',
+        boxShadow: '0 0 0 1px rgba(139,92,246,0.12), 0 0 50px rgba(139,92,246,0.16), 0 18px 50px rgba(0,0,0,0.6)',
         fontFamily: 'inherit',
         flexShrink: 0,
       }}>
 
-        {/* Leader art banner */}
-        <div style={{ position: 'relative', height: 200 }}>
-          <img
-            src={getCardImageUrl(tournament.leader_id)}
-            alt={tournament.leader_name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%', display: 'block' }}
-          />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(12,8,20,0.85) 80%, #0c0814 100%)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${color}, ${color}88, transparent)` }} />
-          <div style={{ position: 'absolute', bottom: 18, left: 20 }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
-              {cleanName(tournament.leader_name)}
+        {/* Compact header — leader thumbnail + title + result */}
+        <div style={{ position: 'relative', padding: '16px 18px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(to right, ${color}, ${color}66, transparent)` }} />
+          <div style={{ display: 'flex', gap: 13, alignItems: 'center' }}>
+            {/* Leader portrait thumbnail */}
+            <div style={{ position: 'relative', width: 58, flexShrink: 0, borderRadius: 8, overflow: 'hidden', border: `2px solid ${color}88`, boxShadow: `0 0 16px ${color}33, 0 4px 12px rgba(0,0,0,0.5)` }}>
+              <img
+                src={getCardImageUrl(tournament.leader_id)}
+                alt={tournament.leader_name}
+                style={{ width: '100%', aspectRatio: '63/88', objectFit: 'cover', objectPosition: 'top center', display: 'block' }}
+              />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 4px 3px', textAlign: 'center', background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', fontSize: 12, fontWeight: 800, fontFamily: 'monospace', color: '#fff', letterSpacing: '-0.5px', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                {tournament.wins}-{tournament.losses}
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', marginTop: 2 }}>{tournament.leader_id}</div>
+
+            {/* Title + meta */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.3px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {tournament.name}
+              </div>
+              <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {tournament.date}{tournament.player_count ? ` · ${tournament.player_count} players` : ''}{tournament.location ? ` · ${tournament.location}` : ''}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 6, ...pStyle(tournament.placement) }}>
+                  {pLabel(tournament.placement)}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '-0.5px' }}>
+                  <span style={{ color: '#34d399' }}>{tournament.wins}W</span>
+                  <span style={{ color: '#3d2d6e', margin: '0 3px' }}>·</span>
+                  <span style={{ color: '#f05252' }}>{tournament.losses}L</span>
+                </span>
+                <span style={{ fontSize: 11, color: '#7c6fa0' }}>{winRate}%</span>
+                {tournament.leader_color && (
+                  <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: color + '24', color, border: `1px solid ${color}55` }}>
+                    {cleanName(tournament.leader_name)}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          {tournament.leader_color && (
-            <div style={{ position: 'absolute', top: 14, right: 14, fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: color + '28', color, border: `1px solid ${color}55` }}>
-              {tournament.leader_color}
-            </div>
-          )}
         </div>
 
-        {/* Tournament info row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ width: 46, height: 46, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, ...pStyle(tournament.placement) }}>
-            {pLabel(tournament.placement)}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tournament.name}</div>
-            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>{tournament.date}{tournament.player_count ? ` · ${tournament.player_count} players` : ''}{tournament.location ? ` · ${tournament.location}` : ''}</div>
-          </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '-1px', lineHeight: 1 }}>
-              <span style={{ color: '#34d399' }}>{tournament.wins}W</span>
-              <span style={{ color: '#2a1f4a', margin: '0 4px', fontSize: 18 }}>·</span>
-              <span style={{ color: '#f05252' }}>{tournament.losses}L</span>
-            </div>
-            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 3 }}>{winRate}% win rate</div>
-          </div>
-        </div>
-
-        {/* Round stats */}
-        {rounds.length > 0 && (
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#3d2d6e', marginBottom: 10 }}>Round Stats</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {[
-                { label: '1st WR', value: wentFirstTotal > 0 ? `${Math.round(wentFirstWins / wentFirstTotal * 100)}%` : '—', sub: `${wentFirstWins}/${wentFirstTotal} games` },
-                { label: '2nd WR', value: wentSecondTotal > 0 ? `${Math.round(wentSecondWins / wentSecondTotal * 100)}%` : '—', sub: `${wentSecondWins}/${wentSecondTotal} games` },
-                { label: 'Dice WR', value: diceWon > 0 ? `${Math.round(diceWins / diceWon * 100)}%` : '—', sub: `${diceWins}/${diceWon} won` },
-              ].map(s => (
-                <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: '#3d2d6e', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5, fontWeight: 600 }}>{s.label}</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace' }}>{s.value}</div>
-                  <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 3 }}>{s.sub}</div>
-                </div>
-              ))}
-            </div>
+        {/* Stats strip */}
+        {hasRounds && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            {[
+              { label: 'Going 1st', value: wentFirstTotal > 0 ? `${Math.round(wentFirstWins / wentFirstTotal * 100)}%` : '—', sub: `${wentFirstWins}/${wentFirstTotal}` },
+              { label: 'Going 2nd', value: wentSecondTotal > 0 ? `${Math.round(wentSecondWins / wentSecondTotal * 100)}%` : '—', sub: `${wentSecondWins}/${wentSecondTotal}` },
+              { label: 'Dice Won', value: diceWon > 0 ? `${Math.round(diceWins / diceWon * 100)}%` : '—', sub: `${diceWins}/${diceWon}` },
+            ].map((s, i) => (
+              <div key={s.label} style={{ padding: '11px 8px', textAlign: 'center', borderLeft: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                <div style={{ fontSize: 8.5, color: '#3d2d6e', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4, fontWeight: 700 }}>{s.label}</div>
+                <div style={{ fontSize: 19, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace', lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 9.5, color: '#3d2d6e', marginTop: 3 }}>{s.sub}</div>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Round by round */}
-        {rounds.length > 0 && (
-          <div style={{ padding: '16px 20px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#3d2d6e', marginBottom: 10 }}>Round by Round</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {rounds.map(r => {
-                const oppColor = COLORS[r.opponent_leader_color] ?? '#94a3b8'
-                const isWin = r.result === 'win'
-                return (
-                  <div key={r.id} style={{ background: isWin ? 'rgba(52,211,153,0.04)' : 'rgba(240,82,82,0.04)', border: `1px solid ${isWin ? 'rgba(52,211,153,0.12)' : 'rgba(240,82,82,0.1)'}`, borderRadius: 10, padding: '10px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#3d2d6e', width: 28, flexShrink: 0, fontFamily: 'monospace' }}>R{r.round_number}</div>
-                      {r.opponent_leader_id ? (
-                        <img src={getCardImageUrl(r.opponent_leader_id)} alt="" style={{ width: 34, height: 47, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: `1px solid ${oppColor}44` }} onError={e => { e.target.style.display = 'none' }} />
-                      ) : (
-                        <div style={{ width: 34, height: 47, borderRadius: 4, background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: oppColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {cleanName(r.opponent_leader_name) || 'Unknown'}
-                        </div>
-                        <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                          {r.won_dice_roll !== null && (
-                            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, fontWeight: 700, background: r.won_dice_roll ? 'rgba(52,211,153,0.15)' : 'rgba(240,82,82,0.15)', color: r.won_dice_roll ? '#34d399' : '#f05252' }}>
-                              {r.won_dice_roll ? 'Dice W' : 'Dice L'}
-                            </span>
-                          )}
-                          {r.went_first !== null && (
-                            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, fontWeight: 700, background: 'rgba(255,255,255,0.06)', color: r.went_first ? '#fbbf24' : '#a78bfa' }}>
-                              {r.went_first ? '1st' : '2nd'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: isWin ? 'rgba(52,211,153,0.15)' : 'rgba(240,82,82,0.15)', color: isWin ? '#34d399' : '#f05252', border: `1px solid ${isWin ? 'rgba(52,211,153,0.3)' : 'rgba(240,82,82,0.3)'}` }}>
-                        {isWin ? 'W' : 'L'}
-                      </div>
+        {/* Round-by-round table */}
+        {hasRounds && (
+          <div style={{ padding: '12px 14px 14px' }}>
+            {/* Column header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 8px', fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: 22, flexShrink: 0 }}>Rd</div>
+              <div style={{ flex: 1 }}>Opponent</div>
+              <div style={{ width: 38, flexShrink: 0, textAlign: 'center' }}>Dice</div>
+              <div style={{ width: 38, flexShrink: 0, textAlign: 'center' }}>Order</div>
+              <div style={{ width: 30, flexShrink: 0, textAlign: 'center' }}>Res</div>
+            </div>
+
+            {rounds.map(r => {
+              const oppColor = COLORS[r.opponent_leader_color] ?? '#94a3b8'
+              const isWin = r.result === 'win'
+              return (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 7, marginTop: 5, background: isWin ? 'rgba(52,211,153,0.06)' : 'rgba(240,82,82,0.06)' }}>
+                  {/* Round */}
+                  <div style={{ width: 22, flexShrink: 0, textAlign: 'center', fontSize: 12, fontWeight: 700, fontFamily: 'monospace', color: isWin ? '#34d399' : '#f05252' }}>
+                    {r.round_number}
+                  </div>
+                  {/* Opponent */}
+                  <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {r.opponent_leader_id ? (
+                      <img src={getCardImageUrl(r.opponent_leader_id)} alt="" style={{ width: 26, height: 36, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: `1.5px solid ${oppColor}66` }} onError={e => { e.target.style.display = 'none' }} />
+                    ) : (
+                      <div style={{ width: 26, height: 36, borderRadius: 4, background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
+                    )}
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: oppColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cleanName(r.opponent_leader_name) || 'Unknown'}
                     </div>
-                    {r.notes && (
-                      <div style={{ fontSize: 10, color: '#7c6fa0', marginTop: 6, paddingLeft: 38, fontStyle: 'italic' }}>{r.notes}</div>
+                  </div>
+                  {/* Dice */}
+                  <div style={{ width: 38, flexShrink: 0, textAlign: 'center', fontSize: 13, lineHeight: 1 }}>
+                    {r.won_dice_roll === null
+                      ? <span style={{ color: '#2a1f4a' }}>—</span>
+                      : <span title={r.won_dice_roll ? 'Won dice' : 'Lost dice'} style={{ color: r.won_dice_roll ? '#34d399' : '#5a4a7a', filter: r.won_dice_roll ? 'none' : 'grayscale(0.6)' }}>🎲</span>}
+                  </div>
+                  {/* Order */}
+                  <div style={{ width: 38, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                    {r.went_first === null ? (
+                      <span style={{ color: '#2a1f4a', fontSize: 13 }}>—</span>
+                    ) : (
+                      <span style={{ fontSize: 10, fontWeight: 800, fontFamily: 'monospace', width: 20, height: 20, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: r.went_first ? 'rgba(251,191,36,0.16)' : 'rgba(167,139,250,0.16)', color: r.went_first ? '#fbbf24' : '#a78bfa' }}>
+                        {r.went_first ? '1' : '2'}
+                      </span>
                     )}
                   </div>
-                )
-              })}
-            </div>
+                  {/* Result */}
+                  <div style={{ width: 30, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                    <span style={{ width: 22, height: 22, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: isWin ? 'rgba(52,211,153,0.18)' : 'rgba(240,82,82,0.18)', color: isWin ? '#34d399' : '#f05252' }}>
+                      {isWin ? '✓' : '✕'}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
         {/* Footer watermark */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid rgba(139,92,246,0.15)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderTop: '1px solid rgba(139,92,246,0.15)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6', letterSpacing: '-0.2px' }}>☠ PirateTracker</div>
           <div style={{ fontSize: 10, color: '#2a1f4a' }}>piratetracker.vercel.app</div>
         </div>
@@ -187,7 +200,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
       {/* Close button — below card, clearly outside the screenshot area */}
       <button
         onClick={onClose}
-        style={{ marginTop: 24, padding: '10px 32px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+        style={{ marginTop: 22, padding: '10px 32px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
       >
         ✕ Close
       </button>
