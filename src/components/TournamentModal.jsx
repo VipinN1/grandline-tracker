@@ -113,6 +113,12 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
           </div>
         </div>
 
+        {/* Brand bar — kept high so screenshots can't crop it out */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 18px', background: 'rgba(139,92,246,0.06)', borderBottom: '1px solid rgba(139,92,246,0.12)' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#8b5cf6', letterSpacing: '-0.2px' }}>☠ PirateTracker</div>
+          <div style={{ fontSize: 9.5, color: '#4a3a6e' }}>piratetracker.vercel.app</div>
+        </div>
+
         {/* Stats strip */}
         {hasRounds && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -121,10 +127,10 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
               { label: 'Going 2nd', value: wentSecondTotal > 0 ? `${Math.round(wentSecondWins / wentSecondTotal * 100)}%` : '—', sub: `${wentSecondWins}/${wentSecondTotal}` },
               { label: 'Dice Won', value: diceWon > 0 ? `${Math.round(diceWins / diceWon * 100)}%` : '—', sub: `${diceWins}/${diceWon}` },
             ].map((s, i) => (
-              <div key={s.label} style={{ padding: '11px 8px', textAlign: 'center', borderLeft: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                <div style={{ fontSize: 8.5, color: '#3d2d6e', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4, fontWeight: 700 }}>{s.label}</div>
-                <div style={{ fontSize: 19, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace', lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: 9.5, color: '#3d2d6e', marginTop: 3 }}>{s.sub}</div>
+              <div key={s.label} style={{ padding: '7px 6px', textAlign: 'center', borderLeft: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                <div style={{ fontSize: 7.5, color: '#3d2d6e', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 3, fontWeight: 700 }}>{s.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace', lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 8.5, color: '#3d2d6e', marginTop: 2 }}>{s.sub}</div>
               </div>
             ))}
           </div>
@@ -154,9 +160,9 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                   {/* Opponent */}
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {r.opponent_leader_id ? (
-                      <img src={getCardImageUrl(r.opponent_leader_id)} alt="" style={{ width: 26, height: 36, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: `1.5px solid ${oppColor}66` }} onError={e => { e.target.style.display = 'none' }} />
+                      <img src={getCardImageUrl(r.opponent_leader_id)} alt="" style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, flexShrink: 0, border: `1.5px solid ${oppColor}66`, boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }} onError={e => { e.target.style.display = 'none' }} />
                     ) : (
-                      <div style={{ width: 26, height: 36, borderRadius: 4, background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
+                      <div style={{ width: 40, height: 56, borderRadius: 5, background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
                     )}
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: oppColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {cleanName(r.opponent_leader_name) || 'Unknown'}
@@ -189,12 +195,6 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
             })}
           </div>
         )}
-
-        {/* Footer watermark */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderTop: '1px solid rgba(139,92,246,0.15)' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6', letterSpacing: '-0.2px' }}>☠ PirateTracker</div>
-          <div style={{ fontSize: 10, color: '#2a1f4a' }}>piratetracker.vercel.app</div>
-        </div>
       </div>
 
       {/* Close button — below card, clearly outside the screenshot area */}
