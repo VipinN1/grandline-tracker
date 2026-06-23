@@ -49,7 +49,9 @@ export default function TournamentsPage({ session }) {
       name: form.name.trim(),
       description: form.description.trim() || null,
       discord_link: form.discord_link.trim() || null,
-      registration_deadline: form.registration_deadline,
+      // datetime-local gives a naive local string; convert to a UTC instant so
+      // it isn't misread as UTC by Postgres (which shifted the displayed time).
+      registration_deadline: new Date(form.registration_deadline).toISOString(),
       created_by: session.user.id,
     })
     if (!error) {
