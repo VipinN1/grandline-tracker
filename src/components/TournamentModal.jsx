@@ -8,6 +8,23 @@ function cleanName(name) {
   return name.replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '').replace(/\s*\([^)]*\)$/, '').trim()
 }
 
+// Lighten a hex color toward white by `amt` (0–1)
+function hexLighten(hex, amt) {
+  const n = parseInt(hex.slice(1), 16)
+  const mix = c => Math.round(c + (255 - c) * amt)
+  return '#' + [mix(n >> 16 & 255), mix(n >> 8 & 255), mix(n & 255)].map(x => x.toString(16).padStart(2, '0')).join('')
+}
+
+// leader_color can hold one or more colors ("Red", "Red Blue", "Red/Green").
+// Returns the gradient stops: dual+ colors fade between each; a single color
+// fades from a lighter shade into itself.
+function leaderColorStops(leaderColor) {
+  const list = (leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
+  if (list.length >= 2) return list
+  if (list.length === 1) return [hexLighten(list[0], 0.45), list[0]]
+  return ['#c4b5fd', '#8b5cf6']
+}
+
 function CardPreview({ card, onClose }) {
   if (!card) return null
   return (
@@ -34,7 +51,11 @@ function pStyle(n) {
 
 // ─── Screenshot share overlay ─────────────────────────────────────────────────
 function ShareOverlay({ tournament, onClose, isMobile }) {
-  const color = COLORS[tournament.leader_color] ?? '#8b5cf6'
+  const colorStops = leaderColorStops(tournament.leader_color)
+  const color = (tournament.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? '#8b5cf6'
+  const nameGradient = `linear-gradient(110deg, ${colorStops.join(', ')})`
+  const leaderName = cleanName(tournament.leader_name)
+  const nameFontSize = leaderName.length > 16 ? 22 : leaderName.length > 10 ? 29 : 38
   const rounds = (tournament.tournament_rounds ?? []).sort((a, b) => a.round_number - b.round_number)
   const wentFirstWins = rounds.filter(r => r.went_first === true && r.result === 'win').length
   const wentFirstTotal = rounds.filter(r => r.went_first === true).length
@@ -103,13 +124,21 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                   <span style={{ color: '#f05252' }}>{tournament.losses}L</span>
                 </span>
                 <span style={{ fontSize: 11, color: '#7c6fa0' }}>{winRate}%</span>
-                {tournament.leader_color && (
-                  <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: color + '24', color, border: `1px solid ${color}55` }}>
-                    {cleanName(tournament.leader_name)}
-                  </span>
-                )}
               </div>
             </div>
+
+            {/* Big gradient leader name */}
+            {leaderName && (
+              <div style={{ flexShrink: 0, maxWidth: '46%', marginLeft: 'auto', textAlign: 'right', filter: `drop-shadow(0 0 14px ${color}55)` }}>
+                <div style={{
+                  fontSize: nameFontSize, fontWeight: 800, lineHeight: 1.02, letterSpacing: '-1px',
+                  backgroundImage: nameGradient, WebkitBackgroundClip: 'text', backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent', color: 'transparent',
+                }}>
+                  {leaderName}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
