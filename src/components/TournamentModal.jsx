@@ -58,7 +58,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 
   // Fit the leader name to its allotted box on a single line, scaling the font
   // down only as far as needed so it uses the horizontal space without overflow.
-  const NAME_MAX = 40, NAME_MIN = 14
+  const NAME_MAX = 29, NAME_MIN = 12
   const nameBoxRef = useRef(null)
   const nameTextRef = useRef(null)
   const [nameFontSize, setNameFontSize] = useState(NAME_MAX)
@@ -148,7 +148,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 
           {/* Big gradient leader name — fills the lower-right empty space */}
           {leaderName && (
-            <div ref={nameBoxRef} style={{ position: 'absolute', right: 18, bottom: 11, width: isMobile ? '54%' : 212, textAlign: 'right', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
+            <div ref={nameBoxRef} style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)', width: isMobile ? '54%' : 212, textAlign: 'center', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
               <div ref={nameTextRef} style={{
                 display: 'inline-block', whiteSpace: 'nowrap',
                 fontSize: nameFontSize, fontWeight: 800, lineHeight: 1.0, letterSpacing: '-1px',
