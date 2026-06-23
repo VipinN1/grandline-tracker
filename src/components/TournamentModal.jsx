@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
@@ -36,6 +36,25 @@ function pStyle(n) {
 function ShareOverlay({ tournament, onClose, isMobile }) {
   const color = (tournament.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? '#8b5cf6'
   const leaderName = cleanName(tournament.leader_name)
+
+  // Scale the ghosted watermark down for long names so it stays in its
+  // right-side region instead of sprawling under the title.
+  const nameBoxRef = useRef(null)
+  const nameTextRef = useRef(null)
+  const [nameFontSize, setNameFontSize] = useState(isMobile ? 56 : 76)
+  useLayoutEffect(() => {
+    const box = nameBoxRef.current, txt = nameTextRef.current
+    if (!box || !txt) return
+    const NAME_MIN = 30
+    let size = isMobile ? 56 : 76
+    txt.style.fontSize = size + 'px'
+    while (size > NAME_MIN && txt.scrollWidth > box.clientWidth) {
+      size -= 1
+      txt.style.fontSize = size + 'px'
+    }
+    setNameFontSize(size)
+  }, [leaderName, isMobile])
+
   const rounds = (tournament.tournament_rounds ?? []).sort((a, b) => a.round_number - b.round_number)
   const wentFirstWins = rounds.filter(r => r.went_first === true && r.result === 'win').length
   const wentFirstTotal = rounds.filter(r => r.went_first === true).length
@@ -110,9 +129,9 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 
           {/* Ghosted leader name watermark — big, faint, bleeds off the right */}
           {leaderName && (
-            <div style={{ position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 0, pointerEvents: 'none' }}>
-              <div style={{
-                whiteSpace: 'nowrap', fontSize: isMobile ? 56 : 76, fontWeight: 800,
+            <div ref={nameBoxRef} style={{ position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', width: isMobile ? '62%' : 300, textAlign: 'right', overflow: 'hidden', zIndex: 0, pointerEvents: 'none' }}>
+              <div ref={nameTextRef} style={{
+                display: 'inline-block', whiteSpace: 'nowrap', fontSize: nameFontSize, fontWeight: 800,
                 lineHeight: 1, letterSpacing: '-3px', color: `${color}1f`,
               }}>
                 {leaderName}
