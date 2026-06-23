@@ -36,17 +36,19 @@ function pStyle(n) {
 function ShareOverlay({ tournament, onClose, isMobile }) {
   const color = (tournament.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? '#8b5cf6'
   const leaderName = cleanName(tournament.leader_name)
+  const nameWords = leaderName ? leaderName.split(/\s+/).filter(Boolean) : []
 
-  // Scale the ghosted watermark down for long names so it stays in its
-  // right-side region instead of sprawling under the title.
+  // Ghosted watermark: multi-word names stack on staggered lines so each word
+  // stays large; a single long word scales down to fit the right-side region.
   const nameBoxRef = useRef(null)
   const nameTextRef = useRef(null)
-  const [nameFontSize, setNameFontSize] = useState(isMobile ? 56 : 76)
+  const [nameFontSize, setNameFontSize] = useState(76)
   useLayoutEffect(() => {
     const box = nameBoxRef.current, txt = nameTextRef.current
     if (!box || !txt) return
+    const multi = (leaderName || '').trim().split(/\s+/).length > 1
     const NAME_MIN = 30
-    let size = isMobile ? 56 : 76
+    let size = isMobile ? (multi ? 38 : 56) : (multi ? 50 : 76)
     txt.style.fontSize = size + 'px'
     while (size > NAME_MIN && txt.scrollWidth > box.clientWidth) {
       size -= 1
@@ -131,10 +133,12 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
           {leaderName && (
             <div ref={nameBoxRef} style={{ position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', width: isMobile ? '62%' : 300, textAlign: 'right', overflow: 'hidden', zIndex: 0, pointerEvents: 'none' }}>
               <div ref={nameTextRef} style={{
-                display: 'inline-block', whiteSpace: 'nowrap', fontSize: nameFontSize, fontWeight: 800,
-                lineHeight: 1, letterSpacing: '-3px', color: `${color}1f`,
+                display: 'inline-block', fontSize: nameFontSize, fontWeight: 800,
+                lineHeight: 0.9, letterSpacing: '-3px', color: `${color}1f`,
               }}>
-                {leaderName}
+                {nameWords.map((w, i) => (
+                  <div key={i} style={{ whiteSpace: 'nowrap', transform: i ? `translateX(${i * 0.3}em)` : undefined }}>{w}</div>
+                ))}
               </div>
             </div>
           )}
