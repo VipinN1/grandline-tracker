@@ -257,11 +257,11 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
             <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(139,92,246,0.05) 100%)' }} />
             <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f0f2f5', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-            <button onClick={() => setShowShare(true)} style={{ position: 'absolute', top: 12, right: 50, background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 6, color: '#a78bfa', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: 'pointer', letterSpacing: '0.3px', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+            <button onClick={() => setShowShare(true)} style={{ position: 'absolute', top: 12, right: 50, background: 'rgba(18,10,34,0.82)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', border: '1px solid rgba(139,92,246,0.7)', borderRadius: 6, color: '#c4b5fd', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: 'pointer', letterSpacing: '0.3px', whiteSpace: 'nowrap', fontFamily: 'inherit', boxShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
               ↗ Share
             </button>
             {onDelete !== false && (
-              <button onClick={() => setShowConfirm(true)} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(240,82,82,0.5)', border: '1px solid rgba(240,82,82,0.4)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#f05252', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              <button onClick={() => setShowConfirm(true)} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(26,8,12,0.82)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', border: '1px solid rgba(240,82,82,0.7)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#ff7676', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
                 {deleting ? 'Deleting…' : 'Delete Log'}
               </button>
             )}
