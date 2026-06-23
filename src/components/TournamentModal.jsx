@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from 'react'
+import { useState } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
@@ -6,23 +6,6 @@ const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a7
 function cleanName(name) {
   if (!name) return ''
   return name.replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '').replace(/\s*\([^)]*\)$/, '').trim()
-}
-
-// Lighten a hex color toward white by `amt` (0–1)
-function hexLighten(hex, amt) {
-  const n = parseInt(hex.slice(1), 16)
-  const mix = c => Math.round(c + (255 - c) * amt)
-  return '#' + [mix(n >> 16 & 255), mix(n >> 8 & 255), mix(n & 255)].map(x => x.toString(16).padStart(2, '0')).join('')
-}
-
-// leader_color can hold one or more colors ("Red", "Red Blue", "Red/Green").
-// Returns the gradient stops: dual+ colors fade between each; a single color
-// fades from a lighter shade into itself.
-function leaderColorStops(leaderColor) {
-  const list = (leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
-  if (list.length >= 2) return list
-  if (list.length === 1) return [hexLighten(list[0], 0.45), list[0]]
-  return ['#c4b5fd', '#8b5cf6']
 }
 
 function CardPreview({ card, onClose }) {
@@ -51,29 +34,8 @@ function pStyle(n) {
 
 // ─── Screenshot share overlay ─────────────────────────────────────────────────
 function ShareOverlay({ tournament, onClose, isMobile }) {
-  const colorStops = leaderColorStops(tournament.leader_color)
   const color = (tournament.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? '#8b5cf6'
-  const nameGradient = `linear-gradient(110deg, ${colorStops.join(', ')})`
   const leaderName = cleanName(tournament.leader_name)
-
-  // Fit the leader name to its allotted box on a single line, scaling the font
-  // down only as far as needed so it uses the horizontal space without overflow.
-  const NAME_MAX = 29, NAME_MIN = 12
-  const nameBoxRef = useRef(null)
-  const nameTextRef = useRef(null)
-  const [nameFontSize, setNameFontSize] = useState(NAME_MAX)
-  useLayoutEffect(() => {
-    const box = nameBoxRef.current, txt = nameTextRef.current
-    if (!box || !txt) return
-    let size = NAME_MAX
-    txt.style.fontSize = size + 'px'
-    while (size > NAME_MIN && txt.scrollWidth > box.clientWidth) {
-      size -= 1
-      txt.style.fontSize = size + 'px'
-    }
-    setNameFontSize(size)
-  }, [leaderName, isMobile])
-
   const rounds = (tournament.tournament_rounds ?? []).sort((a, b) => a.round_number - b.round_number)
   const wentFirstWins = rounds.filter(r => r.went_first === true && r.result === 'win').length
   const wentFirstTotal = rounds.filter(r => r.went_first === true).length
@@ -110,8 +72,8 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 
         {/* Compact header — leader thumbnail + title + result */}
         <div style={{ position: 'relative', padding: '16px 18px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(to right, ${color}, ${color}66, transparent)` }} />
-          <div style={{ display: 'flex', gap: 13, alignItems: 'center' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(to right, ${color}, ${color}66, transparent)`, zIndex: 2 }} />
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 13, alignItems: 'center' }}>
             {/* Leader portrait thumbnail */}
             <div style={{ position: 'relative', width: 58, flexShrink: 0, borderRadius: 8, overflow: 'hidden', border: `2px solid ${color}88`, boxShadow: `0 0 16px ${color}33, 0 4px 12px rgba(0,0,0,0.5)` }}>
               <img
@@ -146,15 +108,12 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
             </div>
           </div>
 
-          {/* Big gradient leader name — fills the lower-right empty space */}
+          {/* Ghosted leader name watermark — big, faint, bleeds off the right */}
           {leaderName && (
-            <div ref={nameBoxRef} style={{ position: 'absolute', right: 18, bottom: 9, width: isMobile ? '54%' : 212, textAlign: 'center', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
-              <div ref={nameTextRef} style={{
-                display: 'inline-block', whiteSpace: 'nowrap',
-                fontSize: nameFontSize, fontWeight: 800, lineHeight: 1.0, letterSpacing: '-1px',
-                backgroundImage: nameGradient, WebkitBackgroundClip: 'text', backgroundClip: 'text',
-                WebkitTextFillColor: 'transparent', color: 'transparent',
-                WebkitTextStroke: '1px rgba(167,139,250,0.85)',
+            <div style={{ position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 0, pointerEvents: 'none' }}>
+              <div style={{
+                whiteSpace: 'nowrap', fontSize: isMobile ? 56 : 76, fontWeight: 800,
+                lineHeight: 1, letterSpacing: '-3px', color: `${color}1f`,
               }}>
                 {leaderName}
               </div>
