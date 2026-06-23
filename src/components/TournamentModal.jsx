@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
@@ -55,7 +55,25 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
   const color = (tournament.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? '#8b5cf6'
   const nameGradient = `linear-gradient(110deg, ${colorStops.join(', ')})`
   const leaderName = cleanName(tournament.leader_name)
-  const nameFontSize = leaderName.length > 16 ? 22 : leaderName.length > 10 ? 29 : 38
+
+  // Fit the leader name to its allotted box on a single line, scaling the font
+  // down only as far as needed so it uses the horizontal space without overflow.
+  const NAME_MAX = 40, NAME_MIN = 14
+  const nameBoxRef = useRef(null)
+  const nameTextRef = useRef(null)
+  const [nameFontSize, setNameFontSize] = useState(NAME_MAX)
+  useLayoutEffect(() => {
+    const box = nameBoxRef.current, txt = nameTextRef.current
+    if (!box || !txt) return
+    let size = NAME_MAX
+    txt.style.fontSize = size + 'px'
+    while (size > NAME_MIN && txt.scrollWidth > box.clientWidth) {
+      size -= 1
+      txt.style.fontSize = size + 'px'
+    }
+    setNameFontSize(size)
+  }, [leaderName, isMobile])
+
   const rounds = (tournament.tournament_rounds ?? []).sort((a, b) => a.round_number - b.round_number)
   const wentFirstWins = rounds.filter(r => r.went_first === true && r.result === 'win').length
   const wentFirstTotal = rounds.filter(r => r.went_first === true).length
@@ -130,8 +148,9 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 
           {/* Big gradient leader name — fills the lower-right empty space */}
           {leaderName && (
-            <div style={{ position: 'absolute', right: 18, bottom: 12, maxWidth: '52%', textAlign: 'right', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
-              <div style={{
+            <div ref={nameBoxRef} style={{ position: 'absolute', right: 18, bottom: 11, width: isMobile ? '54%' : 212, textAlign: 'right', filter: `drop-shadow(0 0 14px ${color}55)`, pointerEvents: 'none' }}>
+              <div ref={nameTextRef} style={{
+                display: 'inline-block', whiteSpace: 'nowrap',
                 fontSize: nameFontSize, fontWeight: 800, lineHeight: 1.0, letterSpacing: '-1px',
                 backgroundImage: nameGradient, WebkitBackgroundClip: 'text', backgroundClip: 'text',
                 WebkitTextFillColor: 'transparent', color: 'transparent',
