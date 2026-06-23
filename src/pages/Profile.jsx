@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
@@ -100,6 +101,7 @@ export default function Profile({ session }) {
   const [loading, setLoading] = useState(true)
   const [selectedTournament, setSelectedTournament] = useState(null)
   const [activeTab, setActiveTab] = useState('history')
+  const navigate = useNavigate()
   const [avatarUrl, setAvatarUrl] = useState(null)
   const { isMobile } = useWindowSize()
   const [editingProfile, setEditingProfile] = useState(false)
@@ -335,7 +337,7 @@ export default function Profile({ session }) {
         />
       )}
       {selectedTournament && (
-        <TournamentModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} isMobile={isMobile} onDelete={() => { setTournaments(prev => prev.filter(t => t.id !== selectedTournament.id)); setSelectedTournament(null) }} />
+        <TournamentModal tournament={selectedTournament} onClose={() => setSelectedTournament(null)} isMobile={isMobile} onEdit={t => navigate('/log', { state: { editTournament: t } })} onDelete={() => { setTournaments(prev => prev.filter(t => t.id !== selectedTournament.id)); setSelectedTournament(null) }} />
       )}
     </div>
   )

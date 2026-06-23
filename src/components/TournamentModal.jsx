@@ -247,7 +247,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 }
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
-export default function TournamentModal({ tournament, onClose, zIndex = 200, isMobile = false, onDelete }) {
+export default function TournamentModal({ tournament, onClose, zIndex = 200, isMobile = false, onDelete, onEdit }) {
   const [selectedCard, setSelectedCard] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -291,10 +291,19 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
             <button onClick={() => setShowShare(true)} style={{ position: 'absolute', top: 12, right: 50, background: 'rgba(18,10,34,0.82)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', border: '1px solid rgba(139,92,246,0.7)', borderRadius: 6, color: '#c4b5fd', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: 'pointer', letterSpacing: '0.3px', whiteSpace: 'nowrap', fontFamily: 'inherit', boxShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
               ↗ Share
             </button>
-            {onDelete !== false && (
-              <button onClick={() => setShowConfirm(true)} disabled={deleting} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(26,8,12,0.82)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', border: '1px solid rgba(240,82,82,0.7)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#ff7676', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-                {deleting ? 'Deleting…' : 'Delete Log'}
-              </button>
+            {(onEdit || onDelete !== false) && (
+              <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 8 }}>
+                {onEdit && (
+                  <button onClick={() => onEdit(tournament)} style={{ background: 'rgba(18,10,34,0.82)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', border: '1px solid rgba(139,92,246,0.7)', borderRadius: 6, color: '#c4b5fd', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', fontFamily: 'inherit' }}>
+                    ✎ Edit
+                  </button>
+                )}
+                {onDelete !== false && (
+                  <button onClick={() => setShowConfirm(true)} disabled={deleting} style={{ background: 'rgba(26,8,12,0.82)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', border: '1px solid rgba(240,82,82,0.7)', borderRadius: 6, color: deleting ? '#7c6fa0' : '#ff7676', fontSize: 11, fontWeight: 700, padding: '0 10px', height: 30, cursor: deleting ? 'not-allowed' : 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', fontFamily: 'inherit' }}>
+                    {deleting ? 'Deleting…' : 'Delete Log'}
+                  </button>
+                )}
+              </div>
             )}
             <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>{tournament.deck_name ?? tournament.name}</div>

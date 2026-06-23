@@ -31,7 +31,8 @@
       "Bash(curl -s \"https://optcgapi.com/api/sets/filtered/?card_name=Nami\")",
       "mcp__ide__getDiagnostics",
       "Read(//c/Users/siris/.claude/image-cache/dbff26a8-0cb2-441b-b083-c93526612376/**)",
-      "Bash(identify \"C:\\\\Users\\\\siris\\\\.claude\\\\image-cache\\\\dbff26a8-0cb2-441b-b083-c93526612376\\\\1.png\")"
+      "Bash(identify \"C:\\\\Users\\\\siris\\\\.claude\\\\image-cache\\\\dbff26a8-0cb2-441b-b083-c93526612376\\\\1.png\")",
+      "Bash(git stash *)"
     ]
   }
 }

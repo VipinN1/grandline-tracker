@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import SelectDecklistModal from '../components/SelectDecklistModal'
 import { useWindowSize } from '../hooks/useWindowSize'
 import LiveTournament from './LiveTournament'
@@ -250,34 +250,53 @@ function RoundRow({ round, index, onChange, onRemove }) {
   )
 }
 
-function PastTournamentForm({ session }) {
+function PastTournamentForm({ session, editTournament = null }) {
   const navigate = useNavigate()
+  const isEditing = !!editTournament
 
-  const [tournamentName, setTournamentName] = useState('')
-  const [date, setDate] = useState('')
-  const [playerCount, setPlayerCount] = useState('')
-  const [placement, setPlacement] = useState('')
-  const [notes, setNotes] = useState('')
-  const [deckName, setDeckName] = useState('')
+  const [tournamentName, setTournamentName] = useState(editTournament && !editTournament.series_id ? (editTournament.name ?? '') : '')
+  const [date, setDate] = useState(editTournament?.date ?? '')
+  const [playerCount, setPlayerCount] = useState(editTournament?.player_count != null ? String(editTournament.player_count) : '')
+  const [placement, setPlacement] = useState(editTournament?.placement != null ? String(editTournament.placement) : '')
+  const [notes, setNotes] = useState(editTournament?.notes ?? '')
+  const [deckName, setDeckName] = useState(editTournament?.deck_name ?? '')
 
   const [stores, setStores] = useState([])
   const [series, setSeries] = useState([])
   const [selectedStore, setSelectedStore] = useState(null)
   const [selectedSeries, setSelectedSeries] = useState(null)
 
-  const [leaderResult, setLeaderResult] = useState(null)
+  const [leaderResult, setLeaderResult] = useState(
+    editTournament
+      ? { card_image_id: editTournament.leader_id, card_set_id: editTournament.leader_id, card_name: editTournament.leader_name, card_color: editTournament.leader_color }
+      : null
+  )
 
   const [decklistRaw, setDecklistRaw] = useState('')
   const [parsedCards, setParsedCards] = useState([])
   const [deckParsed, setDeckParsed] = useState(false)
   const [enriching, setEnriching] = useState(false)
 
-  const [rounds, setRounds] = useState([{ oppLeader: null, wonDice: null, wentFirst: null, result: null }])
+  const [rounds, setRounds] = useState(
+    editTournament
+      ? (editTournament.tournament_rounds ?? [])
+          .slice()
+          .sort((a, b) => a.round_number - b.round_number)
+          .map(r => ({
+            oppLeader: (r.opponent_leader_id || r.opponent_leader_name)
+              ? { card_image_id: r.opponent_leader_id, card_set_id: r.opponent_leader_id, card_name: r.opponent_leader_name, card_color: r.opponent_leader_color }
+              : null,
+            wonDice: r.won_dice_roll,
+            wentFirst: r.went_first,
+            result: r.result,
+          }))
+      : [{ oppLeader: null, wonDice: null, wentFirst: null, result: null }]
+  )
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const [attachedDecklist, setAttachedDecklist] = useState(null)
+  const [attachedDecklist, setAttachedDecklist] = useState(editTournament?.decklists ?? null)
   const [selectingDecklist, setSelectingDecklist] = useState(false)
 
   const { isMobile } = useWindowSize()
@@ -291,6 +310,16 @@ function PastTournamentForm({ session }) {
     ])
     setStores(storeData ?? [])
     setSeries(seriesData ?? [])
+    if (editTournament) {
+      if (editTournament.store_id) {
+        const st = (storeData ?? []).find(s => s.id === editTournament.store_id)
+        if (st) setSelectedStore(st)
+      }
+      if (editTournament.series_id) {
+        const sr = (seriesData ?? []).find(s => s.id === editTournament.series_id)
+        if (sr) setSelectedSeries(sr)
+      }
+    }
   }
 
   async function createStore(name) {
@@ -354,7 +383,7 @@ function PastTournamentForm({ session }) {
     const finalName = selectedSeries?.name ?? tournamentName.trim()
     const storeLocation = selectedStore ? [selectedStore.name, selectedStore.city, selectedStore.state].filter(Boolean).join(', ') : ''
 
-    const { data: tournament, error: tError } = await supabase.from('tournaments').insert({
+    const payload = {
       user_id: session.user.id,
       name: finalName,
       date,
@@ -371,15 +400,27 @@ function PastTournamentForm({ session }) {
       decklist_id: decklistId,
       store_id: selectedStore?.id ?? null,
       series_id: selectedSeries?.id ?? null,
-    }).select().single()
+    }
 
-    if (tError) { setError('Failed to save: ' + tError.message); setSaving(false); return }
+    let tournamentId
+    if (isEditing) {
+      const { error: uError } = await supabase.from('tournaments').update(payload).eq('id', editTournament.id)
+      if (uError) { setError('Failed to save: ' + uError.message); setSaving(false); return }
+      tournamentId = editTournament.id
+      // Replace the rounds wholesale so removed/reordered rounds stay consistent
+      const { error: delError } = await supabase.from('tournament_rounds').delete().eq('tournament_id', tournamentId)
+      if (delError) { setError('Failed to update rounds: ' + delError.message); setSaving(false); return }
+    } else {
+      const { data: tournament, error: tError } = await supabase.from('tournaments').insert(payload).select().single()
+      if (tError) { setError('Failed to save: ' + tError.message); setSaving(false); return }
+      tournamentId = tournament.id
+    }
 
     // Save rounds
     if (rounds.length > 0) {
-      await supabase.from('tournament_rounds').insert(
+      const { error: rError } = await supabase.from('tournament_rounds').insert(
         rounds.map((r, i) => ({
-          tournament_id: tournament.id,
+          tournament_id: tournamentId,
           round_number: i + 1,
           opponent_leader_id: r.oppLeader?.card_image_id ?? r.oppLeader?.card_set_id ?? null,
           opponent_leader_name: r.oppLeader?.card_name ?? null,
@@ -389,10 +430,11 @@ function PastTournamentForm({ session }) {
           result: r.result,
         }))
       )
+      if (rError) { setError('Failed to save rounds: ' + rError.message); setSaving(false); return }
     }
 
     setSaving(false)
-    navigate('/dashboard')
+    navigate(isEditing ? '/profile' : '/dashboard')
   }
 
   const storesForDisplay = stores.map(s => ({ ...s, sublabel: [s.city, s.state].filter(Boolean).join(', ') }))
@@ -437,9 +479,9 @@ function PastTournamentForm({ session }) {
   return (
     <div>
       <div style={{ marginBottom: isMobile ? '1rem' : '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Record</div>
-        <div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Log Tournament Result</div>
-        {!isMobile && <div style={{ fontSize: 13, color: '#7c6fa0' }}>Add a locals or major event to your history</div>}
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>{isEditing ? 'Edit' : 'Record'}</div>
+        <div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>{isEditing ? 'Edit Tournament Result' : 'Log Tournament Result'}</div>
+        {!isMobile && <div style={{ fontSize: 13, color: '#7c6fa0' }}>{isEditing ? 'Update the details of this logged event' : 'Add a locals or major event to your history'}</div>}
       </div>
 
       {isMobile && leaderCardPanel}
@@ -582,7 +624,7 @@ function PastTournamentForm({ session }) {
           )}
 
           <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: isMobile ? 14 : 12, borderRadius: 10, border: 'none', background: saving ? '#5b21b6' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
-            {saving ? 'Saving...' : 'Save Result'}
+            {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Save Result'}
           </button>
         </div>
 
@@ -636,8 +678,19 @@ function ModeToggle({ mode, setMode, isMobile }) {
 }
 
 export default function LogResult({ session }) {
+  const location = useLocation()
+  const editTournament = location.state?.editTournament ?? null
   const [mode, setMode] = useState('past')
   const { isMobile } = useWindowSize()
+
+  // Editing an existing log is past-only — skip the live/past toggle.
+  if (editTournament) {
+    return (
+      <div>
+        <PastTournamentForm session={session} editTournament={editTournament} />
+      </div>
+    )
+  }
 
   return (
     <div>
