@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCardImageUrl } from '../lib/optcgapi'
 import SelectDecklistModal from './SelectDecklistModal'
+import ProfilePopover from './ProfilePopover'
 
 function timeAgo(iso) {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
@@ -62,6 +63,7 @@ export default function DirectMessages({ session, isMobile, initialUserId }) {
   const [sending, setSending] = useState(false)
   const [pickDeck, setPickDeck] = useState(false)
   const [lightbox, setLightbox] = useState(null)
+  const [popoverProfile, setPopoverProfile] = useState(null)
   const bottomRef = useRef(null)
   const fileRef = useRef(null)
   const activeIdRef = useRef(activeId)
@@ -236,8 +238,10 @@ export default function DirectMessages({ session, isMobile, initialUserId }) {
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
                 {isMobile && <button onClick={() => setActiveId(null)} style={{ background: 'none', border: 'none', color: '#a78bfa', fontSize: 18, cursor: 'pointer', padding: 0 }}>←</button>}
-                <Avatar profile={otherProfile} size={32} />
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{otherProfile?.username ?? 'User'}</div>
+                <div onClick={() => otherProfile && setPopoverProfile(otherProfile)} title="View profile" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: otherProfile ? 'pointer' : 'default' }}>
+                  <Avatar profile={otherProfile} size={32} />
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{otherProfile?.username ?? 'User'}</div>
+                </div>
               </div>
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -284,6 +288,7 @@ export default function DirectMessages({ session, isMobile, initialUserId }) {
         </div>
       )}
 
+      {popoverProfile && <ProfilePopover profile={popoverProfile} session={session} onClose={() => setPopoverProfile(null)} />}
       {pickDeck && <SelectDecklistModal session={session} isMobile={isMobile} onClose={() => setPickDeck(false)} onSelect={sendDeck} />}
       {lightbox && (
         <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
