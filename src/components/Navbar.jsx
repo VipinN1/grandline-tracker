@@ -39,6 +39,7 @@ function tabStyle(isActive) {
 
 const AUTH_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/stats', label: 'Stats' },
   { to: '/log', label: 'Log Result' },
   { to: '/decklists', label: 'Decklists' },
   { to: '/friends', label: 'Friends' },

@@ -21,6 +21,7 @@ import Signup from './pages/Signup'
 import Home from './pages/Home'
 import StorefrontPage from './pages/StorefrontPage'
 import BountyBoard from './pages/BountyBoard'
+import Stats from './pages/Stats'
 import BugReports from './pages/BugReports'
 import About from './pages/About'
 import ResetPassword from './pages/ResetPassword'
@@ -94,6 +95,7 @@ export default function App() {
           <Route path="/community" element={<Community session={session} />} />
           <Route path="/marketplace" element={<Marketplace session={session} />} />
           <Route path="/dashboard" element={<ProtectedRoute session={session}><Dashboard session={session} /></ProtectedRoute>} />
+          <Route path="/stats" element={<ProtectedRoute session={session}><Stats session={session} /></ProtectedRoute>} />
           <Route path="/log" element={<ProtectedRoute session={session}><LogResult session={session} /></ProtectedRoute>} />
           <Route path="/decklists" element={<ProtectedRoute session={session}><Decklists session={session} /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute session={session}><Friends session={session} /></ProtectedRoute>} />
