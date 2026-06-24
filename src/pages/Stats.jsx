@@ -31,54 +31,69 @@ function emptyAgg() {
 
 function bump(pair, win) { pair[0] += win; pair[1] += 1 }
 
-function buildMatrix(tournaments) {
-  const my = new Map()        // baseKey -> { key, id, name, color }
-  const opp = new Map()
-  const matrix = new Map()    // `${myKey}|${oppKey}` -> agg
-  const myTotals = new Map()  // myKey -> [wins, total] (overall, for row summary)
+// When `symmetric` is true (Global), each game is counted from BOTH sides:
+// A-beats-B also records B-loses-to-A, with dice/first-second inverted for the
+// mirror. When false (Mine), it's directional — rows are decks you piloted,
+// columns are opponents you faced.
+function buildMatrix(tournaments, symmetric) {
+  const rowLeaders = new Map() // rowKey -> { key, id, name, color }
+  const colLeaders = new Map() // colKey -> { key, id, name, color }
+  const matrix = new Map()     // `${rowKey}|${colKey}` -> agg
+  const rowTotals = new Map()  // rowKey -> [wins, total] (overall, for row summary)
+
+  function addObs(rowKey, rowLeader, colKey, colLeader, win, wentFirst, wonDice) {
+    if (!rowLeaders.has(rowKey)) rowLeaders.set(rowKey, rowLeader)
+    if (!colLeaders.has(colKey)) colLeaders.set(colKey, colLeader)
+    const rt = rowTotals.get(rowKey) ?? [0, 0]; bump(rt, win); rowTotals.set(rowKey, rt)
+    const mk = `${rowKey}|${colKey}`
+    const agg = matrix.get(mk) ?? emptyAgg()
+    bump(agg.overall, win)
+    if (wentFirst === true) bump(agg.first, win)
+    else if (wentFirst === false) bump(agg.second, win)
+    if (wonDice === true) bump(agg.diceWon, win)
+    else if (wonDice === false) bump(agg.diceLost, win)
+    matrix.set(mk, agg)
+  }
 
   for (const t of tournaments) {
     if (!t.leader_id) continue
     const myKey = baseId(t.leader_id)
-    if (!my.has(myKey)) my.set(myKey, { key: myKey, id: t.leader_id, name: cleanName(t.leader_name) || 'Unknown', color: t.leader_color })
-    let mt = myTotals.get(myKey) ?? [0, 0]
+    const myLeader = { key: myKey, id: t.leader_id, name: cleanName(t.leader_name) || 'Unknown', color: t.leader_color }
 
     for (const r of (t.tournament_rounds ?? [])) {
       if (r.result !== 'win' && r.result !== 'loss') continue
       const oKey = r.opponent_leader_id ? baseId(r.opponent_leader_id) : (r.opponent_leader_name ? `n:${cleanName(r.opponent_leader_name)}` : null)
       if (!oKey) continue
-      if (!opp.has(oKey)) opp.set(oKey, { key: oKey, id: r.opponent_leader_id, name: cleanName(r.opponent_leader_name) || 'Unknown', color: r.opponent_leader_color })
-
+      const oppLeader = { key: oKey, id: r.opponent_leader_id, name: cleanName(r.opponent_leader_name) || 'Unknown', color: r.opponent_leader_color }
       const win = r.result === 'win' ? 1 : 0
-      bump(mt, win)
 
-      const mk = `${myKey}|${oKey}`
-      const agg = matrix.get(mk) ?? emptyAgg()
-      bump(agg.overall, win)
-      if (r.went_first === true) bump(agg.first, win)
-      else if (r.went_first === false) bump(agg.second, win)
-      if (r.won_dice_roll === true) bump(agg.diceWon, win)
-      else if (r.won_dice_roll === false) bump(agg.diceLost, win)
-      matrix.set(mk, agg)
+      // Your perspective
+      addObs(myKey, myLeader, oKey, oppLeader, win, r.went_first, r.won_dice_roll)
+
+      // Opponent's perspective (Global only) — invert result, dice and order
+      if (symmetric) {
+        const invFirst = (r.went_first === true || r.went_first === false) ? !r.went_first : null
+        const invDice = (r.won_dice_roll === true || r.won_dice_roll === false) ? !r.won_dice_roll : null
+        addObs(oKey, oppLeader, myKey, myLeader, 1 - win, invFirst, invDice)
+      }
     }
-    myTotals.set(myKey, mt)
   }
 
-  const myLeaders = [...my.values()]
-    .filter(m => (myTotals.get(m.key)?.[1] ?? 0) > 0)
-    .sort((a, b) => (myTotals.get(b.key)?.[1] ?? 0) - (myTotals.get(a.key)?.[1] ?? 0))
+  const myLeaders = [...rowLeaders.values()]
+    .filter(m => (rowTotals.get(m.key)?.[1] ?? 0) > 0)
+    .sort((a, b) => (rowTotals.get(b.key)?.[1] ?? 0) - (rowTotals.get(a.key)?.[1] ?? 0))
     .slice(0, MAX_AXIS)
 
-  const oppTotals = new Map()
+  const colTotals = new Map()
   for (const [mk, agg] of matrix) {
     const oKey = mk.slice(mk.indexOf('|') + 1)
-    oppTotals.set(oKey, (oppTotals.get(oKey) ?? 0) + agg.overall[1])
+    colTotals.set(oKey, (colTotals.get(oKey) ?? 0) + agg.overall[1])
   }
-  const oppLeaders = [...opp.values()]
-    .sort((a, b) => (oppTotals.get(b.key) ?? 0) - (oppTotals.get(a.key) ?? 0))
+  const oppLeaders = [...colLeaders.values()]
+    .sort((a, b) => (colTotals.get(b.key) ?? 0) - (colTotals.get(a.key) ?? 0))
     .slice(0, MAX_AXIS)
 
-  return { myLeaders, oppLeaders, matrix, myTotals }
+  return { myLeaders, oppLeaders, matrix, myTotals: rowTotals }
 }
 
 // Red (low) → green (high) tint, layered over the dark grid.
@@ -137,7 +152,7 @@ export default function Stats({ session }) {
     return () => { cancelled = true }
   }, [scope, session])
 
-  const { myLeaders, oppLeaders, matrix, myTotals } = useMemo(() => buildMatrix(rows), [rows])
+  const { myLeaders, oppLeaders, matrix, myTotals } = useMemo(() => buildMatrix(rows, scope === 'global'), [rows, scope])
 
   const ROW_W = isMobile ? 128 : 152
   const CELL_W = isMobile ? 58 : 66

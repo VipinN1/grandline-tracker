@@ -498,6 +498,7 @@ export default function Community({ session }) {
   const [selectedProfile, setSelectedProfile] = useState(null)
   const [tab, setTab] = useState(location.state?.dmUserId ? 'messages' : 'posts')
   const [dmUserId] = useState(location.state?.dmUserId ?? null)
+  const [unreadDms, setUnreadDms] = useState(0)
   const { isMobile } = useWindowSize()
 
   async function loadPosts() {
@@ -508,6 +509,21 @@ export default function Community({ session }) {
   }
 
   useEffect(() => { loadPosts() }, [filter])
+
+  useEffect(() => {
+    if (!session) return
+    async function loadDmCount() {
+      const { count } = await supabase.from('direct_messages').select('*', { count: 'exact', head: true }).eq('receiver_id', session.user.id).eq('read', false)
+      setUnreadDms(count ?? 0)
+    }
+    loadDmCount()
+    const channel = supabase
+      .channel(`community_dm_${session.user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${session.user.id}` }, () => setUnreadDms(c => c + 1))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${session.user.id}` }, () => loadDmCount())
+      .subscribe()
+    return () => { channel.unsubscribe() }
+  }, [session])
 
   return (
     <div>
@@ -520,7 +536,14 @@ export default function Community({ session }) {
       {session && (
         <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           {[{ key: 'posts', label: 'Posts' }, { key: 'messages', label: 'Messages' }].map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: 'transparent', color: tab === t.key ? '#f0f2f5' : '#7c6fa0', borderBottom: tab === t.key ? '2px solid #8b5cf6' : '2px solid transparent', marginBottom: -1 }}>{t.label}</button>
+            <button key={t.key} onClick={() => setTab(t.key)} style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: 'transparent', color: tab === t.key ? '#f0f2f5' : '#7c6fa0', borderBottom: tab === t.key ? '2px solid #8b5cf6' : '2px solid transparent', marginBottom: -1, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {t.label}
+              {t.key === 'messages' && unreadDms > 0 && (
+                <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#f05252', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', lineHeight: 1 }}>
+                  {unreadDms > 9 ? '9+' : unreadDms}
+                </span>
+              )}
+            </button>
           ))}
         </div>
       )}
