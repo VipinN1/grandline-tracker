@@ -7,21 +7,28 @@ export default function BugReportModal({ session, onClose }) {
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
 
-  async function submit() {
-    const text = message.trim()
-    if (!text) return setError('Please describe the bug first')
-    setSubmitting(true)
-    setError('')
-    const { error: insErr } = await supabase.from('bug_reports').insert({
-      message: text,
-      user_id: session?.user?.id ?? null,
-      username: session?.user?.user_metadata?.username ?? null,
-      page: typeof window !== 'undefined' ? window.location.pathname : null,
-    })
-    setSubmitting(false)
-    if (insErr) { setError('Could not submit: ' + insErr.message); return }
-    setDone(true)
+async function submit() {
+  const text = message.trim()
+  if (!text) return setError('Please describe the bug first')
+  setSubmitting(true)
+  setError('')
+
+  let username = session?.user?.user_metadata?.username ?? null
+  if (session?.user?.id) {
+    const { data: profile } = await supabase.from('profiles').select('username').eq('id', session.user.id).single()
+    if (profile?.username) username = profile.username
   }
+
+  const { error: insErr } = await supabase.from('bug_reports').insert({
+    message: text,
+    user_id: session?.user?.id ?? null,
+    username,
+    page: typeof window !== 'undefined' ? window.location.pathname : null,
+  })
+  setSubmitting(false)
+  if (insErr) { setError('Could not submit: ' + insErr.message); return }
+  setDone(true)
+}
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
