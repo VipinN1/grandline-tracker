@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
+import BugReportModal from './BugReportModal'
 
 // Lazy-loaded so tesseract.js stays out of the main bundle until a scan starts.
 const CardScanner = lazy(() => import('./CardScanner'))
@@ -55,8 +56,12 @@ export default function Navbar({ session }) {
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [scanOpen, setScanOpen] = useState(false)
+  const [bugOpen, setBugOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [unreadMktCount, setUnreadMktCount] = useState(0)
   const { isMobile } = useWindowSize()
+
+  const links = isAdmin ? [...AUTH_LINKS, { to: '/bug-reports', label: '🐞 Reports' }] : AUTH_LINKS
 
   function openScanner() {
     setMenuOpen(false)
@@ -71,10 +76,11 @@ export default function Navbar({ session }) {
       if (!session) return
       const { data } = await supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('avatar_url, username')
         .eq('id', session.user.id)
         .single()
       if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+      if (data?.username === 'Cipin') setIsAdmin(true)
     }
     loadAvatar()
   }, [session])
@@ -137,6 +143,16 @@ export default function Navbar({ session }) {
     </button>
   )
 
+  const bugButton = (
+    <button
+      onClick={() => setBugOpen(true)}
+      title="Report a bug"
+      style={{ fontSize: 12, fontWeight: 600, color: '#7c6fa0', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', padding: '5px 9px', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}
+    >
+      🐞 Bug
+    </button>
+  )
+
   return (
     <>
       <nav style={{ background: 'rgba(12,8,20,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(139,92,246,0.12)', padding: '0 1.5rem', height: 52, display: 'flex', alignItems: 'center', gap: 4, position: 'sticky', top: 0, zIndex: 50 }}>
@@ -144,6 +160,7 @@ export default function Navbar({ session }) {
 
         {isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
+            <button onClick={() => setBugOpen(true)} title="Report a bug" style={{ background: 'none', border: 'none', color: '#7c6fa0', fontSize: 18, cursor: 'pointer', padding: '2px 4px', lineHeight: 1 }}>🐞</button>
             {session && avatarEl}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -156,7 +173,7 @@ export default function Navbar({ session }) {
         ) : session ? (
           <>
             <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-              {AUTH_LINKS.map(link => (
+              {links.map(link => (
                 <NavLink key={link.to} to={link.to} style={({ isActive }) => tabStyle(isActive)}>
                   <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     {link.label}
@@ -170,6 +187,7 @@ export default function Navbar({ session }) {
               ))}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+              {bugButton}
               {avatarEl}
               <button onClick={handleSignOut} style={{ fontSize: 12, fontWeight: 600, color: '#4a5068', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                 Sign out
@@ -187,6 +205,7 @@ export default function Navbar({ session }) {
               <NavLink to="/about" style={({ isActive }) => tabStyle(isActive)}>About</NavLink>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+              {bugButton}
               <button onClick={() => navigate('/login')} style={{ fontSize: 13, fontWeight: 600, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '5px 10px' }}>
                 Log In
               </button>
@@ -203,7 +222,7 @@ export default function Navbar({ session }) {
           {session ? (
             <>
               {scanMenuButton}
-              {AUTH_LINKS.map(link => (
+              {links.map(link => (
                 <NavLink
                   key={link.to}
                   to={link.to}
@@ -283,6 +302,8 @@ export default function Navbar({ session }) {
           <CardScanner onClose={() => setScanOpen(false)} />
         </Suspense>
       )}
+
+      {bugOpen && <BugReportModal session={session} onClose={() => setBugOpen(false)} />}
     </>
   )
 }

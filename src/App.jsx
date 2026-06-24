@@ -21,6 +21,7 @@ import Signup from './pages/Signup'
 import Home from './pages/Home'
 import StorefrontPage from './pages/StorefrontPage'
 import BountyBoard from './pages/BountyBoard'
+import BugReports from './pages/BugReports'
 import About from './pages/About'
 import ResetPassword from './pages/ResetPassword'
 
@@ -102,6 +103,7 @@ export default function App() {
           <Route path="/tournaments/:id" element={<TournamentDetailPage session={session} />} />
           <Route path="/storefront/:id" element={<StorefrontPage session={session} />} />
           <Route path="/bounty" element={<BountyBoard session={session} />} />
+          <Route path="/bug-reports" element={<ProtectedRoute session={session}><BugReports session={session} /></ProtectedRoute>} />
           <Route path="/about" element={<About />} />
         </Route>
       </Routes>
