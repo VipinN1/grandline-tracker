@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 function fmtDate(d) {
@@ -7,6 +8,7 @@ function fmtDate(d) {
 }
 
 export default function BugReports({ session }) {
+  const navigate = useNavigate()
   const [authorized, setAuthorized] = useState(null) // null = checking
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
@@ -94,7 +96,13 @@ export default function BugReports({ session }) {
                   <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.4px', background: resolved ? 'rgba(52,211,153,0.12)' : 'rgba(249,115,22,0.12)', color: resolved ? '#34d399' : '#f97316', border: `1px solid ${resolved ? 'rgba(52,211,153,0.3)' : 'rgba(249,115,22,0.3)'}` }}>
                     {resolved ? 'Resolved' : 'Open'}
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#a78bfa' }}>{r.username ?? 'Anonymous'}</span>
+                  {r.user_id ? (
+                    <button onClick={() => navigate(`/profile/${r.user_id}`)} title="View profile" style={{ fontSize: 12, fontWeight: 600, color: '#a78bfa', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(167,139,250,0.4)', textUnderlineOffset: 2 }}>
+                      {r.username ?? 'View profile'}
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#7c6fa0' }}>{r.username ?? 'Anonymous'}</span>
+                  )}
                   {r.page && <span style={{ fontSize: 11, color: '#3d2d6e', fontFamily: 'monospace' }}>{r.page}</span>}
                   <span style={{ fontSize: 11, color: '#7c6fa0', marginLeft: 'auto' }}>{fmtDate(r.created_at)}</span>
                 </div>
