@@ -178,6 +178,9 @@ export default function UserProfilePage({ session }) {
               {isMobile && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', color: '#f0f2f5', border: '1px solid rgba(255,255,255,0.1)' }}>{winRate}% WR</span>}
             </div>
             <FriendButton />
+            {session && (
+              <button onClick={() => navigate('/community', { state: { dmUserId: profile.id } })} style={{ fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.1)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit', marginTop: 10, marginLeft: 8 }}>💬 Message</button>
+            )}
           </div>
           {!isMobile && (
             <div style={{ textAlign: 'right', flexShrink: 0 }}>

@@ -60,6 +60,7 @@ export default function Navbar({ session }) {
   const [bugOpen, setBugOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [unreadMktCount, setUnreadMktCount] = useState(0)
+  const [unreadDmCount, setUnreadDmCount] = useState(0)
   const { isMobile } = useWindowSize()
 
   const links = isAdmin ? [...AUTH_LINKS, { to: '/bug-reports', label: 'Bug Reports' }] : AUTH_LINKS
@@ -104,6 +105,29 @@ export default function Navbar({ session }) {
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'marketplace_messages', filter: `receiver_id=eq.${session.user.id}` }, () => {
         loadUnread()
+      })
+      .subscribe()
+    return () => { channel.unsubscribe() }
+  }, [session])
+
+  useEffect(() => {
+    if (!session) return
+    async function loadUnreadDms() {
+      const { count } = await supabase
+        .from('direct_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', session.user.id)
+        .eq('read', false)
+      setUnreadDmCount(count ?? 0)
+    }
+    loadUnreadDms()
+    const channel = supabase
+      .channel(`navbar_dm_${session.user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${session.user.id}` }, () => {
+        setUnreadDmCount(c => c + 1)
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${session.user.id}` }, () => {
+        loadUnreadDms()
       })
       .subscribe()
     return () => { channel.unsubscribe() }
@@ -183,6 +207,11 @@ export default function Navbar({ session }) {
                         {unreadMktCount > 9 ? '9+' : unreadMktCount}
                       </span>
                     )}
+                    {link.to === '/community' && unreadDmCount > 0 && (
+                      <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#f05252', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
+                        {unreadDmCount > 9 ? '9+' : unreadDmCount}
+                      </span>
+                    )}
                   </span>
                 </NavLink>
               ))}
@@ -245,6 +274,11 @@ export default function Navbar({ session }) {
                   {link.to === '/marketplace' && unreadMktCount > 0 && (
                     <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
                       {unreadMktCount > 9 ? '9+' : unreadMktCount}
+                    </span>
+                  )}
+                  {link.to === '/community' && unreadDmCount > 0 && (
+                    <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                      {unreadDmCount > 9 ? '9+' : unreadDmCount}
                     </span>
                   )}
                 </NavLink>

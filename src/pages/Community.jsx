@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getCardImageUrl, enrichCards, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import TournamentModal from '../components/TournamentModal'
 import SelectDecklistModal from '../components/SelectDecklistModal'
 import ProfilePopover from '../components/ProfilePopover'
+import DirectMessages from '../components/DirectMessages'
 
 const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
 
@@ -489,11 +490,14 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
 
 export default function Community({ session }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [filter, setFilter] = useState('latest')
   const [selectedProfile, setSelectedProfile] = useState(null)
+  const [tab, setTab] = useState(location.state?.dmUserId ? 'messages' : 'posts')
+  const [dmUserId] = useState(location.state?.dmUserId ?? null)
   const { isMobile } = useWindowSize()
 
   async function loadPosts() {
@@ -513,31 +517,45 @@ export default function Community({ session }) {
         <div style={{ fontSize: 13, color: '#7c6fa0' }}>Decklists, tournament reports, and meta discussion</div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: '1.5rem', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: 4, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: 4 }}>
-          {['latest', 'top'].map(f => (
-            <button key={f} onClick={() => setFilter(f)} style={{ fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: filter === f ? '#8b5cf6' : 'transparent', color: filter === f ? '#fff' : '#7c6fa0', transition: 'all 0.1s', textTransform: 'capitalize' }}>{f}</button>
+      {session && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          {[{ key: 'posts', label: 'Posts' }, { key: 'messages', label: 'Messages' }].map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: 'transparent', color: tab === t.key ? '#f0f2f5' : '#7c6fa0', borderBottom: tab === t.key ? '2px solid #8b5cf6' : '2px solid transparent', marginBottom: -1 }}>{t.label}</button>
           ))}
         </div>
-        {session ? (
-          <button onClick={() => setShowCreate(true)} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit' }}>+ Create Post</button>
-        ) : (
-          <button onClick={() => navigate('/login')} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', fontFamily: 'inherit' }}>Sign in to post</button>
-        )}
-      </div>
+      )}
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading posts...</div>
-      ) : posts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 20px', color: '#3d2d6e' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>💬</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No posts yet</div>
-          <div style={{ fontSize: 13 }}>Be the first to post in the community</div>
-        </div>
+      {tab === 'messages' && session ? (
+        <DirectMessages session={session} isMobile={isMobile} initialUserId={dmUserId} />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {posts.map(post => <PostCard key={post.id} post={post} session={session} onProfileClick={setSelectedProfile} onDelete={id => setPosts(prev => prev.filter(p => p.id !== id))} />)}
-        </div>
+        <>
+          <div style={{ display: 'flex', gap: 10, marginBottom: '1.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 4, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: 4 }}>
+              {['latest', 'top'].map(f => (
+                <button key={f} onClick={() => setFilter(f)} style={{ fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: filter === f ? '#8b5cf6' : 'transparent', color: filter === f ? '#fff' : '#7c6fa0', transition: 'all 0.1s', textTransform: 'capitalize' }}>{f}</button>
+              ))}
+            </div>
+            {session ? (
+              <button onClick={() => setShowCreate(true)} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit' }}>+ Create Post</button>
+            ) : (
+              <button onClick={() => navigate('/login')} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', fontFamily: 'inherit' }}>Sign in to post</button>
+            )}
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading posts...</div>
+          ) : posts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '80px 20px', color: '#3d2d6e' }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>💬</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No posts yet</div>
+              <div style={{ fontSize: 13 }}>Be the first to post in the community</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {posts.map(post => <PostCard key={post.id} post={post} session={session} onProfileClick={setSelectedProfile} onDelete={id => setPosts(prev => prev.filter(p => p.id !== id))} />)}
+            </div>
+          )}
+        </>
       )}
 
       {showCreate && <CreatePostModal session={session} onClose={() => setShowCreate(false)} onSubmit={() => { setShowCreate(false); loadPosts() }} isMobile={isMobile} />}
