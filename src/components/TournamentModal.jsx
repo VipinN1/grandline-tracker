@@ -412,7 +412,16 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
               </>
             )}
 
-            {cards.length === 0 && rounds.length === 0 && (
+            {tournament.notes && (
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 8 }}>Notes</div>
+                <div style={{ fontSize: 13, color: '#b8add4', lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '12px 14px' }}>
+                  {tournament.notes}
+                </div>
+              </div>
+            )}
+
+            {cards.length === 0 && rounds.length === 0 && !tournament.notes && (
               <div style={{ fontSize: 13, color: '#3d2d6e', textAlign: 'center', padding: '20px 0' }}>No additional data for this tournament.</div>
             )}
           </div>
