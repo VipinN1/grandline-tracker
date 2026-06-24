@@ -245,6 +245,11 @@ function RoundRow({ round, index, onChange, onRemove }) {
             { value: 'loss', label: '✗ Loss', color: '#f05252' },
           ]}
         />
+
+        <div>
+          <label style={labelStyle}>Notes (optional)</label>
+          <textarea placeholder="Round notes..." value={round.notes ?? ''} onChange={e => onChange(index, 'notes', e.target.value)} style={{ ...inputStyle, minHeight: 56, resize: 'vertical' }} />
+        </div>
       </div>
     </div>
   )
@@ -289,8 +294,9 @@ function PastTournamentForm({ session, editTournament = null }) {
             wonDice: r.won_dice_roll,
             wentFirst: r.went_first,
             result: r.result,
+            notes: r.notes ?? '',
           }))
-      : [{ oppLeader: null, wonDice: null, wentFirst: null, result: null }]
+      : [{ oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }]
   )
 
   const [saving, setSaving] = useState(false)
@@ -350,7 +356,7 @@ function PastTournamentForm({ session, editTournament = null }) {
   }
 
   function addRound() {
-    setRounds(prev => [...prev, { oppLeader: null, wonDice: null, wentFirst: null, result: null }])
+    setRounds(prev => [...prev, { oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
   }
 
   const wins = rounds.filter(r => r.result === 'win').length
@@ -428,6 +434,7 @@ function PastTournamentForm({ session, editTournament = null }) {
           won_dice_roll: r.wonDice,
           went_first: r.wentFirst,
           result: r.result,
+          notes: r.notes?.trim() || null,
         }))
       )
       if (rError) { setError('Failed to save rounds: ' + rError.message); setSaving(false); return }

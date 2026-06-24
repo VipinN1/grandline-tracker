@@ -15,6 +15,12 @@ const labelStyle = {
   color: '#7c6fa0', marginBottom: 6, display: 'block',
 }
 
+// Tiny localStorage helpers used to keep in-progress live-tournament input
+// (the current round draft + overall notes) safe across reloads.
+function readJSON(key) {
+  try { return JSON.parse(localStorage.getItem(key) ?? 'null') } catch { return null }
+}
+
 function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -267,15 +273,25 @@ function SetupScreen({ session, onStart }) {
 }
 
 function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
-  const [oppLeader, setOppLeader] = useState(null)
-  const [wonDice, setWonDice] = useState(null)
-  const [wentFirst, setWentFirst] = useState(null)
-  const [result, setResult] = useState(null)
-  const [notes, setNotes] = useState('')
+  const DRAFT_KEY = `live_round_draft_${tournament.id}`
+  const [oppLeader, setOppLeader] = useState(() => readJSON(DRAFT_KEY)?.oppLeader ?? null)
+  const [wonDice, setWonDice] = useState(() => readJSON(DRAFT_KEY)?.wonDice ?? null)
+  const [wentFirst, setWentFirst] = useState(() => readJSON(DRAFT_KEY)?.wentFirst ?? null)
+  const [result, setResult] = useState(() => readJSON(DRAFT_KEY)?.result ?? null)
+  const [notes, setNotes] = useState(() => readJSON(DRAFT_KEY)?.notes ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const roundNumber = rounds.length + 1
+
+  // Autosave the in-progress round so a reload mid-entry doesn't lose it.
+  useEffect(() => {
+    const empty = !oppLeader && wonDice === null && wentFirst === null && !result && !notes.trim()
+    try {
+      if (empty) localStorage.removeItem(DRAFT_KEY)
+      else localStorage.setItem(DRAFT_KEY, JSON.stringify({ oppLeader, wonDice, wentFirst, result, notes }))
+    } catch { /* storage unavailable — ignore */ }
+  }, [DRAFT_KEY, oppLeader, wonDice, wentFirst, result, notes])
 
   async function logRound() {
     setError('')
@@ -451,6 +467,23 @@ function ActiveTournament({ tournament, session, onFinish }) {
   const [rounds, setRounds] = useState([])
   const [finishing, setFinishing] = useState(false)
   const [showFinishConfirm, setShowFinishConfirm] = useState(false)
+  const NOTES_KEY = `live_overall_notes_${tournament.id}`
+  const [overallNotes, setOverallNotes] = useState(() => {
+    try { return localStorage.getItem(NOTES_KEY) ?? '' } catch { return '' }
+  })
+
+  // Autosave overall notes across reloads.
+  useEffect(() => {
+    try { localStorage.setItem(NOTES_KEY, overallNotes) } catch { /* ignore */ }
+  }, [NOTES_KEY, overallNotes])
+
+  // Drop the saved drafts once the tournament is finished or cancelled.
+  function clearDrafts() {
+    try {
+      localStorage.removeItem(NOTES_KEY)
+      localStorage.removeItem(`live_round_draft_${tournament.id}`)
+    } catch { /* ignore */ }
+  }
 
   useEffect(() => {
     async function load() {
@@ -488,9 +521,11 @@ function ActiveTournament({ tournament, session, onFinish }) {
       leader_name: tournament.leader_name,
       leader_color: tournament.leader_color,
       deck_name: tournament.deck_name,
+      notes: overallNotes.trim(),
     })
 
     await supabase.from('live_tournaments').update({ status: 'finished' }).eq('id', tournament.id)
+    clearDrafts()
     setFinishing(false)
     onFinish()
   }
@@ -517,6 +552,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
                       await supabase.from('live_rounds').delete().eq('tournament_id', tournament.id)
                       await supabase.from('live_tournaments').delete().eq('id', tournament.id)
                     }
+                    clearDrafts()
                     onFinish()
                     }}
                     style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -551,6 +587,11 @@ function ActiveTournament({ tournament, session, onFinish }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
         <RoundLogger tournament={tournament} rounds={rounds} onRoundLogged={r => setRounds(prev => [...prev, r])} session={session} />
         <RoundHistory rounds={rounds} />
+      </div>
+
+      <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, marginTop: 14 }}>
+        <label style={labelStyle}>Overall Tournament Notes (optional)</label>
+        <textarea placeholder="Overall thoughts, meta reads, how the day went..." value={overallNotes} onChange={e => setOverallNotes(e.target.value)} style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} />
       </div>
 
       {showFinishConfirm && (
@@ -601,6 +642,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
                       leader_name: tournament.leader_name,
                       leader_color: tournament.leader_color,
                       deck_name: tournament.deck_name,
+                      notes: overallNotes.trim(),
                     }).select().single()
                     if (savedTournament && rounds.length > 0) {
                       await supabase.from('tournament_rounds').insert(
@@ -618,9 +660,11 @@ function ActiveTournament({ tournament, session, onFinish }) {
                       )
                     }
                     await supabase.from('live_tournaments').update({ status: 'finished' }).eq('id', tournament.id)
+                    clearDrafts()
                     setFinishing(false)
                     onFinish()
                   } else {
+                    clearDrafts()
                     setShowFinishConfirm(false)
                     onFinish()
                   }
