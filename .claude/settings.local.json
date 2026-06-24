@@ -32,7 +32,11 @@
       "mcp__ide__getDiagnostics",
       "Read(//c/Users/siris/.claude/image-cache/dbff26a8-0cb2-441b-b083-c93526612376/**)",
       "Bash(identify \"C:\\\\Users\\\\siris\\\\.claude\\\\image-cache\\\\dbff26a8-0cb2-441b-b083-c93526612376\\\\1.png\")",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(curl -s --max-time 25 \"https://optcgapi.com/api/sets/card/OP01-001/\")",
+      "Bash(curl -s --max-time 25 -o /dev/null -w \"%{http_code}\" \"https://optcgapi.com/api/sets/card/OP01-001/\")",
+      "Bash(curl -s --max-time 25 \"https://optcgapi.com/\")",
+      "Bash(python -c 'import sys,re,html; t=sys.stdin.read\\(\\); t=re.sub\\(r'\\\\''<[^>]+>'\\\\'','\\\\'' '\\\\'',t\\); t=html.unescape\\(t\\); t=re.sub\\(r'\\\\''\\\\s+'\\\\'','\\\\'' '\\\\'',t\\); *)"
     ]
   }
 }

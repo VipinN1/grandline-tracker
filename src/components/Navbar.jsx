@@ -61,7 +61,7 @@ export default function Navbar({ session }) {
   const [unreadMktCount, setUnreadMktCount] = useState(0)
   const { isMobile } = useWindowSize()
 
-  const links = isAdmin ? [...AUTH_LINKS, { to: '/bug-reports', label: '🐞 Reports' }] : AUTH_LINKS
+  const links = isAdmin ? [...AUTH_LINKS, { to: '/bug-reports', label: 'Bug Reports' }] : AUTH_LINKS
 
   function openScanner() {
     setMenuOpen(false)
@@ -160,7 +160,7 @@ export default function Navbar({ session }) {
 
         {isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-            <button onClick={() => setBugOpen(true)} title="Report a bug" style={{ background: 'none', border: 'none', color: '#7c6fa0', fontSize: 18, cursor: 'pointer', padding: '2px 4px', lineHeight: 1 }}>🐞</button>
+            <button onClick={() => setBugOpen(true)} title="Report a bug" style={{ background: 'none', border: 'none', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 6px', lineHeight: 1 }}>Bug</button>
             {session && avatarEl}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
