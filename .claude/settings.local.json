@@ -37,7 +37,8 @@
       "Bash(curl -s --max-time 25 -o /dev/null -w \"%{http_code}\" \"https://optcgapi.com/api/sets/card/OP01-001/\")",
       "Bash(curl -s --max-time 25 \"https://optcgapi.com/\")",
       "Bash(python -c 'import sys,re,html; t=sys.stdin.read\\(\\); t=re.sub\\(r'\\\\''<[^>]+>'\\\\'','\\\\'' '\\\\'',t\\); t=html.unescape\\(t\\); t=re.sub\\(r'\\\\''\\\\s+'\\\\'','\\\\'' '\\\\'',t\\); *)",
-      "Bash(grep -vE \"no-useless-escape|Cannot access variable before|setState synchronously|exhaustive-deps|immutability|cascading renders|^\\\\s*$|^\\\\s*\\\\^|problems|^C:|^\\\\s*[0-9]+ \\\\|\")"
+      "Bash(grep -vE \"no-useless-escape|Cannot access variable before|setState synchronously|exhaustive-deps|immutability|cascading renders|^\\\\s*$|^\\\\s*\\\\^|problems|^C:|^\\\\s*[0-9]+ \\\\|\")",
+      "Bash(grep -rohE \"eyJ[A-Za-z0-9_-]{20,}\\\\.[A-Za-z0-9_-]{20,}\\\\.[A-Za-z0-9_-]{10,}\" dist)"
     ]
   }
 }

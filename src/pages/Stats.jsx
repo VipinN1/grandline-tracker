@@ -23,7 +23,8 @@ const METRICS = [
   { key: 'diceLost', label: 'Lost Dice' },
 ]
 
-const MAX_AXIS = 18 // cap rows/cols so the grid stays readable
+const GLOBAL_MAX_AXIS = 24 // Global can span the whole meta; cap it for readability.
+                           // "Mine" is uncapped so none of your real matchups are hidden.
 
 function emptyAgg() {
   return { overall: [0, 0], first: [0, 0], second: [0, 0], diceWon: [0, 0], diceLost: [0, 0] }
@@ -79,10 +80,12 @@ function buildMatrix(tournaments, symmetric) {
     }
   }
 
+  const cap = symmetric ? GLOBAL_MAX_AXIS : Infinity
+
   const myLeaders = [...rowLeaders.values()]
     .filter(m => (rowTotals.get(m.key)?.[1] ?? 0) > 0)
     .sort((a, b) => (rowTotals.get(b.key)?.[1] ?? 0) - (rowTotals.get(a.key)?.[1] ?? 0))
-    .slice(0, MAX_AXIS)
+    .slice(0, cap)
 
   const colTotals = new Map()
   for (const [mk, agg] of matrix) {
@@ -91,7 +94,7 @@ function buildMatrix(tournaments, symmetric) {
   }
   const oppLeaders = [...colLeaders.values()]
     .sort((a, b) => (colTotals.get(b.key) ?? 0) - (colTotals.get(a.key) ?? 0))
-    .slice(0, MAX_AXIS)
+    .slice(0, cap)
 
   return { myLeaders, oppLeaders, matrix, myTotals: rowTotals }
 }
