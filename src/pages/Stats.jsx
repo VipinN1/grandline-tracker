@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { colors, radius, shadow, font, eyebrow, pageHeader } from '../theme'
 
-const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#a78bfa', Yellow: '#e6b84f', Black: '#94a3b8' }
+const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
 function cleanName(name) {
   if (!name) return ''
@@ -225,11 +225,11 @@ export default function Stats({ session }) {
                         const wr = tot > 0 ? w / tot : null
                         return (
                           <td key={o.key} style={{ padding: 0, borderRight: '1px solid rgba(0,0,0,0.25)', borderBottom: '1px solid rgba(0,0,0,0.25)' }}>
-                            <div style={{ width: CELL_W, height: CELL_H, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: wr !== null ? cellBg(wr) : 'rgba(255,255,255,0.015)', opacity: wr !== null && tot < 3 ? 0.4 : 1 }} title={m.name + ' vs ' + o.name + (tot > 0 ? ` — ${w}W ${tot - w}L` : ' — no games')}>
+                            <div style={{ width: CELL_W, height: CELL_H, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: wr !== null ? cellBg(wr) : 'rgba(140,176,208,0.015)', opacity: wr !== null && tot < 3 ? 0.4 : 1 }} title={m.name + ' vs ' + o.name + (tot > 0 ? ` — ${w}W ${tot - w}L` : ' — no games')}>
                               {wr !== null ? (
                                 <>
                                   <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{Math.round(wr * 100)}%</div>
-                                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>{w}-{tot - w}</div>
+                                  <div style={{ fontSize: 9, color: 'rgba(140,176,208,0.5)', fontFamily: 'monospace' }}>{w}-{tot - w}</div>
                                 </>
                               ) : (
                                 <div style={{ fontSize: 12, color: '#3a526a' }}>—</div>

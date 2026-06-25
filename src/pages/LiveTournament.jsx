@@ -3,16 +3,16 @@ import { getCardImageUrl, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 
-const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
 const inputStyle = {
-  width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit',
+  width: '100%', background: 'rgba(140,176,208,0.03)', border: '1px solid rgba(140,176,208,0.07)',
+  borderRadius: 8, padding: '9px 12px', color: '#e9f1f8', fontSize: 13, outline: 'none', fontFamily: 'inherit',
 }
 
 const labelStyle = {
   fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px',
-  color: '#7c6fa0', marginBottom: 6, display: 'block',
+  color: '#9db2c6', marginBottom: 6, display: 'block',
 }
 
 // Tiny localStorage helpers used to keep in-progress live-tournament input
@@ -54,13 +54,13 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
     return (
       <div>
         {label && <label style={labelStyle}>{label}</label>}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '8px 12px' }}>
-          <img src={getCardImageUrl(selected.card_set_id)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.display = 'none' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(15,31,51,0.80)', border: '1px solid #2f7da344', borderRadius: 8, padding: '8px 12px' }}>
+          <img src={getCardImageUrl(selected.card_set_id)} alt={selected.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(140,176,208,0.08)' }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selected.card_name}</div>
-            <div style={{ fontSize: 11, color: COLORS[selected.card_color] ?? '#7c6fa0' }}>{selected.card_color} · {selected.card_set_id}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{selected.card_name}</div>
+            <div style={{ fontSize: 11, color: COLORS[selected.card_color] ?? '#9db2c6' }}>{selected.card_color} · {selected.card_set_id}</div>
           </div>
-          <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+          <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
         </div>
       </div>
     )
@@ -71,17 +71,17 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
       {label && <label style={labelStyle}>{label}</label>}
       <input type="text" placeholder={placeholder ?? 'Search leader...'} value={query} onChange={handleChange} onFocus={() => query.length >= 2 && setOpen(true)} style={inputStyle} />
       {open && query.length >= 2 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 280, overflowY: 'auto' }}>
-          {searching ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
-            : results.length === 0 ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#3d2d6e' }}>No leaders found</div>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(15,31,51,0.80)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 280, overflowY: 'auto' }}>
+          {searching ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#9db2c6' }}>Searching...</div>
+            : results.length === 0 ? <div style={{ padding: '12px 14px', fontSize: 13, color: '#67809a' }}>No leaders found</div>
             : results.map(card => (
-              <div key={card.card_set_id} onClick={() => { onSelect(card); setQuery(''); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <div key={card.card_set_id} onClick={() => { onSelect(card); setQuery(''); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(140,176,208,0.05)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <img src={getCardImageUrl(card.card_set_id)} alt={card.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                  <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#7c6fa0', marginTop: 2 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{card.card_name}</div>
+                  <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#9db2c6', marginTop: 2 }}>
                     <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
-                    {card.set_name && <span style={{ color: '#3d2d6e' }}> · {card.set_name}</span>}
+                    {card.set_name && <span style={{ color: '#67809a' }}> · {card.set_name}</span>}
                   </div>
                 </div>
               </div>
@@ -181,32 +181,32 @@ function SetupScreen({ session, onStart }) {
   return (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#34d399', marginBottom: 4 }}>● Live Tournament</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Start Live Tournament</div>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Track your rounds in real time</div>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3bb27e', marginBottom: 4 }}>● Live Tournament</div>
+        <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 28, fontWeight: 600, color: '#e9f1f8', letterSpacing: '-0.3px', marginBottom: 2 }}>Start Live Tournament</div>
+        <div style={{ fontSize: 13, color: '#9db2c6' }}>Track your rounds in real time</div>
       </div>
 
-      <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* Store picker */}
         <div ref={storeRef} style={{ position: 'relative' }}>
           <label style={labelStyle}>Store / Venue</label>
           {selectedStore ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selectedStore.name}</div>
-              <button onClick={() => setSelectedStore(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15,31,51,0.80)', border: '1px solid #2f7da344', borderRadius: 8, padding: '9px 12px' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{selectedStore.name}</div>
+              <button onClick={() => setSelectedStore(null)} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
             </div>
           ) : (
             <>
               <input type="text" placeholder="Search store..." value={storeQuery} onChange={e => { setStoreQuery(e.target.value); setStoreOpen(true) }} onFocus={() => setStoreOpen(true)} style={inputStyle} />
               {storeOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(15,31,51,0.80)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
                   {filteredStores.map(s => (
-                    <div key={s.id} onClick={() => { setSelectedStore(s); setStoreQuery(''); setStoreOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#f0f2f5', borderBottom: '1px solid rgba(255,255,255,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      {s.name} {s.city && <span style={{ color: '#7c6fa0' }}>· {s.city}</span>}
+                    <div key={s.id} onClick={() => { setSelectedStore(s); setStoreQuery(''); setStoreOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#e9f1f8', borderBottom: '1px solid rgba(140,176,208,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      {s.name} {s.city && <span style={{ color: '#9db2c6' }}>· {s.city}</span>}
                     </div>
                   ))}
-                  {storeQuery && <div onClick={() => { setStoreOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#8b5cf6', fontWeight: 600 }}>+ Use "{storeQuery}" as location</div>}
+                  {storeQuery && <div onClick={() => { setStoreOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#2f7da3', fontWeight: 600 }}>+ Use "{storeQuery}" as location</div>}
                 </div>
               )}
             </>
@@ -217,17 +217,17 @@ function SetupScreen({ session, onStart }) {
         <div ref={seriesRef} style={{ position: 'relative' }}>
           <label style={labelStyle}>Tournament Series</label>
           {selectedSeries ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(20,14,40,0.80)', border: '1px solid #8b5cf644', borderRadius: 8, padding: '9px 12px' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{selectedSeries.name}</div>
-              <button onClick={() => setSelectedSeries(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15,31,51,0.80)', border: '1px solid #2f7da344', borderRadius: 8, padding: '9px 12px' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{selectedSeries.name}</div>
+              <button onClick={() => setSelectedSeries(null)} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
             </div>
           ) : (
             <>
               <input type="text" placeholder="Search series..." value={seriesQuery} onChange={e => { setSeriesQuery(e.target.value); setSeriesOpen(true) }} onFocus={() => setSeriesOpen(true)} style={inputStyle} />
               {seriesOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(20,14,40,0.80)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(15,31,51,0.80)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 200, overflowY: 'auto' }}>
                   {filteredSeries.map(s => (
-                    <div key={s.id} onClick={() => { setSelectedSeries(s); setSeriesQuery(''); setSeriesOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#f0f2f5', borderBottom: '1px solid rgba(255,255,255,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div key={s.id} onClick={() => { setSelectedSeries(s); setSeriesQuery(''); setSeriesOpen(false) }} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#e9f1f8', borderBottom: '1px solid rgba(140,176,208,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       {s.name}
                     </div>
                   ))}
@@ -240,7 +240,7 @@ function SetupScreen({ session, onStart }) {
         {/* Name + date */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            <label style={labelStyle}>Tournament Name {selectedSeries && <span style={{ color: '#3d2d6e', fontWeight: 400 }}>(auto)</span>}</label>
+            <label style={labelStyle}>Tournament Name {selectedSeries && <span style={{ color: '#67809a', fontWeight: 400 }}>(auto)</span>}</label>
             <input type="text" placeholder="e.g. Weekly Locals" value={selectedSeries ? selectedSeries.name : name} onChange={e => setName(e.target.value)} disabled={!!selectedSeries} style={{ ...inputStyle, opacity: selectedSeries ? 0.5 : 1 }} />
           </div>
           <div>
@@ -262,9 +262,9 @@ function SetupScreen({ session, onStart }) {
 
         <LeaderSearchInput label="Your Leader" placeholder="Search your leader..." onSelect={setLeader} selected={leader} onClear={() => setLeader(null)} />
 
-        {error && <div style={{ fontSize: 13, color: '#f05252', background: 'rgba(240,82,82,0.08)', border: '1px solid rgba(240,82,82,0.2)', borderRadius: 8, padding: '10px 14px' }}>{error}</div>}
+        {error && <div style={{ fontSize: 13, color: '#d24a3a', background: 'rgba(210,74,58,0.08)', border: '1px solid rgba(210,74,58,0.2)', borderRadius: 8, padding: '10px 14px' }}>{error}</div>}
 
-        <button onClick={handleStart} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: saving ? '#5b21b6' : '#34d399', color: '#0f1117', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={handleStart} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: saving ? '#3a526a' : '#3bb27e', color: '#0f1117', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
           {saving ? 'Starting...' : '🏆 Start Tournament'}
         </button>
       </div>
@@ -347,7 +347,7 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
             <button
               key={opt.value}
               onClick={() => onChange(value === opt.value ? null : opt.value)}
-              style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: `1px solid ${value === opt.value ? opt.color : 'rgba(255,255,255,0.07)'}`, background: value === opt.value ? opt.color + '22' : 'rgba(255,255,255,0.03)', color: value === opt.value ? opt.color : '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
+              style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: `1px solid ${value === opt.value ? opt.color : 'rgba(140,176,208,0.07)'}`, background: value === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: value === opt.value ? opt.color : '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
             >
               {opt.label}
             </button>
@@ -358,8 +358,8 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
   }
 
   return (
-    <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20 }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', marginBottom: 16 }}>
+    <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: 20 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#e9f1f8', marginBottom: 16 }}>
         Round {roundNumber}
       </div>
 
@@ -377,8 +377,8 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
           value={wonDice}
           onChange={setWonDice}
           options={[
-            { value: true, label: '🎲 Won', color: '#34d399' },
-            { value: false, label: '🎲 Lost', color: '#f05252' },
+            { value: true, label: '🎲 Won', color: '#3bb27e' },
+            { value: false, label: '🎲 Lost', color: '#d24a3a' },
           ]}
         />
 
@@ -387,8 +387,8 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
           value={wentFirst}
           onChange={setWentFirst}
           options={[
-            { value: true, label: '1st', color: '#fbbf24' },
-            { value: false, label: '2nd', color: '#a78bfa' },
+            { value: true, label: '1st', color: '#dcb35e' },
+            { value: false, label: '2nd', color: '#52a9cd' },
           ]}
         />
 
@@ -397,8 +397,8 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
           value={result}
           onChange={setResult}
           options={[
-            { value: 'win', label: '✓ Win', color: '#34d399' },
-            { value: 'loss', label: '✗ Loss', color: '#f05252' },
+            { value: 'win', label: '✓ Win', color: '#3bb27e' },
+            { value: 'loss', label: '✗ Loss', color: '#d24a3a' },
           ]}
         />
 
@@ -407,9 +407,9 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
           <textarea placeholder="Round notes..." value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} />
         </div>
 
-        {error && <div style={{ fontSize: 12, color: '#f05252' }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: '#d24a3a' }}>{error}</div>}
 
-        <button onClick={logRound} disabled={saving} style={{ width: '100%', padding: 11, borderRadius: 8, border: 'none', background: saving ? '#5b21b6' : '#8b5cf6', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={logRound} disabled={saving} style={{ width: '100%', padding: 11, borderRadius: 8, border: 'none', background: saving ? '#3a526a' : '#2f7da3', color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
           {saving ? 'Saving...' : `Log Round ${roundNumber}`}
         </button>
       </div>
@@ -421,40 +421,40 @@ function RoundHistory({ rounds }) {
   if (rounds.length === 0) return null
 
   return (
-    <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#7c6fa0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 14 }}>Round History</div>
+    <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: 20 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#9db2c6', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 14 }}>Round History</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {rounds.map(r => (
-          <div key={r.id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px' }}>
+          <div key={r.id} style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 10, padding: '10px 14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#7c6fa0', minWidth: 60 }}>R{r.round_number}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#9db2c6', minWidth: 60 }}>R{r.round_number}</div>
 
               {r.opponent_leader_id && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
                   <img src={getCardImageUrl(r.opponent_leader_id)} alt={r.opponent_leader_name} style={{ width: 24, height: 33, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
-                  <div style={{ fontSize: 12, color: COLORS[r.opponent_leader_color] ?? '#7c6fa0' }}>{r.opponent_leader_name}</div>
+                  <div style={{ fontSize: 12, color: COLORS[r.opponent_leader_color] ?? '#9db2c6' }}>{r.opponent_leader_name}</div>
                 </div>
               )}
-              {!r.opponent_leader_id && <div style={{ flex: 1, fontSize: 12, color: '#3d2d6e' }}>Unknown leader</div>}
+              {!r.opponent_leader_id && <div style={{ flex: 1, fontSize: 12, color: '#67809a' }}>Unknown leader</div>}
 
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 {r.won_dice_roll !== null && (
-                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: r.won_dice_roll ? 'rgba(52,211,153,0.1)' : 'rgba(240,82,82,0.1)', color: r.won_dice_roll ? '#34d399' : '#f05252' }}>
+                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: r.won_dice_roll ? 'rgba(59,178,126,0.1)' : 'rgba(210,74,58,0.1)', color: r.won_dice_roll ? '#3bb27e' : '#d24a3a' }}>
                     {r.won_dice_roll ? '🎲 Won' : '🎲 Lost'}
                   </span>
                 )}
                 {r.went_first !== null && (
-                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'rgba(255,255,255,0.06)', color: r.went_first ? '#fbbf24' : '#a78bfa' }}>
+                  <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'rgba(140,176,208,0.06)', color: r.went_first ? '#dcb35e' : '#52a9cd' }}>
                     {r.went_first ? '1st' : '2nd'}
                   </span>
                 )}
-                <span style={{ fontSize: 13, fontWeight: 700, color: r.result === 'win' ? '#34d399' : '#f05252', minWidth: 24, textAlign: 'right' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: r.result === 'win' ? '#3bb27e' : '#d24a3a', minWidth: 24, textAlign: 'right' }}>
                   {r.result === 'win' ? 'W' : 'L'}
                 </span>
               </div>
             </div>
             {r.notes && (
-              <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 6, paddingLeft: 72, fontStyle: 'italic' }}>{r.notes}</div>
+              <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 6, paddingLeft: 72, fontStyle: 'italic' }}>{r.notes}</div>
             )}
           </div>
         ))}
@@ -533,16 +533,16 @@ function ActiveTournament({ tournament, session, onFinish }) {
   return (
     <div>
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(168,85,247,0.06))', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(47,125,163,0.12), rgba(47,125,163,0.06))', border: '1px solid rgba(140,176,208,0.2)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-          <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: 48, height: 66, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, border: `2px solid ${COLORS[tournament.leader_color] ?? '#8b5cf6'}` }} onError={e => { e.target.style.display = 'none' }} />
+          <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: 48, height: 66, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, border: `2px solid ${COLORS[tournament.leader_color] ?? '#2f7da3'}` }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 6px #34d399', animation: 'livePulse 1.5s ease-in-out infinite' }} />
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Live</div>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3bb27e', boxShadow: '0 0 6px #3bb27e', animation: 'livePulse 1.5s ease-in-out infinite' }} />
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#3bb27e', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Live</div>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{tournament.name}</div>
-            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>{tournament.leader_name} · {tournament.deck_name}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#e9f1f8' }}>{tournament.name}</div>
+            <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 2 }}>{tournament.leader_name} · {tournament.deck_name}</div>
           </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -555,13 +555,13 @@ function ActiveTournament({ tournament, session, onFinish }) {
                     clearDrafts()
                     onFinish()
                     }}
-                    style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                    style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                 >
                     Cancel
                 </button>
                 <button
                     onClick={() => setShowFinishConfirm(true)}
-                    style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                    style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#3bb27e', color: '#0f1117', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                 >
                     Finish
                 </button>
@@ -576,9 +576,9 @@ function ActiveTournament({ tournament, session, onFinish }) {
             { label: '1st WR', value: wentFirstTotal > 0 ? `${Math.round(wentFirstWins / wentFirstTotal * 100)}%` : '—' },
             { label: '2nd WR', value: wentSecondTotal > 0 ? `${Math.round(wentSecondWins / wentSecondTotal * 100)}%` : '—' },
           ].map(s => (
-            <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
-              <div style={{ fontSize: 10, color: '#7c6fa0', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>{s.value}</div>
+            <div key={s.label} style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: 10, color: '#9db2c6', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>{s.value}</div>
             </div>
           ))}
         </div>
@@ -589,18 +589,18 @@ function ActiveTournament({ tournament, session, onFinish }) {
         <RoundHistory rounds={rounds} />
       </div>
 
-      <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: 20, marginTop: 14 }}>
+      <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: 20, marginTop: 14 }}>
         <label style={labelStyle}>Overall Tournament Notes (optional)</label>
         <textarea placeholder="Overall thoughts, meta reads, how the day went..." value={overallNotes} onChange={e => setOverallNotes(e.target.value)} style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} />
       </div>
 
       {showFinishConfirm && (
         <div onClick={() => setShowFinishConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: 24, width: 360 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 8 }}>Finish Tournament?</div>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 14, padding: 24, width: 360 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8', marginBottom: 8 }}>Finish Tournament?</div>
             {session ? (
               <>
-                <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 20 }}>
+                <div style={{ fontSize: 13, color: '#9db2c6', marginBottom: 20 }}>
                   This will save your result ({wins}W - {losses}L) to your tournament history. Enter your final placement.
                 </div>
                 <div style={{ marginBottom: 16 }}>
@@ -614,14 +614,14 @@ function ActiveTournament({ tournament, session, onFinish }) {
                 </div>
               </>
             ) : (
-              <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 20, lineHeight: 1.6 }}>
-                Great run! Final record: <span style={{ color: '#f0f2f5', fontWeight: 700 }}>{wins}W - {losses}L</span>.
+              <div style={{ fontSize: 13, color: '#9db2c6', marginBottom: 20, lineHeight: 1.6 }}>
+                Great run! Final record: <span style={{ color: '#e9f1f8', fontWeight: 700 }}>{wins}W - {losses}L</span>.
                 <br />
-                <span style={{ color: '#a78bfa' }}>Sign up for a free account</span> to save results to your tournament history.
+                <span style={{ color: '#52a9cd' }}>Sign up for a free account</span> to save results to your tournament history.
               </div>
             )}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowFinishConfirm(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Back</button>
+              <button onClick={() => setShowFinishConfirm(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Back</button>
               <button
                 onClick={async () => {
                   if (session) {
@@ -669,7 +669,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
                     onFinish()
                   }
                 }}
-                style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#3bb27e', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 {finishing ? 'Saving...' : session ? 'Save & Finish' : 'Finish'}
               </button>
@@ -699,7 +699,7 @@ export default function LiveTournament({ session }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Loading...</div>
+        <div style={{ fontSize: 13, color: '#9db2c6' }}>Loading...</div>
       </div>
     )
   }

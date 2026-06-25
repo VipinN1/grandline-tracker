@@ -5,21 +5,21 @@ import { searchCards } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
 
 const CONDITION_COLORS = {
-  'Near Mint': '#34d399', 'Lightly Played': '#22d3ee',
-  'Moderately Played': '#fbbf24', 'Heavily Played': '#f97316', 'Damaged': '#f05252',
+  'Near Mint': '#3bb27e', 'Lightly Played': '#22d3ee',
+  'Moderately Played': '#dcb35e', 'Heavily Played': '#e08a3c', 'Damaged': '#d24a3a',
 }
 const CONDITIONS = ['Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged']
 const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
 const CARD_TYPES = ['Leader', 'Character', 'Event', 'Stage']
-const COLOR_HEX = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+const COLOR_HEX = { Red: '#d24a3a', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#dcb35e', Black: '#94a3b8' }
 const BOOSTER_SETS = ['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','OP16','EB01','EB02','EB03','EB04','PRB01','PRB02']
 
 function pillStyle(isActive, accentColor) {
   return {
     padding: '3px 9px', borderRadius: 20, fontSize: 11, fontWeight: 600,
-    cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${isActive ? (accentColor ?? 'rgba(139,92,246,0.5)') : 'rgba(139,92,246,0.3)'}`,
-    background: isActive ? (accentColor ? `${accentColor}33` : 'rgba(139,92,246,0.3)') : 'rgba(15,8,30,0.85)',
-    color: isActive ? (accentColor ?? '#a78bfa') : '#7c6fa0', transition: 'all 0.15s',
+    cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${isActive ? (accentColor ?? 'rgba(200,162,74,0.5)') : 'rgba(200,162,74,0.3)'}`,
+    background: isActive ? (accentColor ? `${accentColor}33` : 'rgba(200,162,74,0.3)') : 'rgba(26,50,81,0.85)',
+    color: isActive ? (accentColor ?? '#52a9cd') : '#9db2c6', transition: 'all 0.15s',
   }
 }
 
@@ -34,17 +34,17 @@ function getAltArtType(card) {
 }
 
 const INPUT = {
-  background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)',
-  borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13,
+  background: 'rgba(26,50,81,0.92)', border: '1px solid rgba(200,162,74,0.35)',
+  borderRadius: 8, padding: '9px 12px', color: '#e9f1f8', fontSize: 13,
   outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
 }
 const LABEL = {
   fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-  letterSpacing: '0.6px', color: '#7c6fa0', marginBottom: 5, display: 'block',
+  letterSpacing: '0.6px', color: '#9db2c6', marginBottom: 5, display: 'block',
 }
 
 function ConditionBadge({ condition }) {
-  const color = CONDITION_COLORS[condition] ?? '#7c6fa0'
+  const color = CONDITION_COLORS[condition] ?? '#9db2c6'
   return (
     <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: `${color}22`, color, border: `1px solid ${color}44`, whiteSpace: 'nowrap' }}>
       {condition}
@@ -106,23 +106,23 @@ function StoreMessageModal({ storefront, currentUser, onClose, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>Message {storefront.store_name}</div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(140,176,208,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#e9f1f8' }}>Message {storefront.store_name}</div>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 40, color: '#7c6fa0', fontSize: 13 }}>Loading...</div>
+            <div style={{ textAlign: 'center', padding: 40, color: '#9db2c6', fontSize: 13 }}>Loading...</div>
           ) : messages.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: '#7c6fa0', fontSize: 13 }}>No messages yet. Say hello!</div>
+            <div style={{ textAlign: 'center', padding: 40, color: '#9db2c6', fontSize: 13 }}>No messages yet. Say hello!</div>
           ) : messages.map(m => {
             const mine = m.sender_id === currentUser.id
             return (
               <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '75%', padding: '8px 12px', borderRadius: mine ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: mine ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.06)', border: `1px solid ${mine ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.08)'}`, fontSize: 13, color: '#f0f2f5', lineHeight: 1.5 }}>
+                <div style={{ maxWidth: '75%', padding: '8px 12px', borderRadius: mine ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: mine ? 'rgba(200,162,74,0.25)' : 'rgba(140,176,208,0.06)', border: `1px solid ${mine ? 'rgba(200,162,74,0.3)' : 'rgba(140,176,208,0.08)'}`, fontSize: 13, color: '#e9f1f8', lineHeight: 1.5 }}>
                   {m.content}
-                  <div style={{ fontSize: 10, color: '#7c6fa0', marginTop: 4, textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, color: '#9db2c6', marginTop: 4, textAlign: 'right' }}>
                     {new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                   </div>
                 </div>
@@ -131,9 +131,9 @@ function StoreMessageModal({ storefront, currentUser, onClose, isMobile }) {
           })}
           <div ref={bottomRef} />
         </div>
-        <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(139,92,246,0.1)', display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(140,176,208,0.1)', display: 'flex', gap: 8, flexShrink: 0 }}>
           <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())} placeholder="Type a message..." style={{ ...INPUT, flex: 1 }} />
-          <button onClick={send} disabled={sending || !text.trim()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: text.trim() ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: text.trim() ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: text.trim() ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s' }}>Send</button>
+          <button onClick={send} disabled={sending || !text.trim()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: text.trim() ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'rgba(140,176,208,0.05)', color: text.trim() ? '#fff' : '#9db2c6', fontSize: 13, fontWeight: 700, cursor: text.trim() ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'all 0.15s' }}>Send</button>
         </div>
       </div>
     </div>
@@ -183,19 +183,19 @@ function EditStoreModal({ storefront, onClose, onSuccess, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 480, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Edit Store Profile</div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 480, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(140,176,208,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>Edit Store Profile</div>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           <div style={{ marginBottom: 18 }}>
             <label style={LABEL}>Store Logo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 72, height: 72, borderRadius: 12, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: 72, height: 72, borderRadius: 12, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
                 {logoPreview ? <img src={logoPreview} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 28 }}>🏪</span>}
               </div>
-              <label style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <label style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {logoPreview ? 'Change Logo' : 'Upload Logo'}
                 <input type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
               </label>
@@ -217,11 +217,11 @@ function EditStoreModal({ storefront, onClose, onSuccess, isMobile }) {
             <label style={LABEL}>Website / Social Link</label>
             <input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} style={{ ...INPUT, width: '100%' }} placeholder="https://..." />
           </div>
-          {error && <div style={{ fontSize: 12, color: '#f05252', marginBottom: 10 }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#d24a3a', marginBottom: 10 }}>{error}</div>}
         </div>
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-          <button onClick={save} disabled={saving} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(140,176,208,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -314,18 +314,18 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 520, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 520, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(140,176,208,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>{editItem ? 'Edit Card' : 'Add Card to Inventory'}</div>
-            {!editItem && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Step {step} of 2</div>}
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>{editItem ? 'Edit Card' : 'Add Card to Inventory'}</div>
+            {!editItem && <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 1 }}>Step {step} of 2</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
         {step === 1 ? (
           <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-            <div style={{ background: 'rgba(139,92,246,0.03)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+            <div style={{ background: 'rgba(140,176,208,0.03)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
               {/* Color */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
                 {[['', 'All'], ...CARD_COLORS.map(c => [c, c])].map(([val, label]) => {
@@ -352,7 +352,7 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
                 <select
                   value={['', 'ST', 'Promos'].includes(filterSource) ? '' : filterSource}
                   onChange={e => setFilterSource(e.target.value)}
-                  style={{ padding: '2px 7px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.3)' : 'rgba(15,8,30,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.3)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
+                  style={{ padding: '2px 7px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(200,162,74,0.3)' : 'rgba(26,50,81,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(200,162,74,0.3)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#52a9cd' : '#9db2c6' }}
                 >
                   <option value="">Booster Sets</option>
                   {BOOSTER_SETS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -363,7 +363,7 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
               {/* Alt Art */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                 {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
-                  const ac = { parallel: '#e879f9', sp: '#34d399', manga: '#38bdf8', tr: '#f97316' }[val]
+                  const ac = { parallel: '#d56a9c', sp: '#3bb27e', manga: '#38bdf8', tr: '#e08a3c' }[val]
                   return <button key={val || 'a-all'} onClick={() => setFilterAltArt(val)} style={pillStyle(filterAltArt === val, ac)}>{label}</button>
                 })}
               </div>
@@ -378,21 +378,21 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
             <div style={{ position: 'relative' }} ref={dropdownRef}>
               <input type="text" placeholder="Search card by name or ID..." value={cardQuery} onChange={handleCardQuery} onFocus={() => cardResults.length > 0 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%' }} />
               {dropdownOpen && (cardSearching || cardResults.length > 0) && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#13091f', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 10, marginTop: 4, maxHeight: 320, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#13091f', border: '1px solid rgba(200,162,74,0.25)', borderRadius: 10, marginTop: 4, maxHeight: 320, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
                   {cardSearching ? (
-                    <div style={{ padding: 14, fontSize: 12, color: '#7c6fa0', textAlign: 'center' }}>Searching...</div>
+                    <div style={{ padding: 14, fontSize: 12, color: '#9db2c6', textAlign: 'center' }}>Searching...</div>
                   ) : cardResults.map(card => (
                     <div key={card.card_image_id ?? card.card_set_id}
                       onClick={() => { setSelectedCard(card); setCardQuery(card.card_name); setDropdownOpen(false); setStep(2) }}
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.1)'}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(140,176,208,0.04)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.1)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       <img src={`https://optcgapi.com/media/static/Card_Images/${card.card_image_id ?? card.card_set_id}.jpg`} alt={card.card_name}
                         style={{ width: 28, height: 40, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }}
                         onError={e => { e.target.style.display = 'none' }} />
                       <div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                        <div style={{ fontSize: 10, color: '#7c6fa0' }}>{card.card_set_id} · {card.card_color} · {card.card_type}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#e9f1f8' }}>{card.card_name}</div>
+                        <div style={{ fontSize: 10, color: '#9db2c6' }}>{card.card_set_id} · {card.card_color} · {card.card_type}</div>
                       </div>
                     </div>
                   ))}
@@ -403,15 +403,15 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
         ) : (
           <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
             {selectedCard && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '12px 14px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '12px 14px', background: 'rgba(140,176,208,0.08)', border: '1px solid rgba(140,176,208,0.2)', borderRadius: 10 }}>
                 <img src={`https://optcgapi.com/media/static/Card_Images/${selectedCard.card_image_id ?? selectedCard.card_set_id}.jpg`} alt={selectedCard.card_name}
                   style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, flexShrink: 0 }}
                   onError={e => { e.target.style.display = 'none' }} />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
-                  <div style={{ fontSize: 11, color: '#7c6fa0' }}>{selectedCard.card_set_id} · {selectedCard.card_color} · {selectedCard.card_type}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{selectedCard.card_name}</div>
+                  <div style={{ fontSize: 11, color: '#9db2c6' }}>{selectedCard.card_set_id} · {selectedCard.card_color} · {selectedCard.card_type}</div>
                 </div>
-                {!editItem && <button onClick={() => { setStep(1); setSelectedCard(null) }} style={{ marginLeft: 'auto', fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>Change</button>}
+                {!editItem && <button onClick={() => { setStep(1); setSelectedCard(null) }} style={{ marginLeft: 'auto', fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>Change</button>}
               </div>
             )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
@@ -435,17 +435,17 @@ function AddInventoryModal({ storefront, editItem, onClose, onSuccess, isMobile 
               <label style={LABEL}>Description (optional)</label>
               <textarea value={description} onChange={e => setDescription(e.target.value)} style={{ ...INPUT, width: '100%', minHeight: 70, resize: 'vertical' }} placeholder="Any extra details..." />
             </div>
-            {error && <div style={{ fontSize: 12, color: '#f05252', marginTop: 10 }}>{error}</div>}
+            {error && <div style={{ fontSize: 12, color: '#d24a3a', marginTop: 10 }}>{error}</div>}
           </div>
         )}
 
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(140,176,208,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
           {step === 2 && !editItem && (
-            <button onClick={() => setStep(1)} style={{ padding: '10px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>← Back</button>
+            <button onClick={() => setStep(1)} style={{ padding: '10px 18px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>← Back</button>
           )}
-          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
           {(step === 2 || editItem) && (
-            <button onClick={save} disabled={saving} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
+            <button onClick={save} disabled={saving} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Saving...' : editItem ? 'Update Card' : 'Add to Inventory'}
             </button>
           )}
@@ -517,35 +517,35 @@ function CsvImportModal({ storefront, onClose, onSuccess, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 540, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 540, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(140,176,208,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Bulk Import</div>
-            <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Columns: card_id, quantity, price, condition</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>Bulk Import</div>
+            <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 1 }}>Columns: card_id, quantity, price, condition</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           {done ? (
             <div style={{ textAlign: 'center', padding: '30px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 14 }}>✅</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', marginBottom: 8 }}>Import Complete</div>
-              <div style={{ fontSize: 13, color: '#34d399' }}>{resultCounts.success} card{resultCounts.success !== 1 ? 's' : ''} added</div>
-              {resultCounts.failed > 0 && <div style={{ fontSize: 13, color: '#f05252', marginTop: 4 }}>{resultCounts.failed} failed</div>}
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8', marginBottom: 8 }}>Import Complete</div>
+              <div style={{ fontSize: 13, color: '#3bb27e' }}>{resultCounts.success} card{resultCounts.success !== 1 ? 's' : ''} added</div>
+              {resultCounts.failed > 0 && <div style={{ fontSize: 13, color: '#d24a3a', marginTop: 4 }}>{resultCounts.failed} failed</div>}
             </div>
           ) : importing ? (
             <div style={{ textAlign: 'center', padding: '30px 0' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5', marginBottom: 16 }}>Importing... {progress}%</div>
-              <div style={{ width: '100%', height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', transition: 'width 0.3s', borderRadius: 3 }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#e9f1f8', marginBottom: 16 }}>Importing... {progress}%</div>
+              <div style={{ width: '100%', height: 6, background: 'rgba(140,176,208,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', transition: 'width 0.3s', borderRadius: 3 }} />
               </div>
-              <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 10 }}>Looking up card data from API...</div>
+              <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 10 }}>Looking up card data from API...</div>
             </div>
           ) : (
             <>
               <div style={{ marginBottom: 14 }}>
                 <label style={LABEL}>Example format</label>
-                <pre style={{ fontSize: 11, color: '#7c6fa0', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 12px', fontFamily: 'monospace', overflowX: 'auto', margin: 0 }}>
+                <pre style={{ fontSize: 11, color: '#9db2c6', background: 'rgba(140,176,208,0.03)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 8, padding: '10px 12px', fontFamily: 'monospace', overflowX: 'auto', margin: 0 }}>
 {`card_id,quantity,price,condition
 OP01-001,2,15.00,Near Mint
 OP14-120,1,45.00,Lightly Played`}
@@ -557,13 +557,13 @@ OP14-120,1,45.00,Lightly Played`}
                   style={{ ...INPUT, width: '100%', minHeight: 150, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
                   placeholder="Paste your CSV here..." />
               </div>
-              {parseError && <div style={{ fontSize: 12, color: '#f05252', marginBottom: 10 }}>{parseError}</div>}
+              {parseError && <div style={{ fontSize: 12, color: '#d24a3a', marginBottom: 10 }}>{parseError}</div>}
               {parsed.length > 0 && (
-                <div style={{ padding: '10px 14px', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 8, marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#34d399' }}>{parsed.length} row{parsed.length !== 1 ? 's' : ''} ready to import</div>
+                <div style={{ padding: '10px 14px', background: 'rgba(59,178,126,0.08)', border: '1px solid rgba(59,178,126,0.2)', borderRadius: 8, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#3bb27e' }}>{parsed.length} row{parsed.length !== 1 ? 's' : ''} ready to import</div>
                 </div>
               )}
-              <label style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.06)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit', display: 'inline-block' }}>
+              <label style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.06)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit', display: 'inline-block' }}>
                 Or upload a .csv file
                 <input type="file" accept=".csv,text/csv" onChange={e => {
                   const file = e.target.files?.[0]; if (!file) return
@@ -575,18 +575,18 @@ OP14-120,1,45.00,Lightly Played`}
             </>
           )}
         </div>
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(140,176,208,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
           {done ? (
-            <button onClick={onSuccess} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Done</button>
+            <button onClick={onSuccess} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Done</button>
           ) : importing ? null : (
             <>
-              <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
               {parsed.length === 0 ? (
-                <button onClick={parseCsv} disabled={!csvText.trim()} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: csvText.trim() ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.05)', color: csvText.trim() ? '#a78bfa' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: csvText.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+                <button onClick={parseCsv} disabled={!csvText.trim()} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: csvText.trim() ? 'rgba(200,162,74,0.3)' : 'rgba(140,176,208,0.05)', color: csvText.trim() ? '#52a9cd' : '#9db2c6', fontSize: 13, fontWeight: 700, cursor: csvText.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
                   Validate CSV
                 </button>
               ) : (
-                <button onClick={runImport} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <button onClick={runImport} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   Import {parsed.length} Cards
                 </button>
               )}
@@ -601,21 +601,21 @@ OP14-120,1,45.00,Lightly Played`}
 // ─── InventoryCard ─────────────────────────────────────────────────────────────
 function InventoryCard({ item }) {
   return (
-    <div style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div style={{ position: 'relative', paddingTop: '140%', background: 'rgba(0,0,0,0.3)' }}>
         <img src={`https://optcgapi.com/media/static/Card_Images/${item.card_id}.jpg`} alt={item.card_name}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
           onError={e => { e.target.style.display = 'none' }} />
         {(item.quantity ?? 1) > 1 && (
-          <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.75)', borderRadius: 12, padding: '2px 7px', fontSize: 10, fontWeight: 700, color: '#f0f2f5' }}>
+          <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.75)', borderRadius: 12, padding: '2px 7px', fontSize: 10, fontWeight: 700, color: '#e9f1f8' }}>
             x{item.quantity}
           </div>
         )}
       </div>
       <div style={{ padding: '8px 10px' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.card_name}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#e9f1f8', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.card_name}</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace' }}>${Number(item.price).toFixed(2)}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#52a9cd', fontFamily: 'monospace' }}>${Number(item.price).toFixed(2)}</span>
           <ConditionBadge condition={item.condition} />
         </div>
       </div>
@@ -696,39 +696,39 @@ export default function StorefrontPage({ session }) {
   })
   const filtersActive = search || colorFilter || typeFilter || conditionFilter || priceMin || priceMax
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 80, color: '#7c6fa0', fontSize: 13 }}>Loading...</div>
+  if (loading) return <div style={{ textAlign: 'center', padding: 80, color: '#9db2c6', fontSize: 13 }}>Loading...</div>
 
   if (!storefront) return (
     <div style={{ textAlign: 'center', padding: 80 }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 16 }}>Storefront not found</div>
-      <button onClick={() => navigate('/marketplace')} style={{ fontSize: 12, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>← Marketplace</button>
+      <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6', marginBottom: 16 }}>Storefront not found</div>
+      <button onClick={() => navigate('/marketplace')} style={{ fontSize: 12, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>← Marketplace</button>
     </div>
   )
 
-  const STATUS_COLORS = { pending: '#fbbf24', approved: '#34d399', rejected: '#f05252' }
+  const STATUS_COLORS = { pending: '#dcb35e', approved: '#3bb27e', rejected: '#d24a3a' }
 
   return (
     <div>
-      <button onClick={() => navigate('/marketplace')} style={{ fontSize: 12, color: '#7c6fa0', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: 20 }}>
+      <button onClick={() => navigate('/marketplace')} style={{ fontSize: 12, color: '#9db2c6', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: 20 }}>
         ← Back to Marketplace
       </button>
 
       {/* Admin approval bar */}
       {isAdmin && storefront.status !== 'approved' && (
-        <div style={{ marginBottom: 20, padding: '14px 18px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ marginBottom: 20, padding: '14px 18px', background: 'rgba(200,162,74,0.06)', border: '1px solid rgba(200,162,74,0.2)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Admin · {storefront.status === 'pending' ? 'Pending Application' : 'Rejected'}</div>
-            <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 2 }}>Applied {new Date(storefront.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#dcb35e', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Admin · {storefront.status === 'pending' ? 'Pending Application' : 'Rejected'}</div>
+            <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 2 }}>Applied {new Date(storefront.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {storefront.status !== 'rejected' && (
               <button onClick={() => setApprovalStatus('rejected')} disabled={approving}
-                style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Reject
               </button>
             )}
             <button onClick={() => setApprovalStatus('approved')} disabled={approving}
-              style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #059669, #34d399)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #059669, #3bb27e)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               Approve
             </button>
           </div>
@@ -736,24 +736,24 @@ export default function StorefrontPage({ session }) {
       )}
 
       {/* Store header */}
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', marginBottom: 28, padding: '20px 22px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.14)', borderRadius: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-        <div style={{ width: isMobile ? 72 : 88, height: isMobile ? 72 : 88, borderRadius: 14, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', marginBottom: 28, padding: '20px 22px', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.14)', borderRadius: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+        <div style={{ width: isMobile ? 72 : 88, height: isMobile ? 72 : 88, borderRadius: 14, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
           {storefront.logo_url
             ? <img src={storefront.logo_url} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : <span style={{ fontSize: 36 }}>🏪</span>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-            <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#f0f2f5', letterSpacing: '-0.3px' }}>{storefront.store_name}</div>
+            <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#e9f1f8', letterSpacing: '-0.3px' }}>{storefront.store_name}</div>
             <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: `${STATUS_COLORS[storefront.status]}22`, color: STATUS_COLORS[storefront.status], border: `1px solid ${STATUS_COLORS[storefront.status]}44`, textTransform: 'capitalize' }}>
               {storefront.status}
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {storefront.address && <div style={{ fontSize: 12, color: '#7c6fa0' }}>📍 {storefront.address}</div>}
-            {storefront.contact_info && <div style={{ fontSize: 12, color: '#7c6fa0' }}>📞 {storefront.contact_info}</div>}
+            {storefront.address && <div style={{ fontSize: 12, color: '#9db2c6' }}>📍 {storefront.address}</div>}
+            {storefront.contact_info && <div style={{ fontSize: 12, color: '#9db2c6' }}>📞 {storefront.contact_info}</div>}
             {storefront.website_url && (
-              <a href={storefront.website_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#8b5cf6', textDecoration: 'none' }}>
+              <a href={storefront.website_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#2f7da3', textDecoration: 'none' }}>
                 🔗 {storefront.website_url.replace(/^https?:\/\//, '')}
               </a>
             )}
@@ -762,17 +762,17 @@ export default function StorefrontPage({ session }) {
         <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', alignSelf: 'center' }}>
           {isOwner ? (
             <>
-              <button onClick={() => setShowEdit(true)} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Edit Profile</button>
-              <button onClick={() => setManagerView(v => !v)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: managerView ? 'rgba(139,92,246,0.2)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setShowEdit(true)} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Edit Profile</button>
+              <button onClick={() => setManagerView(v => !v)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: managerView ? 'rgba(140,176,208,0.2)' : 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {managerView ? 'View Store' : 'Manage Inventory'}
               </button>
             </>
           ) : session ? (
-            <button onClick={() => setShowMessage(true)} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={() => setShowMessage(true)} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               Message Store
             </button>
           ) : (
-            <button onClick={() => navigate('/login')} style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={() => navigate('/login')} style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'transparent', color: '#52a9cd', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               Sign in to message
             </button>
           )}
@@ -783,47 +783,47 @@ export default function StorefrontPage({ session }) {
       {isOwner && managerView ? (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>
-              Inventory <span style={{ fontSize: 12, fontWeight: 400, color: '#7c6fa0' }}>({inventory.length} cards)</span>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#e9f1f8' }}>
+              Inventory <span style={{ fontSize: 12, fontWeight: 400, color: '#9db2c6' }}>({inventory.length} cards)</span>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowCsvImport(true)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Bulk Import</button>
-              <button onClick={() => setShowAddCard(true)} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Card</button>
+              <button onClick={() => setShowCsvImport(true)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Bulk Import</button>
+              <button onClick={() => setShowAddCard(true)} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Card</button>
             </div>
           </div>
           {inventory.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', color: '#3d2d6e' }}>
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: '#67809a' }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>📦</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No cards yet</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>No cards yet</div>
               <div style={{ fontSize: 12 }}>Add cards one by one or use Bulk Import</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {inventory.map(item => (
-                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                   <img src={`https://optcgapi.com/media/static/Card_Images/${item.card_id}.jpg`} alt={item.card_name}
-                    style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(140,176,208,0.06)' }}
                     onError={e => { e.target.style.display = 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.card_name} {(item.quantity ?? 1) > 1 && <span style={{ fontSize: 11, fontWeight: 400, color: '#7c6fa0' }}>x{item.quantity}</span>}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.card_name} {(item.quantity ?? 1) > 1 && <span style={{ fontSize: 11, fontWeight: 400, color: '#9db2c6' }}>x{item.quantity}</span>}
                     </div>
-                    <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <ConditionBadge condition={item.condition} />
-                      <span style={{ color: '#3d2d6e' }}>·</span>
-                      <span style={{ fontFamily: 'monospace', color: '#f0f2f5', fontWeight: 700 }}>${Number(item.price).toFixed(2)}</span>
-                      <span style={{ color: '#3d2d6e' }}>· {item.card_id}</span>
+                      <span style={{ color: '#67809a' }}>·</span>
+                      <span style={{ fontFamily: 'monospace', color: '#e9f1f8', fontWeight: 700 }}>${Number(item.price).toFixed(2)}</span>
+                      <span style={{ color: '#67809a' }}>· {item.card_id}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    <button onClick={() => setEditItem(item)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+                    <button onClick={() => setEditItem(item)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
                     {confirmDeleteItem === item.id ? (
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => removeItem(item.id)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: '#f05252', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Confirm</button>
-                        <button onClick={() => setConfirmDeleteItem(null)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
+                        <button onClick={() => removeItem(item.id)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: '#d24a3a', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Confirm</button>
+                        <button onClick={() => setConfirmDeleteItem(null)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
                       </div>
                     ) : (
-                      <button onClick={() => setConfirmDeleteItem(item.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.2)', background: 'rgba(240,82,82,0.05)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
+                      <button onClick={() => setConfirmDeleteItem(item.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(210,74,58,0.2)', background: 'rgba(210,74,58,0.05)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
                     )}
                   </div>
                 </div>
@@ -834,7 +834,7 @@ export default function StorefrontPage({ session }) {
       ) : (
         /* Public browse view */
         <>
-          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(12,8,20,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(139,92,246,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
+          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(8,16,27,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(140,176,208,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
             <input type="text" placeholder="Search inventory..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...INPUT, width: '100%', padding: '10px 14px', marginBottom: 10 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
               <select value={colorFilter} onChange={e => setColorFilter(e.target.value)} style={{ ...INPUT, minWidth: 130, cursor: 'pointer' }}>
@@ -851,19 +851,19 @@ export default function StorefrontPage({ session }) {
               </select>
               <input type="number" min="0" placeholder="Min $" value={priceMin} onChange={e => setPriceMin(e.target.value)} style={{ ...INPUT, width: 90 }} />
               <input type="number" min="0" placeholder="Max $" value={priceMax} onChange={e => setPriceMax(e.target.value)} style={{ ...INPUT, width: 90 }} />
-              {filtersActive && <button onClick={() => { setSearch(''); setColorFilter(''); setTypeFilter(''); setConditionFilter(''); setPriceMin(''); setPriceMax('') }} style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>Clear ✕</button>}
+              {filtersActive && <button onClick={() => { setSearch(''); setColorFilter(''); setTypeFilter(''); setConditionFilter(''); setPriceMin(''); setPriceMax('') }} style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>Clear ✕</button>}
             </div>
-            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 8 }}>
+            <div style={{ fontSize: 11, color: '#67809a', marginTop: 8 }}>
               {inventoryLoading ? 'Loading...' : `${filteredInventory.length} card${filteredInventory.length !== 1 ? 's' : ''} in stock`}
             </div>
           </div>
 
           {inventoryLoading ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading inventory...</div>
+            <div style={{ textAlign: 'center', padding: 60, color: '#9db2c6', fontSize: 13 }}>Loading inventory...</div>
           ) : filteredInventory.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#67809a' }}>
               <div style={{ fontSize: 40, marginBottom: 14 }}>{filtersActive ? '🔍' : '📦'}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>{filtersActive ? 'No cards match your filters' : 'No inventory yet'}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>{filtersActive ? 'No cards match your filters' : 'No inventory yet'}</div>
               <div style={{ fontSize: 13 }}>{filtersActive ? 'Try adjusting your search' : "This store hasn't added any cards yet"}</div>
             </div>
           ) : (

@@ -14,7 +14,7 @@ function timeAgo(iso) {
 
 function Avatar({ profile, size = 36 }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0, overflow: 'hidden', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.36, fontWeight: 700, color: '#fff', border: '1px solid rgba(139,92,246,0.4)' }}>
+    <div style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0, overflow: 'hidden', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.36, fontWeight: 700, color: '#fff', border: '1px solid rgba(200,162,74,0.4)' }}>
       {profile?.avatar_url
         ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : (profile?.username?.slice(0, 2).toUpperCase() ?? '??')}
@@ -29,20 +29,20 @@ function DeckMessage({ deck, onEnlarge }) {
   const cards = deck.cards ?? []
   const count = cards.reduce((s, c) => s + (c.count ?? 0), 0)
   return (
-    <div style={{ border: '1px solid rgba(139,92,246,0.25)', borderRadius: 10, overflow: 'hidden', background: 'rgba(139,92,246,0.06)', minWidth: 220 }}>
+    <div style={{ border: '1px solid rgba(200,162,74,0.25)', borderRadius: 10, overflow: 'hidden', background: 'rgba(140,176,208,0.06)', minWidth: 220 }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', cursor: 'pointer' }}>
-        <img src={getCardImageUrl(deck.leader_id)} alt={deck.leader_name} style={{ width: 30, height: 41, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
+        <img src={getCardImageUrl(deck.leader_id)} alt={deck.leader_name} style={{ width: 30, height: 41, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: '1px solid rgba(140,176,208,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{deck.name}</div>
-          <div style={{ fontSize: 10, color: '#7c6fa0' }}>{count} cards · {deck.leader_name}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{deck.name}</div>
+          <div style={{ fontSize: 10, color: '#9db2c6' }}>{count} cards · {deck.leader_name}</div>
         </div>
-        <div style={{ fontSize: 10, color: '#a78bfa' }}>{open ? '▲' : '▼'}</div>
+        <div style={{ fontSize: 10, color: '#52a9cd' }}>{open ? '▲' : '▼'}</div>
       </div>
       {open && (
-        <div style={{ padding: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <div style={{ padding: 10, borderTop: '1px solid rgba(140,176,208,0.06)', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {cards.flatMap(card =>
             Array.from({ length: card.count }, (_, i) => (
-              <img key={`${card.id}-${i}`} src={getCardImageUrl(card.id)} alt={card.name} onClick={() => onEnlarge(getCardImageUrl(card.id))} title={`${card.name ?? card.id} (${card.id})`} style={{ width: 40, borderRadius: 3, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.opacity = '0.15' }} />
+              <img key={`${card.id}-${i}`} src={getCardImageUrl(card.id)} alt={card.name} onClick={() => onEnlarge(getCardImageUrl(card.id))} title={`${card.name ?? card.id} (${card.id})`} style={{ width: 40, borderRadius: 3, cursor: 'pointer', border: '1px solid rgba(140,176,208,0.08)' }} onError={e => { e.target.style.opacity = '0.15' }} />
             ))
           )}
         </div>
@@ -200,29 +200,29 @@ export default function DirectMessages({ session, isMobile, initialUserId }) {
     <div style={{ display: 'flex', gap: 14, alignItems: 'stretch', height: isMobile ? 'calc(100vh - 200px)' : 'min(70vh, 620px)' }}>
       {/* Conversation list */}
       {showList && (
-        <div style={{ width: isMobile ? '100%' : 280, flexShrink: 0, background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflowY: 'auto' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', padding: '14px 16px 8px' }}>Conversations</div>
+        <div style={{ width: isMobile ? '100%' : 280, flexShrink: 0, background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflowY: 'auto' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#67809a', padding: '14px 16px 8px' }}>Conversations</div>
           {loadingConvos ? (
-            <div style={{ padding: 20, fontSize: 13, color: '#7c6fa0', textAlign: 'center' }}>Loading…</div>
+            <div style={{ padding: 20, fontSize: 13, color: '#9db2c6', textAlign: 'center' }}>Loading…</div>
           ) : conversations.length === 0 ? (
-            <div style={{ padding: '24px 16px', fontSize: 13, color: '#3d2d6e', textAlign: 'center', lineHeight: 1.6 }}>No messages yet. Visit a user's profile and tap <span style={{ color: '#a78bfa' }}>Message</span> to start a chat.</div>
+            <div style={{ padding: '24px 16px', fontSize: 13, color: '#67809a', textAlign: 'center', lineHeight: 1.6 }}>No messages yet. Visit a user's profile and tap <span style={{ color: '#52a9cd' }}>Message</span> to start a chat.</div>
           ) : conversations.map(c => {
             const p = profiles[c.otherId]
             const m = c.last
             const preview = m.body || (m.image_url ? '📷 Photo' : m.decklist_id ? '🃏 Decklist' : '')
             return (
-              <div key={c.otherId} onClick={() => openThread(c.otherId)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', background: activeId === c.otherId ? 'rgba(139,92,246,0.12)' : 'transparent', borderLeft: activeId === c.otherId ? '2px solid #8b5cf6' : '2px solid transparent' }} onMouseEnter={e => { if (activeId !== c.otherId) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }} onMouseLeave={e => { if (activeId !== c.otherId) e.currentTarget.style.background = 'transparent' }}>
+              <div key={c.otherId} onClick={() => openThread(c.otherId)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', background: activeId === c.otherId ? 'rgba(140,176,208,0.12)' : 'transparent', borderLeft: activeId === c.otherId ? '2px solid #2f7da3' : '2px solid transparent' }} onMouseEnter={e => { if (activeId !== c.otherId) e.currentTarget.style.background = 'rgba(140,176,208,0.03)' }} onMouseLeave={e => { if (activeId !== c.otherId) e.currentTarget.style.background = 'transparent' }}>
                 <Avatar profile={p} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p?.username ?? 'User'}</span>
-                    <span style={{ fontSize: 10, color: '#3d2d6e', marginLeft: 'auto', flexShrink: 0 }}>{timeAgo(m.created_at)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p?.username ?? 'User'}</span>
+                    <span style={{ fontSize: 10, color: '#67809a', marginLeft: 'auto', flexShrink: 0 }}>{timeAgo(m.created_at)}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: c.unread ? '#c4b5fd' : '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: c.unread ? 700 : 400 }}>
+                  <div style={{ fontSize: 12, color: c.unread ? '#9fd0e6' : '#9db2c6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: c.unread ? 700 : 400 }}>
                     {m.sender_id === me ? 'You: ' : ''}{preview}
                   </div>
                 </div>
-                {c.unread > 0 && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0 }}>{c.unread > 9 ? '9+' : c.unread}</span>}
+                {c.unread > 0 && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#d24a3a', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0 }}>{c.unread > 9 ? '9+' : c.unread}</span>}
               </div>
             )
           })}
@@ -231,37 +231,37 @@ export default function DirectMessages({ session, isMobile, initialUserId }) {
 
       {/* Thread */}
       {showThread && (
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflow: 'hidden' }}>
           {!activeId ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3d2d6e', fontSize: 13, textAlign: 'center', padding: 20 }}>Select a conversation</div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#67809a', fontSize: 13, textAlign: 'center', padding: 20 }}>Select a conversation</div>
           ) : (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-                {isMobile && <button onClick={() => setActiveId(null)} style={{ background: 'none', border: 'none', color: '#a78bfa', fontSize: 18, cursor: 'pointer', padding: 0 }}>←</button>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: '1px solid rgba(140,176,208,0.07)', flexShrink: 0 }}>
+                {isMobile && <button onClick={() => setActiveId(null)} style={{ background: 'none', border: 'none', color: '#52a9cd', fontSize: 18, cursor: 'pointer', padding: 0 }}>←</button>}
                 <div onClick={() => otherProfile && setPopoverProfile(otherProfile)} title="View profile" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: otherProfile ? 'pointer' : 'default' }}>
                   <Avatar profile={otherProfile} size={32} />
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>{otherProfile?.username ?? 'User'}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#e9f1f8' }}>{otherProfile?.username ?? 'User'}</div>
                 </div>
               </div>
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {loadingThread ? (
-                  <div style={{ color: '#7c6fa0', fontSize: 13, textAlign: 'center', padding: 20 }}>Loading…</div>
+                  <div style={{ color: '#9db2c6', fontSize: 13, textAlign: 'center', padding: 20 }}>Loading…</div>
                 ) : messages.length === 0 ? (
-                  <div style={{ color: '#3d2d6e', fontSize: 13, textAlign: 'center', padding: 20 }}>No messages yet — say hi 👋</div>
+                  <div style={{ color: '#67809a', fontSize: 13, textAlign: 'center', padding: 20 }}>No messages yet — say hi 👋</div>
                 ) : messages.map(m => {
                   const mine = m.sender_id === me
                   return (
                     <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
                       <div style={{ maxWidth: '78%', display: 'flex', flexDirection: 'column', gap: 4, alignItems: mine ? 'flex-end' : 'flex-start' }}>
                         {m.body && (
-                          <div style={{ background: mine ? 'rgba(139,92,246,0.22)' : 'rgba(255,255,255,0.05)', border: `1px solid ${mine ? 'rgba(139,92,246,0.35)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#f0f2f5', lineHeight: 1.45, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{m.body}</div>
+                          <div style={{ background: mine ? 'rgba(200,162,74,0.22)' : 'rgba(140,176,208,0.05)', border: `1px solid ${mine ? 'rgba(200,162,74,0.35)' : 'rgba(140,176,208,0.08)'}`, borderRadius: 12, padding: '8px 12px', fontSize: 13, color: '#e9f1f8', lineHeight: 1.45, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{m.body}</div>
                         )}
                         {m.image_url && (
-                          <img src={m.image_url} alt="" onClick={() => setLightbox(m.image_url)} style={{ maxWidth: 220, borderRadius: 10, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }} />
+                          <img src={m.image_url} alt="" onClick={() => setLightbox(m.image_url)} style={{ maxWidth: 220, borderRadius: 10, cursor: 'pointer', border: '1px solid rgba(140,176,208,0.1)' }} />
                         )}
                         {m.decklist_id && <DeckMessage deck={m.decklists} onEnlarge={setLightbox} />}
-                        <span style={{ fontSize: 9, color: '#3d2d6e' }}>{timeAgo(m.created_at)}</span>
+                        <span style={{ fontSize: 9, color: '#67809a' }}>{timeAgo(m.created_at)}</span>
                       </div>
                     </div>
                   )
@@ -270,18 +270,18 @@ export default function DirectMessages({ session, isMobile, initialUserId }) {
               </div>
 
               {/* Composer */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderTop: '1px solid rgba(140,176,208,0.07)', flexShrink: 0 }}>
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
-                <button onClick={() => fileRef.current?.click()} disabled={sending} title="Send image" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#a78bfa', fontSize: 16, width: 36, height: 36, cursor: 'pointer', flexShrink: 0 }}>🖼</button>
-                <button onClick={() => setPickDeck(true)} disabled={sending} title="Send decklist" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#a78bfa', fontSize: 15, width: 36, height: 36, cursor: 'pointer', flexShrink: 0 }}>🃏</button>
+                <button onClick={() => fileRef.current?.click()} disabled={sending} title="Send image" style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 8, color: '#52a9cd', fontSize: 16, width: 36, height: 36, cursor: 'pointer', flexShrink: 0 }}>🖼</button>
+                <button onClick={() => setPickDeck(true)} disabled={sending} title="Send decklist" style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 8, color: '#52a9cd', fontSize: 15, width: 36, height: 36, cursor: 'pointer', flexShrink: 0 }}>🃏</button>
                 <input
                   value={text}
                   onChange={e => setText(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText() } }}
                   placeholder="Message…"
-                  style={{ flex: 1, background: 'rgba(15,8,30,0.9)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+                  style={{ flex: 1, background: 'rgba(26,50,81,0.9)', border: '1px solid rgba(200,162,74,0.25)', borderRadius: 8, padding: '9px 12px', color: '#e9f1f8', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
                 />
-                <button onClick={sendText} disabled={sending || !text.trim()} style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: text.trim() ? '#8b5cf6' : 'rgba(139,92,246,0.15)', color: text.trim() ? '#fff' : '#3d2d6e', fontSize: 13, fontWeight: 700, cursor: text.trim() && !sending ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>Send</button>
+                <button onClick={sendText} disabled={sending || !text.trim()} style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: text.trim() ? '#2f7da3' : 'rgba(140,176,208,0.15)', color: text.trim() ? '#fff' : '#67809a', fontSize: 13, fontWeight: 700, cursor: text.trim() && !sending ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>Send</button>
               </div>
             </>
           )}
@@ -292,7 +292,7 @@ export default function DirectMessages({ session, isMobile, initialUserId }) {
       {pickDeck && <SelectDecklistModal session={session} isMobile={isMobile} onClose={() => setPickDeck(false)} onSelect={sendDeck} />}
       {lightbox && (
         <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <img src={lightbox} alt="" style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 12, border: '2px solid rgba(255,255,255,0.15)' }} />
+          <img src={lightbox} alt="" style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 12, border: '2px solid rgba(140,176,208,0.15)' }} />
         </div>
       )}
     </div>

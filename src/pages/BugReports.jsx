@@ -43,15 +43,15 @@ export default function BugReports({ session }) {
   }
 
   if (authorized === null) {
-    return <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading…</div>
+    return <div style={{ textAlign: 'center', padding: 60, color: '#9db2c6', fontSize: 13 }}>Loading…</div>
   }
 
   if (!authorized) {
     return (
       <div style={{ textAlign: 'center', padding: '80px 20px' }}>
         <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0' }}>Not authorized</div>
-        <div style={{ fontSize: 13, color: '#3d2d6e', marginTop: 6 }}>This page is restricted.</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6' }}>Not authorized</div>
+        <div style={{ fontSize: 13, color: '#67809a', marginTop: 6 }}>This page is restricted.</div>
       </div>
     )
   }
@@ -62,9 +62,9 @@ export default function BugReports({ session }) {
   return (
     <div>
       <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Admin</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>🐞 Bug Reports</div>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>{openCount} open · {reports.length} total</div>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.6px', color: '#dcb35e', marginBottom: 4 }}>Admin</div>
+        <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 28, fontWeight: 600, color: '#e9f1f8', letterSpacing: '-0.3px', marginBottom: 2 }}>🐞 Bug Reports</div>
+        <div style={{ fontSize: 13, color: '#9db2c6' }}>{openCount} open · {reports.length} total</div>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
@@ -72,7 +72,7 @@ export default function BugReports({ session }) {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize', border: `1px solid ${filter === f ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`, background: filter === f ? 'rgba(139,92,246,0.12)' : 'transparent', color: filter === f ? '#a78bfa' : '#7c6fa0' }}
+            style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize', border: `1px solid ${filter === f ? 'rgba(200,162,74,0.4)' : 'rgba(140,176,208,0.08)'}`, background: filter === f ? 'rgba(140,176,208,0.12)' : 'transparent', color: filter === f ? '#52a9cd' : '#9db2c6' }}
           >
             {f}
           </button>
@@ -80,43 +80,43 @@ export default function BugReports({ session }) {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading…</div>
+        <div style={{ textAlign: 'center', padding: 60, color: '#9db2c6', fontSize: 13 }}>Loading…</div>
       ) : shown.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>🎉</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0' }}>No {filter === 'all' ? '' : filter} reports</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6' }}>No {filter === 'all' ? '' : filter} reports</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {shown.map(r => {
             const resolved = (r.status ?? 'open') === 'resolved'
             return (
-              <div key={r.id} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '14px 16px' }}>
+              <div key={r.id} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 12, padding: '14px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.4px', background: resolved ? 'rgba(52,211,153,0.12)' : 'rgba(249,115,22,0.12)', color: resolved ? '#34d399' : '#f97316', border: `1px solid ${resolved ? 'rgba(52,211,153,0.3)' : 'rgba(249,115,22,0.3)'}` }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.4px', background: resolved ? 'rgba(59,178,126,0.12)' : 'rgba(224,138,60,0.12)', color: resolved ? '#3bb27e' : '#e08a3c', border: `1px solid ${resolved ? 'rgba(59,178,126,0.3)' : 'rgba(224,138,60,0.3)'}` }}>
                     {resolved ? 'Resolved' : 'Open'}
                   </span>
                   {r.user_id ? (
-                    <button onClick={() => navigate(`/profile/${r.user_id}`)} title="View profile" style={{ fontSize: 12, fontWeight: 600, color: '#a78bfa', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(167,139,250,0.4)', textUnderlineOffset: 2 }}>
+                    <button onClick={() => navigate(`/profile/${r.user_id}`)} title="View profile" style={{ fontSize: 12, fontWeight: 600, color: '#52a9cd', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(167,139,250,0.4)', textUnderlineOffset: 2 }}>
                       {r.username ?? 'View profile'}
                     </button>
                   ) : (
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#7c6fa0' }}>{r.username ?? 'Anonymous'}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#9db2c6' }}>{r.username ?? 'Anonymous'}</span>
                   )}
-                  {r.page && <span style={{ fontSize: 11, color: '#3d2d6e', fontFamily: 'monospace' }}>{r.page}</span>}
-                  <span style={{ fontSize: 11, color: '#7c6fa0', marginLeft: 'auto' }}>{fmtDate(r.created_at)}</span>
+                  {r.page && <span style={{ fontSize: 11, color: '#67809a', fontFamily: 'monospace' }}>{r.page}</span>}
+                  <span style={{ fontSize: 11, color: '#9db2c6', marginLeft: 'auto' }}>{fmtDate(r.created_at)}</span>
                 </div>
-                <div style={{ fontSize: 14, color: '#f0f2f5', lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.message}</div>
+                <div style={{ fontSize: 14, color: '#e9f1f8', lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.message}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button
                     onClick={() => setStatus(r.id, resolved ? 'open' : 'resolved')}
-                    style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.08)', color: '#34d399' }}
+                    style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', border: '1px solid rgba(59,178,126,0.3)', background: 'rgba(59,178,126,0.08)', color: '#3bb27e' }}
                   >
                     {resolved ? 'Reopen' : 'Mark Resolved'}
                   </button>
                   <button
                     onClick={() => remove(r.id)}
-                    style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252' }}
+                    style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a' }}
                   >
                     Delete
                   </button>

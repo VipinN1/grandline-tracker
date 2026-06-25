@@ -48,13 +48,13 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
   }
 
   return (
-    <div style={{ marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+    <div style={{ marginTop: 10, borderTop: '1px solid rgba(140,176,208,0.06)', paddingTop: 8 }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
           background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
           display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0',
-          color: '#7c6fa0', fontSize: 12, fontWeight: 600
+          color: '#9db2c6', fontSize: 12, fontWeight: 600
         }}
       >
         <span style={{ position: 'relative' }}>
@@ -63,12 +63,12 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
             <span style={{
               position: 'absolute', top: -2, right: -3,
               width: 7, height: 7, borderRadius: '50%',
-              background: '#8b5cf6', border: '1px solid #0f1117'
+              background: '#2f7da3', border: '1px solid #0f1117'
             }} />
           )}
         </span>
         Match Chat
-        <span style={{ fontSize: 10, color: '#3d2d6e' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: 10, color: '#67809a' }}>{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
@@ -76,10 +76,10 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
           <div style={{
             maxHeight: 180, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6,
             padding: '8px 10px', background: 'rgba(0,0,0,0.2)', borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.05)'
+            border: '1px solid rgba(140,176,208,0.05)'
           }}>
             {messages.length === 0 ? (
-              <div style={{ fontSize: 12, color: '#3d2d6e', textAlign: 'center', padding: '12px 0' }}>
+              <div style={{ fontSize: 12, color: '#67809a', textAlign: 'center', padding: '12px 0' }}>
                 No messages yet — share your match code here!
               </div>
             ) : messages.map(msg => {
@@ -89,10 +89,10 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
                 <div key={msg.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                   <div style={{
                     width: 22, height: 22, borderRadius: 6,
-                    background: isMe ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.07)',
-                    border: `1px solid ${isMe ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                    background: isMe ? 'rgba(200,162,74,0.25)' : 'rgba(140,176,208,0.07)',
+                    border: `1px solid ${isMe ? 'rgba(200,162,74,0.4)' : 'rgba(140,176,208,0.1)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 8, fontWeight: 700, color: isMe ? '#a78bfa' : '#7c6fa0',
+                    fontSize: 8, fontWeight: 700, color: isMe ? '#52a9cd' : '#9db2c6',
                     flexShrink: 0, overflow: 'hidden'
                   }}>
                     {profile?.avatar_url
@@ -100,7 +100,7 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
                       : (profile?.username?.slice(0, 2).toUpperCase() ?? '?')}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: isMe ? '#a78bfa' : '#94a3b8' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: isMe ? '#52a9cd' : '#94a3b8' }}>
                       {profile?.username ?? 'Unknown'}
                     </span>
                     <span style={{ fontSize: 12, color: '#e2e8f0', marginLeft: 6, wordBreak: 'break-all' }}>
@@ -120,8 +120,8 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
               onKeyDown={handleKey}
               placeholder="Paste match code or message..."
               style={{
-                flex: 1, background: 'rgba(15,8,30,0.9)', border: '1px solid rgba(139,92,246,0.25)',
-                borderRadius: 7, padding: '7px 10px', color: '#f0f2f5', fontSize: 12,
+                flex: 1, background: 'rgba(26,50,81,0.9)', border: '1px solid rgba(200,162,74,0.25)',
+                borderRadius: 7, padding: '7px 10px', color: '#e9f1f8', fontSize: 12,
                 outline: 'none', fontFamily: 'inherit'
               }}
             />
@@ -130,8 +130,8 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
               disabled={sending || !text.trim()}
               style={{
                 padding: '7px 14px', borderRadius: 7, border: 'none', fontFamily: 'inherit',
-                background: text.trim() ? '#8b5cf6' : 'rgba(139,92,246,0.15)',
-                color: text.trim() ? '#fff' : '#3d2d6e',
+                background: text.trim() ? '#2f7da3' : 'rgba(140,176,208,0.15)',
+                color: text.trim() ? '#fff' : '#67809a',
                 fontSize: 12, fontWeight: 700,
                 cursor: text.trim() && !sending ? 'pointer' : 'default',
                 transition: 'all 0.15s'

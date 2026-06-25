@@ -5,25 +5,25 @@ import { searchCards, getCardImageUrl } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
 import ProfilePopover from '../components/ProfilePopover'
 
-const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
 const CONDITION_COLORS = {
-  'Near Mint': '#34d399',
+  'Near Mint': '#3bb27e',
   'Lightly Played': '#22d3ee',
-  'Moderately Played': '#fbbf24',
-  'Heavily Played': '#f97316',
-  'Damaged': '#f05252',
+  'Moderately Played': '#dcb35e',
+  'Heavily Played': '#e08a3c',
+  'Damaged': '#d24a3a',
 }
 
 const CONDITIONS = ['Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged']
 const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
 
 const INPUT = {
-  background: 'rgba(15,8,30,0.92)',
-  border: '1px solid rgba(139,92,246,0.35)',
+  background: 'rgba(26,50,81,0.92)',
+  border: '1px solid rgba(200,162,74,0.35)',
   borderRadius: 8,
   padding: '9px 12px',
-  color: '#f0f2f5',
+  color: '#e9f1f8',
   fontSize: 13,
   outline: 'none',
   fontFamily: 'inherit',
@@ -35,7 +35,7 @@ const LABEL = {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.6px',
-  color: '#7c6fa0',
+  color: '#9db2c6',
   marginBottom: 5,
   display: 'block',
 }
@@ -43,7 +43,7 @@ const LABEL = {
 function Avatar({ profile, size = 28, radius = 7 }) {
   const initials = profile?.username?.slice(0, 2).toUpperCase() ?? '??'
   return (
-    <div style={{ width: size, height: size, borderRadius: radius, background: '#8b5cf622', border: '1px solid #8b5cf644', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.max(9, Math.floor(size * 0.32)), fontWeight: 700, color: '#8b5cf6', flexShrink: 0, overflow: 'hidden' }}>
+    <div style={{ width: size, height: size, borderRadius: radius, background: '#2f7da322', border: '1px solid #2f7da344', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.max(9, Math.floor(size * 0.32)), fontWeight: 700, color: '#2f7da3', flexShrink: 0, overflow: 'hidden' }}>
       {profile?.avatar_url
         ? <img src={profile.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : initials}
@@ -52,7 +52,7 @@ function Avatar({ profile, size = 28, radius = 7 }) {
 }
 
 function ConditionBadge({ condition }) {
-  const color = CONDITION_COLORS[condition] ?? '#7c6fa0'
+  const color = CONDITION_COLORS[condition] ?? '#9db2c6'
   return (
     <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: `${color}22`, color, border: `1px solid ${color}44`, letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>
       {condition}
@@ -123,12 +123,12 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 300, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
             src={listing.photo_url ? listing.photo_url : `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
             alt={listing.card_name}
-            style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
+            style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(140,176,208,0.08)', flexShrink: 0 }}
             onError={e => {
               if (listing.photo_url && e.target.src === listing.photo_url) {
                 e.target.src = `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
@@ -138,28 +138,28 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
             }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
-            <div style={{ fontSize: 11, color: '#7c6fa0' }}>${Number(listing.price).toFixed(2)} · {otherUser?.username ?? 'Seller'}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
+            <div style={{ fontSize: 11, color: '#9db2c6' }}>${Number(listing.price).toFixed(2)} · {otherUser?.username ?? 'Seller'}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading ? (
-            <div style={{ color: '#7c6fa0', fontSize: 13, textAlign: 'center', padding: 20 }}>Loading...</div>
+            <div style={{ color: '#9db2c6', fontSize: 13, textAlign: 'center', padding: 20 }}>Loading...</div>
           ) : messages.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 20px' }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
-              <div style={{ fontSize: 13, color: '#7c6fa0' }}>Start a conversation about this listing</div>
+              <div style={{ fontSize: 13, color: '#9db2c6' }}>Start a conversation about this listing</div>
             </div>
           ) : (
             messages.map(msg => {
               const isMe = msg.sender_id === currentUser.id
               return (
                 <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                  <div style={{ maxWidth: '75%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.06)', color: isMe ? '#fff' : '#f0f2f5', fontSize: 13, lineHeight: 1.5 }}>
+                  <div style={{ maxWidth: '75%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'rgba(140,176,208,0.06)', color: isMe ? '#fff' : '#e9f1f8', fontSize: 13, lineHeight: 1.5 }}>
                     {msg.body}
-                    <div style={{ fontSize: 10, color: isMe ? 'rgba(255,255,255,0.5)' : '#3d2d6e', marginTop: 3, textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, color: isMe ? 'rgba(140,176,208,0.5)' : '#67809a', marginTop: 3, textAlign: 'right' }}>
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
@@ -170,7 +170,7 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
           <div ref={bottomRef} />
         </div>
 
-        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', gap: 8 }}>
+        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', gap: 8 }}>
           <input
             type="text"
             placeholder="Type a message..."
@@ -182,7 +182,7 @@ function MessageModal({ listing, currentUser, otherUser, onClose, isMobile }) {
           <button
             onClick={sendMessage}
             disabled={sending || !text.trim()}
-            style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: text.trim() ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: text.trim() ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}
+            style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: text.trim() ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'rgba(140,176,208,0.05)', color: text.trim() ? '#fff' : '#9db2c6', fontSize: 13, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}
           >
             Send
           </button>
@@ -214,10 +214,10 @@ function ListingDetailModal({ listing, currentUser, session, onClose, isMobile, 
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 640, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>{listing.card_name}</div>
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 640, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>{listing.card_name}</div>
+            <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
           </div>
 
           <div style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -226,7 +226,7 @@ function ListingDetailModal({ listing, currentUser, session, onClose, isMobile, 
                 <img
                   src={listing.photo_url ? listing.photo_url : `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
                   alt={listing.card_name}
-                  style={{ width: isMobile ? '100%' : 180, maxWidth: 200, maxHeight: 260, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', background: '#1a1025' }}
+                  style={{ width: isMobile ? '100%' : 180, maxWidth: 200, maxHeight: 260, borderRadius: 10, border: '1px solid rgba(140,176,208,0.1)', objectFit: 'contain', background: '#1a1025' }}
                   onError={e => {
                     if (listing.photo_url && e.target.src === listing.photo_url) {
                       e.target.src = `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
@@ -237,50 +237,50 @@ function ListingDetailModal({ listing, currentUser, session, onClose, isMobile, 
                 />
                 {listing.photo_url && (
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', marginBottom: 4 }}>Official Art</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#67809a', marginBottom: 4 }}>Official Art</div>
                     <img
                       src={`https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
                       alt={`${listing.card_name} official art`}
-                      style={{ width: 60, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+                      style={{ width: 60, borderRadius: 6, border: '1px solid rgba(140,176,208,0.08)', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
                       onError={e => { e.target.style.display = 'none' }}
                     />
                   </div>
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 28, fontWeight: 700, color: '#f0f2f5', marginBottom: 8, fontFamily: "'Space Mono', monospace" }}>${Number(listing.price).toFixed(2)}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: '#e9f1f8', marginBottom: 8, fontFamily: "'Space Mono', monospace" }}>${Number(listing.price).toFixed(2)}</div>
                 <div style={{ marginBottom: 10 }}><ConditionBadge condition={listing.condition} /></div>
-                <div style={{ fontSize: 12, color: '#7c6fa0', marginBottom: 3 }}>
-                  {listing.card_color && <span style={{ color: COLORS[listing.card_color] ?? '#7c6fa0' }}>{listing.card_color}</span>}
-                  {listing.card_color && listing.card_type && <span style={{ margin: '0 6px', color: '#3d2d6e' }}>·</span>}
+                <div style={{ fontSize: 12, color: '#9db2c6', marginBottom: 3 }}>
+                  {listing.card_color && <span style={{ color: COLORS[listing.card_color] ?? '#9db2c6' }}>{listing.card_color}</span>}
+                  {listing.card_color && listing.card_type && <span style={{ margin: '0 6px', color: '#67809a' }}>·</span>}
                   {listing.card_type && <span>{listing.card_type}</span>}
                 </div>
-                {listing.card_id && <div style={{ fontSize: 11, color: '#3d2d6e', fontFamily: 'monospace', marginBottom: 3 }}>{listing.card_id}</div>}
-                {listing.set_name && <div style={{ fontSize: 12, color: '#7c6fa0', marginBottom: 3 }}>{listing.set_name}</div>}
-                {listing.city && <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 6 }}>📍 {listing.city}</div>}
+                {listing.card_id && <div style={{ fontSize: 11, color: '#67809a', fontFamily: 'monospace', marginBottom: 3 }}>{listing.card_id}</div>}
+                {listing.set_name && <div style={{ fontSize: 12, color: '#9db2c6', marginBottom: 3 }}>{listing.set_name}</div>}
+                {listing.city && <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 6 }}>📍 {listing.city}</div>}
               </div>
             </div>
 
             {listing.description && (
-              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#3d2d6e', marginBottom: 6 }}>Description</div>
+              <div style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 10, padding: '12px 14px', border: '1px solid rgba(140,176,208,0.06)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#67809a', marginBottom: 6 }}>Description</div>
                 <div style={{ fontSize: 13, color: '#b0bac8', lineHeight: 1.6 }}>{listing.description}</div>
               </div>
             )}
 
             <div
               onClick={() => seller && setSellerProfile(seller)}
-              style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: seller ? 'pointer' : 'default', transition: 'border-color 0.1s' }}
-              onMouseEnter={e => { if (seller) e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)' }}
+              style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: seller ? 'pointer' : 'default', transition: 'border-color 0.1s' }}
+              onMouseEnter={e => { if (seller) e.currentTarget.style.borderColor = 'rgba(200,162,74,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.12)' }}
             >
               <Avatar profile={seller} size={40} radius={10} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{seller?.username ?? 'Unknown'}</div>
-                {seller?.location && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>📍 {seller.location}</div>}
-                {seller && <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 3 }}>Click to view profile</div>}
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{seller?.username ?? 'Unknown'}</div>
+                {seller?.location && <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 2 }}>📍 {seller.location}</div>}
+                {seller && <div style={{ fontSize: 10, color: '#67809a', marginTop: 3 }}>Click to view profile</div>}
               </div>
-              <div style={{ fontSize: 11, color: '#3d2d6e' }}>
+              <div style={{ fontSize: 11, color: '#67809a' }}>
                 {new Date(listing.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
             </div>
@@ -289,14 +289,14 @@ function ListingDetailModal({ listing, currentUser, session, onClose, isMobile, 
               <button
                 onClick={handleMarkSold}
                 disabled={marking || listing.status === 'sold'}
-                style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: listing.status === 'sold' ? 'rgba(255,255,255,0.05)' : '#34d399', color: listing.status === 'sold' ? '#7c6fa0' : '#0f1117', fontSize: 13, fontWeight: 700, cursor: listing.status === 'sold' ? 'default' : 'pointer', fontFamily: 'inherit' }}
+                style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: listing.status === 'sold' ? 'rgba(140,176,208,0.05)' : '#3bb27e', color: listing.status === 'sold' ? '#9db2c6' : '#0f1117', fontSize: 13, fontWeight: 700, cursor: listing.status === 'sold' ? 'default' : 'pointer', fontFamily: 'inherit' }}
               >
                 {listing.status === 'sold' ? 'Sold ✓' : marking ? 'Marking...' : 'Mark as Sold'}
               </button>
             ) : (
               <button
                 onClick={() => currentUser ? setShowMsg(true) : onMessageGuest?.()}
-                style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 {currentUser ? 'Message Seller' : 'Sign in to Message'}
               </button>
@@ -339,7 +339,7 @@ function ListingCard({ listing, currentUser, onDetail, onMessage }) {
       onClick={() => onDetail(listing)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ background: 'rgba(139,92,246,0.05)', border: `1px solid ${hovered ? 'rgba(139,92,246,0.3)' : 'rgba(139,92,246,0.1)'}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', transform: hovered ? 'translateY(-2px)' : 'none', transition: 'all 0.15s', display: 'flex', flexDirection: 'column' }}
+      style={{ background: 'rgba(140,176,208,0.05)', border: `1px solid ${hovered ? 'rgba(200,162,74,0.3)' : 'rgba(140,176,208,0.1)'}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', transform: hovered ? 'translateY(-2px)' : 'none', transition: 'all 0.15s', display: 'flex', flexDirection: 'column' }}
     >
       <div style={{ position: 'relative', background: '#1a1025', height: 180, overflow: 'hidden' }}>
         <img
@@ -356,37 +356,37 @@ function ListingCard({ listing, currentUser, onDetail, onMessage }) {
         />
         {cardColor && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: cardColor }} />}
         {(listing.quantity ?? 1) > 1 && (
-          <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#a78bfa' }}>
+          <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(200,162,74,0.3)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#52a9cd' }}>
             x{listing.quantity}
           </div>
         )}
       </div>
 
       <div style={{ padding: '8px 10px', flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
-        <div style={{ fontSize: 11, color: '#3d2d6e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.card_name}</div>
+        <div style={{ fontSize: 11, color: '#67809a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {listing.set_name && <span>{listing.set_name} · </span>}
           <span style={{ fontFamily: 'monospace' }}>{listing.card_id}</span>
         </div>
         <div style={{ marginTop: 2 }}><ConditionBadge condition={listing.condition} /></div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', fontFamily: "'Space Mono', monospace", marginTop: 3 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8', fontFamily: "'Space Mono', monospace", marginTop: 3 }}>
           ${Number(listing.price).toFixed(2)}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, paddingTop: 7, borderTop: '1px solid rgba(140,176,208,0.05)' }}>
           <Avatar profile={seller} size={18} radius={5} />
-          <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#9db2c6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {seller?.username ?? 'Unknown'}
-            {listing.city && <span style={{ color: '#3d2d6e' }}> · {listing.city}</span>}
+            {listing.city && <span style={{ color: '#67809a' }}> · {listing.city}</span>}
           </div>
         </div>
         {isOwner ? (
-          <div style={{ marginTop: 5, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ marginTop: 5, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(140,176,208,0.15)', color: '#52a9cd', border: '1px solid rgba(200,162,74,0.3)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Your listing
           </div>
         ) : (
           <button
             onClick={e => { e.stopPropagation(); onMessage(listing) }}
-            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: currentUser ? 'none' : '1px solid rgba(139,92,246,0.25)', background: currentUser ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'transparent', color: currentUser ? '#fff' : '#a78bfa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
+            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: currentUser ? 'none' : '1px solid rgba(200,162,74,0.25)', background: currentUser ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'transparent', color: currentUser ? '#fff' : '#52a9cd', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
           >
             {currentUser ? 'Message Seller' : 'Sign in to Message'}
           </button>
@@ -513,13 +513,13 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>New Listing</div>
-            <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Step {step} of 2</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>New Listing</div>
+            <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 1 }}>Step {step} of 2</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
 
         <div style={{ overflowY: 'auto', maxHeight: 'calc(90vh - 140px)', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -528,18 +528,18 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
               {manualMode ? (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 13, color: '#7c6fa0' }}>Enter card details manually.</div>
-                    <button type="button" onClick={() => setManualMode(false)} style={{ fontSize: 12, color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                    <div style={{ fontSize: 13, color: '#9db2c6' }}>Enter card details manually.</div>
+                    <button type="button" onClick={() => setManualMode(false)} style={{ fontSize: 12, color: '#2f7da3', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                       ← Search instead
                     </button>
                   </div>
-                  <div style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div>
                       <label style={LABEL}>Card Name *</label>
                       <input type="text" placeholder="e.g. Monkey D. Luffy" value={manualName} onChange={e => setManualName(e.target.value)} style={{ ...INPUT, width: '100%' }} />
                     </div>
                     <div>
-                      <label style={{ ...LABEL, textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>Card ID <span style={{ fontWeight: 400, color: '#3d2d6e' }}>(optional — used for art preview)</span></label>
+                      <label style={{ ...LABEL, textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>Card ID <span style={{ fontWeight: 400, color: '#67809a' }}>(optional — used for art preview)</span></label>
                       <input type="text" placeholder="e.g. OP01-001" value={manualCardId} onChange={e => setManualCardId(e.target.value)} style={{ ...INPUT, width: '100%' }} />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -564,31 +564,31 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                       </div>
                     </div>
                     <div>
-                      <label style={{ ...LABEL, textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>Set Name <span style={{ fontWeight: 400, color: '#3d2d6e' }}>(optional)</span></label>
+                      <label style={{ ...LABEL, textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>Set Name <span style={{ fontWeight: 400, color: '#67809a' }}>(optional)</span></label>
                       <input type="text" placeholder="e.g. Romance Dawn" value={manualSetName} onChange={e => setManualSetName(e.target.value)} style={{ ...INPUT, width: '100%' }} />
                     </div>
                   </div>
                   {manualCardId.trim() && (
                     <div style={{ textAlign: 'center', marginTop: 4 }}>
-                      <img src={getCardImageUrl(manualCardId.trim())} alt="Card preview" style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.display = 'none' }} />
+                      <img src={getCardImageUrl(manualCardId.trim())} alt="Card preview" style={{ width: 110, borderRadius: 10, border: '1px solid rgba(140,176,208,0.1)' }} onError={e => { e.target.style.display = 'none' }} />
                     </div>
                   )}
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 13, color: '#7c6fa0' }}>Search for the card you want to sell.</div>
+                  <div style={{ fontSize: 13, color: '#9db2c6' }}>Search for the card you want to sell.</div>
                   <div ref={dropdownRef}>
                     <label style={LABEL}>Card Name or ID *</label>
                     {selectedCard ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '10px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(140,176,208,0.08)', border: '1px solid rgba(200,162,74,0.25)', borderRadius: 8, padding: '10px 12px' }}>
                         <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
-                          <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#7c6fa0', marginTop: 2 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{selectedCard.card_name}</div>
+                          <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#9db2c6', marginTop: 2 }}>
                             {selectedCard.card_color}{selectedCard.card_color && selectedCard.card_type ? ' · ' : ''}{selectedCard.card_type}{selectedCard.card_type ? ' · ' : ''}<span style={{ fontFamily: 'monospace' }}>{selectedCard.card_set_id}</span>
                           </div>
                         </div>
-                        <button onClick={() => { setSelectedCard(null); setCardQuery('') }} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
+                        <button onClick={() => { setSelectedCard(null); setCardQuery('') }} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
                       </div>
                     ) : (
                       <>
@@ -604,63 +604,63 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                 <button key={val || 'fc-all'} onClick={() => {
                                   if (val === '') { setFilterColor([]); return }
                                   setFilterColor(prev => prev.includes(val) ? prev.filter(x => x !== val) : prev.length < 2 ? [...prev, val] : prev)
-                                }} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: atMax ? 'default' : 'pointer', fontFamily: 'inherit', opacity: atMax ? 0.35 : 1, border: isActive && c ? `1px solid ${c}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && c ? `${c}26` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && c ? c : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                                }} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: atMax ? 'default' : 'pointer', fontFamily: 'inherit', opacity: atMax ? 0.35 : 1, border: isActive && c ? `1px solid ${c}66` : isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive && c ? `${c}26` : isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive && c ? c : isActive ? '#52a9cd' : '#9db2c6' }}>{label}</button>
                               )
                             })}
-                            {filterColor.length > 0 && <span style={{ fontSize: 10, color: '#3d2d6e', alignSelf: 'center', marginLeft: 2 }}>up to 2</span>}
+                            {filterColor.length > 0 && <span style={{ fontSize: 10, color: '#67809a', alignSelf: 'center', marginLeft: 2 }}>up to 2</span>}
                           </div>
                           {/* Type */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {[['', 'All Types'], ['Leader', 'Leader'], ['Character', 'Character'], ['Event', 'Event'], ['Stage', 'Stage']].map(([val, label]) => {
                               const isActive = filterType === val
                               return (
-                                <button key={val || 'ft-all'} onClick={() => setFilterType(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                                <button key={val || 'ft-all'} onClick={() => setFilterType(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive ? '#52a9cd' : '#9db2c6' }}>{label}</button>
                               )
                             })}
                           </div>
                           {/* Source */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                            <button onClick={() => setFilterSource('')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === '' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === '' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === '' ? '#a78bfa' : '#7c6fa0' }}>All</button>
+                            <button onClick={() => setFilterSource('')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === '' ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterSource === '' ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterSource === '' ? '#52a9cd' : '#9db2c6' }}>All</button>
                             <select
                               value={['', 'ST', 'Promos'].includes(filterSource) ? '' : filterSource}
                               onChange={e => setFilterSource(e.target.value)}
-                              style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.3)' : 'rgba(15,8,30,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.35)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
+                              style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(200,162,74,0.3)' : 'rgba(26,50,81,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(200,162,74,0.35)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#52a9cd' : '#9db2c6' }}
                             >
                               <option value="">Booster Sets</option>
                               {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','OP16','EB01','EB02','EB03','EB04','PRB01','PRB02'].map(s => (
                                 <option key={s} value={s}>{s}</option>
                               ))}
                             </select>
-                            <button onClick={() => setFilterSource('ST')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'ST' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'ST' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'ST' ? '#a78bfa' : '#7c6fa0' }}>Starter Decks</button>
-                            <button onClick={() => setFilterSource('Promos')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'Promos' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'Promos' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'Promos' ? '#a78bfa' : '#7c6fa0' }}>Promos</button>
+                            <button onClick={() => setFilterSource('ST')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'ST' ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterSource === 'ST' ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterSource === 'ST' ? '#52a9cd' : '#9db2c6' }}>Starter Decks</button>
+                            <button onClick={() => setFilterSource('Promos')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'Promos' ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterSource === 'Promos' ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterSource === 'Promos' ? '#52a9cd' : '#9db2c6' }}>Promos</button>
                           </div>
                           {/* Alt Art */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
                               const isActive = filterAltArt === val
-                              const altColors = { parallel: '#e879f9', sp: '#34d399', manga: '#38bdf8', tr: '#f97316' }
+                              const altColors = { parallel: '#d56a9c', sp: '#3bb27e', manga: '#38bdf8', tr: '#e08a3c' }
                               const ac = altColors[val]
                               return (
-                                <button key={val || 'fa-all'} onClick={() => setFilterAltArt(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive && ac ? `1px solid ${ac}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && ac ? `${ac}22` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && ac ? ac : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                                <button key={val || 'fa-all'} onClick={() => setFilterAltArt(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive && ac ? `1px solid ${ac}66` : isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive && ac ? `${ac}22` : isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive && ac ? ac : isActive ? '#52a9cd' : '#9db2c6' }}>{label}</button>
                               )
                             })}
                           </div>
                           {/* Cost */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                            <button onClick={() => setFilterCost(null)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterCost === null ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterCost === null ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterCost === null ? '#a78bfa' : '#7c6fa0' }}>All Costs</button>
+                            <button onClick={() => setFilterCost(null)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterCost === null ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterCost === null ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterCost === null ? '#52a9cd' : '#9db2c6' }}>All Costs</button>
                             {[0,1,2,3,4,5,6,7,8,9,10].map(n => {
                               const isActive = filterCost === n
                               return (
-                                <button key={n} onClick={() => setFilterCost(isActive ? null : n)} style={{ padding: '4px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{n}</button>
+                                <button key={n} onClick={() => setFilterCost(isActive ? null : n)} style={{ padding: '4px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive ? '#52a9cd' : '#9db2c6' }}>{n}</button>
                               )
                             })}
                           </div>
                         </div>
                         <input type="text" placeholder="e.g. Monkey D. Luffy or OP14-120" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
                         {dropdownOpen && cardQuery.length >= 2 && (
-                          <div style={{ maxHeight: 360, overflowY: 'auto', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, marginTop: 6, background: 'rgba(12,8,20,0.98)' }}>
+                          <div style={{ maxHeight: 360, overflowY: 'auto', border: '1px solid rgba(140,176,208,0.2)', borderRadius: 10, marginTop: 6, background: 'rgba(8,16,27,0.98)' }}>
                             {cardSearching ? (
-                              <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
+                              <div style={{ padding: 14, fontSize: 13, color: '#9db2c6' }}>Searching...</div>
                             ) : (() => {
                               function getAltArtType(card) {
                                 const name = (card.card_name ?? '').toLowerCase()
@@ -687,12 +687,12 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                 if (filterCost !== null && String(card.card_cost ?? '') !== String(filterCost)) return false
                                 return true
                               })
-                              if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
+                              if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#67809a' }}>No cards found</div>
                               const ALT_BADGES = {
-                                sp:       { label: 'SP',       color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)' },
-                                tr:       { label: 'TR',       color: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.3)' },
+                                sp:       { label: 'SP',       color: '#3bb27e', bg: 'rgba(59,178,126,0.12)',  border: 'rgba(59,178,126,0.3)' },
+                                tr:       { label: 'TR',       color: '#e08a3c', bg: 'rgba(224,138,60,0.12)', border: 'rgba(224,138,60,0.3)' },
                                 manga:    { label: 'MANGA',    color: '#38bdf8', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.3)' },
-                                parallel: { label: 'PARALLEL', color: '#e879f9', bg: 'rgba(232,121,249,0.12)',border: 'rgba(232,121,249,0.3)' },
+                                parallel: { label: 'PARALLEL', color: '#d56a9c', bg: 'rgba(213,106,156,0.12)',border: 'rgba(213,106,156,0.3)' },
                               }
                               return filtered.map(card => {
                                 const cid = card.card_set_id ?? ''
@@ -700,26 +700,26 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                                 const isST = /^ST/i.test(cid)
                                 const altType = getAltArtType(card)
                                 const badge = isPromo
-                                  ? { label: 'PROMO', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.3)' }
+                                  ? { label: 'PROMO', color: '#dcb35e', bg: 'rgba(200,162,74,0.12)', border: 'rgba(200,162,74,0.3)' }
                                   : isST
-                                  ? { label: 'ST', color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' }
+                                  ? { label: 'ST', color: '#52a9cd', bg: 'rgba(140,176,208,0.12)', border: 'rgba(200,162,74,0.3)' }
                                   : altType ? ALT_BADGES[altType]
                                   : null
                                 return (
-                                  <div key={card.card_image_id ?? card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                  <div key={card.card_image_id ?? card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(140,176,208,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                     <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
-                                        <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</span>
+                                        <span style={{ fontSize: 14, fontWeight: 600, color: '#e9f1f8' }}>{card.card_name}</span>
                                         {badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 4, background: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, letterSpacing: '0.5px', flexShrink: 0 }}>{badge.label}</span>}
                                       </div>
-                                      <div style={{ fontSize: 12, color: '#7c6fa0' }}>
-                                        {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
-                                        {card.card_color && card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                                      <div style={{ fontSize: 12, color: '#9db2c6' }}>
+                                        {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#9db2c6' }}>{card.card_color}</span>}
+                                        {card.card_color && card.card_type && <span style={{ color: '#67809a', margin: '0 4px' }}>·</span>}
                                         {card.card_type && <span>{card.card_type}</span>}
-                                        {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                                        {card.card_type && <span style={{ color: '#67809a', margin: '0 4px' }}>·</span>}
                                         <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
-                                        {card.set_name && <><span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span><span>{card.set_name}</span></>}
+                                        {card.set_name && <><span style={{ color: '#67809a', margin: '0 4px' }}>·</span><span>{card.set_name}</span></>}
                                       </div>
                                     </div>
                                   </div>
@@ -733,12 +733,12 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                   </div>
                   {selectedCard && (
                     <div style={{ textAlign: 'center', marginTop: 4 }}>
-                      <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
+                      <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 110, borderRadius: 10, border: '1px solid rgba(140,176,208,0.1)' }} onError={e => { e.target.style.opacity = '0.2' }} />
                     </div>
                   )}
                   {!selectedCard && (
                     <div style={{ textAlign: 'right', marginTop: 4 }}>
-                      <button type="button" onClick={() => setManualMode(true)} style={{ fontSize: 12, color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                      <button type="button" onClick={() => setManualMode(true)} style={{ fontSize: 12, color: '#2f7da3', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                         Can't find your card? Enter manually →
                       </button>
                     </div>
@@ -748,7 +748,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
             </>
           ) : (
             <>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 8, padding: '10px 12px' }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 8, padding: '10px 12px' }}>
                 <img
                   src={getCardImageUrl(manualMode ? manualCardId.trim() : (selectedCard ?? ''))}
                   alt={manualMode ? manualName : selectedCard?.card_name}
@@ -756,10 +756,10 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                   onError={e => { e.target.style.opacity = '0.2' }}
                 />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>
                     {manualMode ? manualName : selectedCard?.card_name}
                   </div>
-                  <div style={{ fontSize: 11, color: COLORS[manualMode ? manualColor : selectedCard?.card_color] ?? '#7c6fa0', marginTop: 1 }}>
+                  <div style={{ fontSize: 11, color: COLORS[manualMode ? manualColor : selectedCard?.card_color] ?? '#9db2c6', marginTop: 1 }}>
                     {manualMode ? (
                       <>
                         {manualColor && <span>{manualColor}</span>}
@@ -767,7 +767,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
                         {manualType && <span>{manualType}</span>}
                         {manualType && manualCardId && <span> · </span>}
                         {manualCardId && <span style={{ fontFamily: 'monospace' }}>{manualCardId}</span>}
-                        {!manualColor && !manualType && !manualCardId && <span style={{ color: '#3d2d6e' }}>Manual entry</span>}
+                        {!manualColor && !manualType && !manualCardId && <span style={{ color: '#67809a' }}>Manual entry</span>}
                       </>
                     ) : (
                       <>{selectedCard?.card_color} · <span style={{ fontFamily: 'monospace' }}>{selectedCard?.card_set_id}</span></>
@@ -796,7 +796,7 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
               <div>
                 <label style={LABEL}>Description</label>
                 <textarea placeholder="Optional: describe condition, shipping info, etc." value={description} onChange={e => setDescription(e.target.value.slice(0, 500))} style={{ ...INPUT, width: '100%', minHeight: 80, resize: 'vertical' }} />
-                <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 3, textAlign: 'right' }}>{description.length}/500</div>
+                <div style={{ fontSize: 11, color: '#67809a', marginTop: 3, textAlign: 'right' }}>{description.length}/500</div>
               </div>
               <div>
                 <label style={LABEL}>City</label>
@@ -804,29 +804,29 @@ function CreateListingModal({ session, profile, onClose, onSuccess, isMobile }) 
               </div>
               <div>
                 <label style={LABEL}>Photo (optional)</label>
-                <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontSize: 12, color: '#7c6fa0', cursor: 'pointer' }} />
+                <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontSize: 12, color: '#9db2c6', cursor: 'pointer' }} />
                 {photoPreview && (
                   <div style={{ marginTop: 10 }}>
-                    <img src={photoPreview} alt="preview" style={{ maxWidth: 150, maxHeight: 200, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', display: 'block' }} />
-                    <button onClick={() => { setPhotoFile(null); setPhotoPreview(null) }} style={{ marginTop: 5, fontSize: 11, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, display: 'block' }}>Remove photo</button>
+                    <img src={photoPreview} alt="preview" style={{ maxWidth: 150, maxHeight: 200, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', objectFit: 'contain', display: 'block' }} />
+                    <button onClick={() => { setPhotoFile(null); setPhotoPreview(null) }} style={{ marginTop: 5, fontSize: 11, color: '#d24a3a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, display: 'block' }}>Remove photo</button>
                   </div>
                 )}
               </div>
-              {error && <div style={{ fontSize: 12, color: '#f05252', background: 'rgba(240,82,82,0.08)', borderRadius: 7, padding: '8px 12px', border: '1px solid rgba(240,82,82,0.2)' }}>{error}</div>}
+              {error && <div style={{ fontSize: 12, color: '#d24a3a', background: 'rgba(210,74,58,0.08)', borderRadius: 7, padding: '8px 12px', border: '1px solid rgba(210,74,58,0.2)' }}>{error}</div>}
             </>
           )}
         </div>
 
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', gap: 8 }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', gap: 8 }}>
           {step === 2 && (
-            <button onClick={() => setStep(1)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={() => setStep(1)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
               ← Back
             </button>
           )}
           <button
             onClick={step === 1 ? () => canAdvance && setStep(2) : handleSubmit}
             disabled={step === 1 ? !canAdvance : !canSubmit}
-            style={{ flex: 2, padding: 10, borderRadius: 8, border: 'none', background: (step === 1 ? canAdvance : canSubmit) ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: (step === 1 ? canAdvance : canSubmit) ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: (step === 1 ? canAdvance : canSubmit) ? 'pointer' : 'default', fontFamily: 'inherit' }}
+            style={{ flex: 2, padding: 10, borderRadius: 8, border: 'none', background: (step === 1 ? canAdvance : canSubmit) ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'rgba(140,176,208,0.05)', color: (step === 1 ? canAdvance : canSubmit) ? '#fff' : '#9db2c6', fontSize: 13, fontWeight: 700, cursor: (step === 1 ? canAdvance : canSubmit) ? 'pointer' : 'default', fontFamily: 'inherit' }}
           >
             {step === 1 ? 'Continue →' : saving ? 'Creating...' : 'Create Listing'}
           </button>
@@ -886,17 +886,17 @@ function EditListingModal({ listing, session, onClose, onSuccess, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 520, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Edit Listing</div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 520, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>Edit Listing</div>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 12px', opacity: 0.7 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(140,176,208,0.03)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 8, padding: '10px 12px', opacity: 0.7 }}>
             <img src={getCardImageUrl(listing.card_id)} alt={listing.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{listing.card_name}</div>
-              <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 1 }}>Card selection locked</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{listing.card_name}</div>
+              <div style={{ fontSize: 11, color: '#67809a', marginTop: 1 }}>Card selection locked</div>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -918,7 +918,7 @@ function EditListingModal({ listing, session, onClose, onSuccess, isMobile }) {
           <div>
             <label style={LABEL}>Description</label>
             <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 500))} style={{ ...INPUT, width: '100%', minHeight: 80, resize: 'vertical' }} />
-            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 3, textAlign: 'right' }}>{description.length}/500</div>
+            <div style={{ fontSize: 11, color: '#67809a', marginTop: 3, textAlign: 'right' }}>{description.length}/500</div>
           </div>
           <div>
             <label style={LABEL}>City</label>
@@ -928,16 +928,16 @@ function EditListingModal({ listing, session, onClose, onSuccess, isMobile }) {
             <label style={LABEL}>Photo</label>
             {photoPreview && !removePhoto && (
               <div style={{ marginBottom: 10 }}>
-                <img src={photoPreview} alt="preview" style={{ maxWidth: 150, maxHeight: 200, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', display: 'block' }} />
-                <button onClick={() => { setRemovePhoto(true); setPhotoPreview(null); setPhotoFile(null) }} style={{ marginTop: 5, fontSize: 11, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, display: 'block' }}>Remove photo</button>
+                <img src={photoPreview} alt="preview" style={{ maxWidth: 150, maxHeight: 200, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', objectFit: 'contain', display: 'block' }} />
+                <button onClick={() => { setRemovePhoto(true); setPhotoPreview(null); setPhotoFile(null) }} style={{ marginTop: 5, fontSize: 11, color: '#d24a3a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, display: 'block' }}>Remove photo</button>
               </div>
             )}
-            <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontSize: 12, color: '#7c6fa0', cursor: 'pointer' }} />
+            <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontSize: 12, color: '#9db2c6', cursor: 'pointer' }} />
           </div>
-          {error && <div style={{ fontSize: 12, color: '#f05252', background: 'rgba(240,82,82,0.08)', borderRadius: 7, padding: '8px 12px', border: '1px solid rgba(240,82,82,0.2)' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#d24a3a', background: 'rgba(210,74,58,0.08)', borderRadius: 7, padding: '8px 12px', border: '1px solid rgba(210,74,58,0.2)' }}>{error}</div>}
         </div>
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.12)', flexShrink: 0 }}>
-          <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: saving ? '#7c6fa0' : '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(140,176,208,0.12)', flexShrink: 0 }}>
+          <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: saving ? 'rgba(140,176,208,0.05)' : 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: saving ? '#9db2c6' : '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -999,11 +999,11 @@ function InboxSection({ session, isMobile }) {
     setLoading(false)
   }
 
-  if (loading) return <div style={{ fontSize: 13, color: '#7c6fa0', textAlign: 'center', padding: 20 }}>Loading messages...</div>
+  if (loading) return <div style={{ fontSize: 13, color: '#9db2c6', textAlign: 'center', padding: 20 }}>Loading messages...</div>
   if (conversations.length === 0) return (
-    <div style={{ textAlign: 'center', padding: '36px 20px', color: '#3d2d6e' }}>
+    <div style={{ textAlign: 'center', padding: '36px 20px', color: '#67809a' }}>
       <div style={{ fontSize: 34, marginBottom: 10 }}>✉️</div>
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#7c6fa0', marginBottom: 4 }}>No messages yet</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#9db2c6', marginBottom: 4 }}>No messages yet</div>
       <div style={{ fontSize: 12 }}>Messages from buyers and sellers will appear here</div>
     </div>
   )
@@ -1015,20 +1015,20 @@ function InboxSection({ session, isMobile }) {
           <div
             key={c.key}
             onClick={() => setActiveConvo(c)}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = c.unreadCount > 0 ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.1)' }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(139,92,246,0.05)', border: `1px solid ${c.unreadCount > 0 ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.1)'}`, borderRadius: 10, padding: '10px 14px', cursor: 'pointer', transition: 'border-color 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(200,162,74,0.3)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = c.unreadCount > 0 ? 'rgba(200,162,74,0.25)' : 'rgba(140,176,208,0.1)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(140,176,208,0.05)', border: `1px solid ${c.unreadCount > 0 ? 'rgba(200,162,74,0.25)' : 'rgba(140,176,208,0.1)'}`, borderRadius: 10, padding: '10px 14px', cursor: 'pointer', transition: 'border-color 0.15s' }}
           >
-            <img src={getCardImageUrl(c.listing?.card_id ?? '')} alt={c.listing?.card_name ?? ''} style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: '1px solid rgba(255,255,255,0.06)' }} onError={e => { e.target.style.opacity = '0.2' }} />
+            <img src={getCardImageUrl(c.listing?.card_id ?? '')} alt={c.listing?.card_name ?? ''} style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: '1px solid rgba(140,176,208,0.06)' }} onError={e => { e.target.style.opacity = '0.2' }} />
             <Avatar profile={c.otherProfile} size={30} radius={7} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.listing?.card_name ?? 'Unknown listing'}</div>
-              <div style={{ fontSize: 11, color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.listing?.card_name ?? 'Unknown listing'}</div>
+              <div style={{ fontSize: 11, color: '#9db2c6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
                 {c.otherProfile?.username ?? 'Unknown'} · {c.lastMsg.body.slice(0, 60)}{c.lastMsg.body.length > 60 ? '...' : ''}
               </div>
             </div>
             {c.unreadCount > 0 && (
-              <div style={{ minWidth: 20, height: 20, borderRadius: 10, background: '#8b5cf6', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0 }}>
+              <div style={{ minWidth: 20, height: 20, borderRadius: 10, background: '#2f7da3', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0 }}>
                 {c.unreadCount}
               </div>
             )}
@@ -1099,37 +1099,37 @@ function WantMessageModal({ want, currentUser, otherUser, onClose, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 300, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 480, maxHeight: isMobile ? '90vh' : '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
             src={`https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
             alt={want.card_name}
-            style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
+            style={{ width: 30, height: 42, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: '1px solid rgba(140,176,208,0.08)', flexShrink: 0 }}
             onError={e => { e.target.style.display = 'none' }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {want.card_name} <span style={{ color: '#7c6fa0', fontWeight: 400 }}>x{want.quantity}</span>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {want.card_name} <span style={{ color: '#9db2c6', fontWeight: 400 }}>x{want.quantity}</span>
             </div>
-            <div style={{ fontSize: 11, color: '#7c6fa0' }}>Wanted by {otherUser?.username ?? 'Buyer'}</div>
+            <div style={{ fontSize: 11, color: '#9db2c6' }}>Wanted by {otherUser?.username ?? 'Buyer'}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading ? (
-            <div style={{ color: '#7c6fa0', fontSize: 13, textAlign: 'center', padding: 20 }}>Loading...</div>
+            <div style={{ color: '#9db2c6', fontSize: 13, textAlign: 'center', padding: 20 }}>Loading...</div>
           ) : messages.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 20px' }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
-              <div style={{ fontSize: 13, color: '#7c6fa0' }}>Let them know you have this card!</div>
+              <div style={{ fontSize: 13, color: '#9db2c6' }}>Let them know you have this card!</div>
             </div>
           ) : messages.map(msg => {
             const isMe = msg.sender_id === currentUser.id
             return (
               <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '75%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.06)', color: isMe ? '#fff' : '#f0f2f5', fontSize: 13, lineHeight: 1.5 }}>
+                <div style={{ maxWidth: '75%', padding: '8px 12px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'rgba(140,176,208,0.06)', color: isMe ? '#fff' : '#e9f1f8', fontSize: 13, lineHeight: 1.5 }}>
                   {msg.body}
-                  <div style={{ fontSize: 10, color: isMe ? 'rgba(255,255,255,0.5)' : '#3d2d6e', marginTop: 3, textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, color: isMe ? 'rgba(140,176,208,0.5)' : '#67809a', marginTop: 3, textAlign: 'right' }}>
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -1138,9 +1138,9 @@ function WantMessageModal({ want, currentUser, otherUser, onClose, isMobile }) {
           })}
           <div ref={bottomRef} />
         </div>
-        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', gap: 8 }}>
+        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', gap: 8 }}>
           <input type="text" placeholder="Type a message..." value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} style={{ ...INPUT, flex: 1 }} />
-          <button onClick={sendMessage} disabled={sending || !text.trim()} style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: text.trim() ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: text.trim() ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>
+          <button onClick={sendMessage} disabled={sending || !text.trim()} style={{ padding: '9px 16px', borderRadius: 8, border: 'none', background: text.trim() ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'rgba(140,176,208,0.05)', color: text.trim() ? '#fff' : '#9db2c6', fontSize: 13, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', fontFamily: 'inherit', flexShrink: 0 }}>
             Send
           </button>
         </div>
@@ -1253,27 +1253,27 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 520, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 520, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(140,176,208,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Looking For</div>
-            <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Post a card you want to find</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>Looking For</div>
+            <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 1 }}>Post a card you want to find</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div ref={dropdownRef}>
             <label style={LABEL}>Card *</label>
             {selectedCard ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, padding: '10px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(200,162,74,0.08)', border: '1px solid rgba(200,162,74,0.25)', borderRadius: 8, padding: '10px 12px' }}>
                 <img src={getCardImageUrl(selectedCard)} alt={selectedCard.card_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{selectedCard.card_name}</div>
-                  <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#7c6fa0', marginTop: 2 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{selectedCard.card_name}</div>
+                  <div style={{ fontSize: 11, color: COLORS[selectedCard.card_color] ?? '#9db2c6', marginTop: 2 }}>
                     {selectedCard.card_color}{selectedCard.card_color && selectedCard.card_type ? ' · ' : ''}{selectedCard.card_type}{selectedCard.card_type ? ' · ' : ''}<span style={{ fontFamily: 'monospace' }}>{selectedCard.card_set_id}</span>
                   </div>
                 </div>
-                <button onClick={() => { setSelectedCard(null); setCardQuery('') }} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
+                <button onClick={() => { setSelectedCard(null); setCardQuery('') }} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
               </div>
             ) : (
               <>
@@ -1289,69 +1289,69 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
                         <button key={val || 'fc-all'} onClick={() => {
                           if (val === '') { setFilterColor([]); return }
                           setFilterColor(prev => prev.includes(val) ? prev.filter(x => x !== val) : prev.length < 2 ? [...prev, val] : prev)
-                        }} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: atMax ? 'default' : 'pointer', fontFamily: 'inherit', opacity: atMax ? 0.35 : 1, border: isActive && c ? `1px solid ${c}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && c ? `${c}26` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && c ? c : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                        }} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: atMax ? 'default' : 'pointer', fontFamily: 'inherit', opacity: atMax ? 0.35 : 1, border: isActive && c ? `1px solid ${c}66` : isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive && c ? `${c}26` : isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive && c ? c : isActive ? '#52a9cd' : '#9db2c6' }}>{label}</button>
                       )
                     })}
-                    {filterColor.length > 0 && <span style={{ fontSize: 10, color: '#3d2d6e', alignSelf: 'center', marginLeft: 2 }}>up to 2</span>}
+                    {filterColor.length > 0 && <span style={{ fontSize: 10, color: '#67809a', alignSelf: 'center', marginLeft: 2 }}>up to 2</span>}
                   </div>
                   {/* Type */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {[['', 'All Types'], ['Leader', 'Leader'], ['Character', 'Character'], ['Event', 'Event'], ['Stage', 'Stage']].map(([val, label]) => {
                       const isActive = filterType === val
                       return (
-                        <button key={val || 'ft-all'} onClick={() => setFilterType(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                        <button key={val || 'ft-all'} onClick={() => setFilterType(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive ? '#52a9cd' : '#9db2c6' }}>{label}</button>
                       )
                     })}
                   </div>
                   {/* Source */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                    <button onClick={() => setFilterSource('')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === '' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === '' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === '' ? '#a78bfa' : '#7c6fa0' }}>All</button>
+                    <button onClick={() => setFilterSource('')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === '' ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterSource === '' ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterSource === '' ? '#52a9cd' : '#9db2c6' }}>All</button>
                     <select
                       value={['', 'ST', 'Promos'].includes(filterSource) ? '' : filterSource}
                       onChange={e => setFilterSource(e.target.value)}
-                      style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.3)' : 'rgba(15,8,30,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.35)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
+                      style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(200,162,74,0.3)' : 'rgba(26,50,81,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(200,162,74,0.35)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#52a9cd' : '#9db2c6' }}
                     >
                       <option value="">Booster Sets</option>
                       {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','OP16','EB01','EB02','EB03','EB04','PRB01','PRB02'].map(s => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
-                    <button onClick={() => setFilterSource('ST')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'ST' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'ST' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'ST' ? '#a78bfa' : '#7c6fa0' }}>Starter Decks</button>
-                    <button onClick={() => setFilterSource('Promos')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'Promos' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterSource === 'Promos' ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterSource === 'Promos' ? '#a78bfa' : '#7c6fa0' }}>Promos</button>
+                    <button onClick={() => setFilterSource('ST')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'ST' ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterSource === 'ST' ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterSource === 'ST' ? '#52a9cd' : '#9db2c6' }}>Starter Decks</button>
+                    <button onClick={() => setFilterSource('Promos')} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterSource === 'Promos' ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterSource === 'Promos' ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterSource === 'Promos' ? '#52a9cd' : '#9db2c6' }}>Promos</button>
                   </div>
                   {/* Alt Art */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
                       const isActive = filterAltArt === val
-                      const altColors = { parallel: '#e879f9', sp: '#34d399', manga: '#38bdf8', tr: '#f97316' }
+                      const altColors = { parallel: '#d56a9c', sp: '#3bb27e', manga: '#38bdf8', tr: '#e08a3c' }
                       const ac = altColors[val]
                       return (
-                        <button key={val || 'fa-all'} onClick={() => setFilterAltArt(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive && ac ? `1px solid ${ac}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive && ac ? `${ac}22` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive && ac ? ac : isActive ? '#a78bfa' : '#7c6fa0' }}>{label}</button>
+                        <button key={val || 'fa-all'} onClick={() => setFilterAltArt(val)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive && ac ? `1px solid ${ac}66` : isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive && ac ? `${ac}22` : isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive && ac ? ac : isActive ? '#52a9cd' : '#9db2c6' }}>{label}</button>
                       )
                     })}
                   </div>
                   {/* Cost */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                    <button onClick={() => setFilterCost(null)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterCost === null ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: filterCost === null ? 'rgba(139,92,246,0.2)' : 'transparent', color: filterCost === null ? '#a78bfa' : '#7c6fa0' }}>All Costs</button>
+                    <button onClick={() => setFilterCost(null)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: filterCost === null ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: filterCost === null ? 'rgba(140,176,208,0.2)' : 'transparent', color: filterCost === null ? '#52a9cd' : '#9db2c6' }}>All Costs</button>
                     {[0,1,2,3,4,5,6,7,8,9,10].map(n => {
                       const isActive = filterCost === n
                       return (
-                        <button key={n} onClick={() => setFilterCost(isActive ? null : n)} style={{ padding: '4px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.2)', background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent', color: isActive ? '#a78bfa' : '#7c6fa0' }}>{n}</button>
+                        <button key={n} onClick={() => setFilterCost(isActive ? null : n)} style={{ padding: '4px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', border: isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.2)', background: isActive ? 'rgba(140,176,208,0.2)' : 'transparent', color: isActive ? '#52a9cd' : '#9db2c6' }}>{n}</button>
                       )
                     })}
                   </div>
                 </div>
                 <input type="text" placeholder="e.g. Monkey D. Luffy or OP01-001" value={cardQuery} onChange={handleCardQuery} onFocus={() => cardQuery.length >= 2 && setDropdownOpen(true)} style={{ ...INPUT, width: '100%', padding: '11px 14px', fontSize: 14 }} />
                 {dropdownOpen && cardQuery.length >= 2 && (
-                  <div style={{ maxHeight: 360, overflowY: 'auto', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, marginTop: 6, background: 'rgba(12,8,20,0.98)' }}>
+                  <div style={{ maxHeight: 360, overflowY: 'auto', border: '1px solid rgba(140,176,208,0.2)', borderRadius: 10, marginTop: 6, background: 'rgba(8,16,27,0.98)' }}>
                     {cardSearching ? (
-                      <div style={{ padding: 14, fontSize: 13, color: '#7c6fa0' }}>Searching...</div>
+                      <div style={{ padding: 14, fontSize: 13, color: '#9db2c6' }}>Searching...</div>
                     ) : (() => {
                       const ALT_BADGES = {
-                        sp:       { label: 'SP',       color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.3)' },
-                        tr:       { label: 'TR',       color: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.3)' },
+                        sp:       { label: 'SP',       color: '#3bb27e', bg: 'rgba(59,178,126,0.12)',  border: 'rgba(59,178,126,0.3)' },
+                        tr:       { label: 'TR',       color: '#e08a3c', bg: 'rgba(224,138,60,0.12)', border: 'rgba(224,138,60,0.3)' },
                         manga:    { label: 'MANGA',    color: '#38bdf8', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.3)' },
-                        parallel: { label: 'PARALLEL', color: '#e879f9', bg: 'rgba(232,121,249,0.12)',border: 'rgba(232,121,249,0.3)' },
+                        parallel: { label: 'PARALLEL', color: '#d56a9c', bg: 'rgba(213,106,156,0.12)',border: 'rgba(213,106,156,0.3)' },
                       }
                       const filtered = cardResults.filter(card => {
                         if (filterColor.length > 0) {
@@ -1369,33 +1369,33 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
                         if (filterCost !== null && String(card.card_cost ?? '') !== String(filterCost)) return false
                         return true
                       })
-                      if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#3d2d6e' }}>No cards found</div>
+                      if (filtered.length === 0) return <div style={{ padding: 14, fontSize: 13, color: '#67809a' }}>No cards found</div>
                       return filtered.map(card => {
                         const cid = card.card_set_id ?? ''
                         const isPromo = /^P-/i.test(cid)
                         const isST = /^ST/i.test(cid)
                         const altType = getAltArtType(card)
                         const badge = isPromo
-                          ? { label: 'PROMO', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.3)' }
+                          ? { label: 'PROMO', color: '#dcb35e', bg: 'rgba(200,162,74,0.12)', border: 'rgba(200,162,74,0.3)' }
                           : isST
-                          ? { label: 'ST', color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' }
+                          ? { label: 'ST', color: '#52a9cd', bg: 'rgba(140,176,208,0.12)', border: 'rgba(200,162,74,0.3)' }
                           : altType ? ALT_BADGES[altType]
                           : null
                         return (
-                          <div key={card.card_image_id ?? card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                          <div key={card.card_image_id ?? card.card_set_id} onClick={() => { setSelectedCard(card); setCardQuery(''); setDropdownOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(140,176,208,0.04)', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                             <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</span>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#e9f1f8' }}>{card.card_name}</span>
                                 {badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 4, background: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, letterSpacing: '0.5px', flexShrink: 0 }}>{badge.label}</span>}
                               </div>
-                              <div style={{ fontSize: 12, color: '#7c6fa0' }}>
-                                {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>}
-                                {card.card_color && card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                              <div style={{ fontSize: 12, color: '#9db2c6' }}>
+                                {card.card_color && <span style={{ color: COLORS[card.card_color] ?? '#9db2c6' }}>{card.card_color}</span>}
+                                {card.card_color && card.card_type && <span style={{ color: '#67809a', margin: '0 4px' }}>·</span>}
                                 {card.card_type && <span>{card.card_type}</span>}
-                                {card.card_type && <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>}
+                                {card.card_type && <span style={{ color: '#67809a', margin: '0 4px' }}>·</span>}
                                 <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
-                                {card.set_name && <><span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span><span>{card.set_name}</span></>}
+                                {card.set_name && <><span style={{ color: '#67809a', margin: '0 4px' }}>·</span><span>{card.set_name}</span></>}
                               </div>
                             </div>
                           </div>
@@ -1413,16 +1413,16 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
                 <img
                   src={photoPreview ?? getCardImageUrl(selectedCard)}
                   alt={selectedCard.card_name}
-                  style={{ width: 80, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', display: 'block' }}
+                  style={{ width: 80, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', display: 'block' }}
                   onError={e => { if (!photoPreview) e.target.style.opacity = '0.2' }}
                 />
                 {photoPreview && (
-                  <button onClick={() => { setPhotoFile(null); setPhotoPreview(null) }} style={{ marginTop: 4, fontSize: 10, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, display: 'block', width: '100%', textAlign: 'center' }}>Remove</button>
+                  <button onClick={() => { setPhotoFile(null); setPhotoPreview(null) }} style={{ marginTop: 4, fontSize: 10, color: '#d24a3a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, display: 'block', width: '100%', textAlign: 'center' }}>Remove</button>
                 )}
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div>
-                  <label style={LABEL}>Post Title <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+                  <label style={LABEL}>Post Title <span style={{ fontWeight: 400, color: '#67809a', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
                   <input
                     type="text"
                     placeholder={selectedCard.card_name}
@@ -1432,8 +1432,8 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
                   />
                 </div>
                 <div>
-                  <label style={LABEL}>Photo <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
-                  <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontSize: 12, color: '#7c6fa0', cursor: 'pointer' }} />
+                  <label style={LABEL}>Photo <span style={{ fontWeight: 400, color: '#67809a', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ fontSize: 12, color: '#9db2c6', cursor: 'pointer' }} />
                 </div>
               </div>
             </div>
@@ -1444,19 +1444,19 @@ function CreateWantModal({ session, profile, onClose, onSuccess, isMobile }) {
               <input type="number" min="1" max="99" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ ...INPUT, width: '100%' }} />
             </div>
             <div>
-              <label style={LABEL}>Max Price <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+              <label style={LABEL}>Max Price <span style={{ fontWeight: 400, color: '#67809a', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
               <input type="number" min="0" step="0.01" placeholder="$0.00" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ ...INPUT, width: '100%' }} />
             </div>
           </div>
           <div>
-            <label style={LABEL}>Notes <span style={{ fontWeight: 400, color: '#3d2d6e', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
+            <label style={LABEL}>Notes <span style={{ fontWeight: 400, color: '#67809a', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>(optional)</span></label>
             <textarea placeholder="Any condition preferences, specific art, etc." value={notes} onChange={e => setNotes(e.target.value.slice(0, 300))} style={{ ...INPUT, width: '100%', minHeight: 70, resize: 'vertical' }} />
-            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 3, textAlign: 'right' }}>{notes.length}/300</div>
+            <div style={{ fontSize: 11, color: '#67809a', marginTop: 3, textAlign: 'right' }}>{notes.length}/300</div>
           </div>
-          {error && <div style={{ fontSize: 12, color: '#f05252', background: 'rgba(240,82,82,0.08)', borderRadius: 7, padding: '8px 12px', border: '1px solid rgba(240,82,82,0.2)' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#d24a3a', background: 'rgba(210,74,58,0.08)', borderRadius: 7, padding: '8px 12px', border: '1px solid rgba(210,74,58,0.2)' }}>{error}</div>}
         </div>
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.12)', flexShrink: 0 }}>
-          <button onClick={handleSubmit} disabled={!selectedCard || saving} style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: selectedCard && !saving ? 'linear-gradient(135deg, #d97706, #fbbf24)' : 'rgba(255,255,255,0.05)', color: selectedCard && !saving ? '#0f1117' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: selectedCard && !saving ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(140,176,208,0.12)', flexShrink: 0 }}>
+          <button onClick={handleSubmit} disabled={!selectedCard || saving} style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: selectedCard && !saving ? 'linear-gradient(135deg, #c8a24a, #dcb35e)' : 'rgba(140,176,208,0.05)', color: selectedCard && !saving ? '#0f1117' : '#9db2c6', fontSize: 13, fontWeight: 700, cursor: selectedCard && !saving ? 'pointer' : 'default', fontFamily: 'inherit' }}>
             {saving ? 'Posting...' : 'Post Want'}
           </button>
         </div>
@@ -1476,13 +1476,13 @@ function WantDetailModal({ want, currentUser, session, onClose, onContact, isMob
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(251,191,36,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(251,191,36,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(200,162,74,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 560, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(200,162,74,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'rgba(251,191,36,0.9)', color: '#0f1117', letterSpacing: '0.4px' }}>WTB</span>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{want.card_name}</div>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'rgba(200,162,74,0.9)', color: '#0f1117', letterSpacing: '0.4px' }}>WTB</span>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{want.card_name}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
         </div>
 
         <div style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1490,7 +1490,7 @@ function WantDetailModal({ want, currentUser, session, onClose, onContact, isMob
             <img
               src={want.photo_url ?? `https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
               alt={want.card_name}
-              style={{ width: isMobile ? '100%' : 160, maxWidth: 180, maxHeight: 230, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', background: '#1a1025', flexShrink: 0 }}
+              style={{ width: isMobile ? '100%' : 160, maxWidth: 180, maxHeight: 230, borderRadius: 10, border: '1px solid rgba(140,176,208,0.1)', objectFit: 'contain', background: '#1a1025', flexShrink: 0 }}
               onError={e => {
                 if (want.photo_url && e.target.src === want.photo_url) {
                   e.target.src = `https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`
@@ -1501,37 +1501,37 @@ function WantDetailModal({ want, currentUser, session, onClose, onContact, isMob
             />
             <div style={{ flex: 1, minWidth: 0 }}>
               {want.max_price ? (
-                <div style={{ fontSize: 26, fontWeight: 700, color: '#fbbf24', marginBottom: 6, fontFamily: "'Space Mono', monospace" }}>Up to ${Number(want.max_price).toFixed(2)}</div>
+                <div style={{ fontSize: 26, fontWeight: 700, color: '#dcb35e', marginBottom: 6, fontFamily: "'Space Mono', monospace" }}>Up to ${Number(want.max_price).toFixed(2)}</div>
               ) : (
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>Price negotiable</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>Price negotiable</div>
               )}
               {want.quantity > 1 && (
-                <div style={{ fontSize: 13, color: '#fbbf24', marginBottom: 6 }}>Quantity: {want.quantity}</div>
+                <div style={{ fontSize: 13, color: '#dcb35e', marginBottom: 6 }}>Quantity: {want.quantity}</div>
               )}
-              <div style={{ fontSize: 12, color: '#7c6fa0', marginBottom: 3 }}>
-                {want.card_color && <span style={{ color: COLORS[want.card_color] ?? '#7c6fa0' }}>{want.card_color}</span>}
+              <div style={{ fontSize: 12, color: '#9db2c6', marginBottom: 3 }}>
+                {want.card_color && <span style={{ color: COLORS[want.card_color] ?? '#9db2c6' }}>{want.card_color}</span>}
               </div>
-              {want.card_id && <div style={{ fontSize: 11, color: '#3d2d6e', fontFamily: 'monospace', marginBottom: 3 }}>{want.card_id}</div>}
-              {want.set_name && <div style={{ fontSize: 12, color: '#7c6fa0', marginBottom: 3 }}>{want.set_name}</div>}
+              {want.card_id && <div style={{ fontSize: 11, color: '#67809a', fontFamily: 'monospace', marginBottom: 3 }}>{want.card_id}</div>}
+              {want.set_name && <div style={{ fontSize: 12, color: '#9db2c6', marginBottom: 3 }}>{want.set_name}</div>}
             </div>
           </div>
 
           {want.notes && (
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#3d2d6e', marginBottom: 6 }}>Notes</div>
+            <div style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 10, padding: '12px 14px', border: '1px solid rgba(140,176,208,0.06)' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#67809a', marginBottom: 6 }}>Notes</div>
               <div style={{ fontSize: 13, color: '#b0bac8', lineHeight: 1.6 }}>{want.notes}</div>
             </div>
           )}
 
           <div
-            style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.12)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}
+            style={{ background: 'rgba(200,162,74,0.05)', border: '1px solid rgba(200,162,74,0.12)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}
           >
             <Avatar profile={poster} size={40} radius={10} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{poster?.username ?? 'Unknown'}</div>
-              {poster?.location && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>📍 {poster.location}</div>}
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{poster?.username ?? 'Unknown'}</div>
+              {poster?.location && <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 2 }}>📍 {poster.location}</div>}
             </div>
-            <div style={{ fontSize: 11, color: '#3d2d6e' }}>
+            <div style={{ fontSize: 11, color: '#67809a' }}>
               {new Date(want.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
           </div>
@@ -1539,13 +1539,13 @@ function WantDetailModal({ want, currentUser, session, onClose, onContact, isMob
           {!isOwner && (
             <button
               onClick={() => { onClose(); onContact(want) }}
-              style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: currentUser ? 'linear-gradient(135deg, #d97706, #fbbf24)' : 'rgba(255,255,255,0.05)', color: currentUser ? '#0f1117' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: currentUser ? 'linear-gradient(135deg, #c8a24a, #dcb35e)' : 'rgba(140,176,208,0.05)', color: currentUser ? '#0f1117' : '#9db2c6', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               {currentUser ? 'I Have This!' : 'Sign in to Offer'}
             </button>
           )}
           {isOwner && (
-            <div style={{ padding: '10px 20px', borderRadius: 8, background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', color: '#fbbf24', fontSize: 13, fontWeight: 700, textAlign: 'center', letterSpacing: '0.5px' }}>
+            <div style={{ padding: '10px 20px', borderRadius: 8, background: 'rgba(200,162,74,0.08)', border: '1px solid rgba(200,162,74,0.2)', color: '#dcb35e', fontSize: 13, fontWeight: 700, textAlign: 'center', letterSpacing: '0.5px' }}>
               Your want
             </div>
           )}
@@ -1568,7 +1568,7 @@ function WantCard({ want, currentUser, onDetail, onContact }) {
       onClick={() => onDetail(want)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ background: 'rgba(251,191,36,0.03)', border: `1px solid ${hovered ? 'rgba(251,191,36,0.3)' : 'rgba(251,191,36,0.12)'}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.15s', transform: hovered ? 'translateY(-2px)' : 'none', cursor: 'pointer' }}
+      style={{ background: 'rgba(200,162,74,0.03)', border: `1px solid ${hovered ? 'rgba(200,162,74,0.3)' : 'rgba(200,162,74,0.12)'}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.15s', transform: hovered ? 'translateY(-2px)' : 'none', cursor: 'pointer' }}
     >
       <div style={{ position: 'relative', background: '#1a1025', height: 180, overflow: 'hidden' }}>
         <img
@@ -1584,45 +1584,45 @@ function WantCard({ want, currentUser, onDetail, onContact }) {
           }}
         />
         {cardColor && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: cardColor }} />}
-        <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(251,191,36,0.9)', borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 700, color: '#0f1117', letterSpacing: '0.4px' }}>
+        <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(200,162,74,0.9)', borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 700, color: '#0f1117', letterSpacing: '0.4px' }}>
           WTB
         </div>
         {want.quantity > 1 && (
-          <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#fbbf24' }}>
+          <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(200,162,74,0.3)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#dcb35e' }}>
             x{want.quantity}
           </div>
         )}
       </div>
       <div style={{ padding: '8px 10px', flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.custom_title ?? want.card_name}</div>
-        <div style={{ fontSize: 11, color: '#3d2d6e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.custom_title ?? want.card_name}</div>
+        <div style={{ fontSize: 11, color: '#67809a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {want.set_name && <span>{want.set_name} · </span>}
           <span style={{ fontFamily: 'monospace' }}>{want.card_id}</span>
         </div>
         {want.max_price ? (
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#fbbf24', fontFamily: "'Space Mono', monospace", marginTop: 2 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#dcb35e', fontFamily: "'Space Mono', monospace", marginTop: 2 }}>
             Up to ${Number(want.max_price).toFixed(2)}
           </div>
         ) : (
-          <div style={{ fontSize: 12, color: '#3d2d6e', marginTop: 2 }}>Price negotiable</div>
+          <div style={{ fontSize: 12, color: '#67809a', marginTop: 2 }}>Price negotiable</div>
         )}
         {want.notes && (
-          <div style={{ fontSize: 11, color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.notes}</div>
+          <div style={{ fontSize: 11, color: '#9db2c6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.notes}</div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, paddingTop: 7, borderTop: '1px solid rgba(140,176,208,0.05)' }}>
           <Avatar profile={poster} size={18} radius={5} />
-          <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#9db2c6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {poster?.username ?? 'Unknown'}
           </div>
         </div>
         {isOwner ? (
-          <div style={{ marginTop: 5, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ marginTop: 5, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(200,162,74,0.1)', color: '#dcb35e', border: '1px solid rgba(200,162,74,0.25)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Your want
           </div>
         ) : (
           <button
             onClick={e => { e.stopPropagation(); onContact(want) }}
-            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: currentUser ? 'none' : '1px solid rgba(251,191,36,0.25)', background: currentUser ? 'linear-gradient(135deg, #d97706, #fbbf24)' : 'transparent', color: currentUser ? '#0f1117' : '#fbbf24', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
+            style={{ marginTop: 5, padding: '5px 10px', borderRadius: 7, border: currentUser ? 'none' : '1px solid rgba(200,162,74,0.25)', background: currentUser ? 'linear-gradient(135deg, #c8a24a, #dcb35e)' : 'transparent', color: currentUser ? '#0f1117' : '#dcb35e', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
           >
             {currentUser ? 'I Have This!' : 'Sign in to Offer'}
           </button>
@@ -1663,54 +1663,54 @@ function MyWantsSection({ session, profile, isMobile }) {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>
-          My Wants <span style={{ fontSize: 12, fontWeight: 400, color: '#7c6fa0' }}>({wants.filter(w => w.status === 'active').length} active)</span>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>
+          My Wants <span style={{ fontSize: 12, fontWeight: 400, color: '#9db2c6' }}>({wants.filter(w => w.status === 'active').length} active)</span>
         </div>
-        <button onClick={() => setShowCreate(true)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Want</button>
+        <button onClick={() => setShowCreate(true)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #c8a24a, #dcb35e)', color: '#0f1117', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Want</button>
       </div>
       {loading ? (
-        <div style={{ fontSize: 13, color: '#7c6fa0', textAlign: 'center', padding: 20 }}>Loading...</div>
+        <div style={{ fontSize: 13, color: '#9db2c6', textAlign: 'center', padding: 20 }}>Loading...</div>
       ) : wants.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '30px 20px', color: '#3d2d6e' }}>
+        <div style={{ textAlign: 'center', padding: '30px 20px', color: '#67809a' }}>
           <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
-          <div style={{ fontSize: 13, color: '#7c6fa0', marginBottom: 4 }}>No active wants</div>
+          <div style={{ fontSize: 13, color: '#9db2c6', marginBottom: 4 }}>No active wants</div>
           <div style={{ fontSize: 12 }}>Post cards you're looking for</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {wants.map(want => (
-            <div key={want.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(251,191,36,0.04)', border: `1px solid ${want.status === 'found' ? 'rgba(52,211,153,0.15)' : 'rgba(251,191,36,0.12)'}`, borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap', opacity: want.status === 'found' ? 0.65 : 1 }}>
+            <div key={want.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(200,162,74,0.04)', border: `1px solid ${want.status === 'found' ? 'rgba(59,178,126,0.15)' : 'rgba(200,162,74,0.12)'}`, borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap', opacity: want.status === 'found' ? 0.65 : 1 }}>
               <img
                 src={`https://optcgapi.com/media/static/Card_Images/${want.card_id}.jpg`}
                 alt={want.card_name}
-                style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(140,176,208,0.06)' }}
                 onError={e => { e.target.style.display = 'none' }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {want.card_name}
-                  <span style={{ fontSize: 11, fontWeight: 400, color: '#fbbf24', marginLeft: 6 }}>x{want.quantity}</span>
+                  <span style={{ fontSize: 11, fontWeight: 400, color: '#dcb35e', marginLeft: 6 }}>x{want.quantity}</span>
                 </div>
-                <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  {want.max_price && <span style={{ color: '#fbbf24', fontFamily: 'monospace' }}>Up to ${Number(want.max_price).toFixed(2)}</span>}
-                  {want.max_price && want.notes && <span style={{ color: '#3d2d6e' }}>·</span>}
+                <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  {want.max_price && <span style={{ color: '#dcb35e', fontFamily: 'monospace' }}>Up to ${Number(want.max_price).toFixed(2)}</span>}
+                  {want.max_price && want.notes && <span style={{ color: '#67809a' }}>·</span>}
                   {want.notes && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{want.notes}</span>}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: want.status === 'found' ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.1)', color: want.status === 'found' ? '#34d399' : '#fbbf24', border: `1px solid ${want.status === 'found' ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.3)'}`, textTransform: 'capitalize' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: want.status === 'found' ? 'rgba(59,178,126,0.1)' : 'rgba(200,162,74,0.1)', color: want.status === 'found' ? '#3bb27e' : '#dcb35e', border: `1px solid ${want.status === 'found' ? 'rgba(59,178,126,0.3)' : 'rgba(200,162,74,0.3)'}`, textTransform: 'capitalize' }}>
                   {want.status === 'found' ? 'Found' : 'Seeking'}
                 </span>
                 {want.status === 'active' && (
-                  <button onClick={() => markFound(want.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(52,211,153,0.25)', background: 'rgba(52,211,153,0.06)', color: '#34d399', cursor: 'pointer', fontFamily: 'inherit' }}>Mark Found</button>
+                  <button onClick={() => markFound(want.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(59,178,126,0.25)', background: 'rgba(59,178,126,0.06)', color: '#3bb27e', cursor: 'pointer', fontFamily: 'inherit' }}>Mark Found</button>
                 )}
                 {confirmDelete === want.id ? (
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <button onClick={() => deleteWant(want.id)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: '#f05252', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Confirm</button>
-                    <button onClick={() => setConfirmDelete(null)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
+                    <button onClick={() => deleteWant(want.id)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: '#d24a3a', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Confirm</button>
+                    <button onClick={() => setConfirmDelete(null)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
                   </div>
                 ) : (
-                  <button onClick={() => setConfirmDelete(want.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.2)', background: 'rgba(240,82,82,0.05)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Delete</button>
+                  <button onClick={() => setConfirmDelete(want.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(210,74,58,0.2)', background: 'rgba(210,74,58,0.05)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>Delete</button>
                 )}
               </div>
             </div>
@@ -1759,32 +1759,32 @@ function MyListingsTab({ session, profile, isMobile }) {
     setConfirmDelete(null)
   }
 
-  const STATUS_COLOR = { active: '#34d399', sold: '#7c6fa0', removed: '#f05252' }
-  const STATUS_BG = { active: 'rgba(52,211,153,0.1)', sold: 'rgba(255,255,255,0.04)', removed: 'rgba(240,82,82,0.08)' }
+  const STATUS_COLOR = { active: '#3bb27e', sold: '#9db2c6', removed: '#d24a3a' }
+  const STATUS_BG = { active: 'rgba(59,178,126,0.1)', sold: 'rgba(140,176,208,0.04)', removed: 'rgba(210,74,58,0.08)' }
 
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5' }}>My Listings <span style={{ fontSize: 12, fontWeight: 400, color: '#7c6fa0' }}>({listings.length})</span></div>
-        <button onClick={() => setShowCreate(true)} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ New Listing</button>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#e9f1f8' }}>My Listings <span style={{ fontSize: 12, fontWeight: 400, color: '#9db2c6' }}>({listings.length})</span></div>
+        <button onClick={() => setShowCreate(true)} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ New Listing</button>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#7c6fa0', fontSize: 13 }}>Loading your listings...</div>
+        <div style={{ textAlign: 'center', padding: 40, color: '#9db2c6', fontSize: 13 }}>Loading your listings...</div>
       ) : listings.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '50px 20px', color: '#3d2d6e' }}>
+        <div style={{ textAlign: 'center', padding: '50px 20px', color: '#67809a' }}>
           <div style={{ fontSize: 40, marginBottom: 14 }}>🏴‍☠️</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No listings yet</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>No listings yet</div>
           <div style={{ fontSize: 13 }}>Click "+ New Listing" to start selling</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {listings.map(listing => (
-            <div key={listing.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+            <div key={listing.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 10, padding: '10px 14px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               <img
                 src={listing.photo_url ? listing.photo_url : `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`}
                 alt={listing.card_name}
-                style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, flexShrink: 0, border: '1px solid rgba(140,176,208,0.06)' }}
                 onError={e => {
                   if (listing.photo_url && e.target.src === listing.photo_url) {
                     e.target.src = `https://optcgapi.com/media/static/Card_Images/${listing.card_id}.jpg`
@@ -1794,40 +1794,40 @@ function MyListingsTab({ session, profile, isMobile }) {
                 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {listing.card_name}
-                  {(listing.quantity ?? 1) > 1 && <span style={{ fontSize: 11, fontWeight: 400, color: '#7c6fa0', marginLeft: 6 }}>x{listing.quantity}</span>}
+                  {(listing.quantity ?? 1) > 1 && <span style={{ fontSize: 11, fontWeight: 400, color: '#9db2c6', marginLeft: 6 }}>x{listing.quantity}</span>}
                 </div>
-                <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <ConditionBadge condition={listing.condition} />
-                  <span style={{ color: '#3d2d6e' }}>·</span>
-                  <span style={{ fontFamily: 'monospace', color: '#f0f2f5', fontWeight: 700 }}>${Number(listing.price).toFixed(2)}</span>
-                  <span style={{ color: '#3d2d6e' }}>·</span>
-                  <span style={{ color: '#3d2d6e' }}>{new Date(listing.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <span style={{ color: '#67809a' }}>·</span>
+                  <span style={{ fontFamily: 'monospace', color: '#e9f1f8', fontWeight: 700 }}>${Number(listing.price).toFixed(2)}</span>
+                  <span style={{ color: '#67809a' }}>·</span>
+                  <span style={{ color: '#67809a' }}>{new Date(listing.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: STATUS_BG[listing.status] ?? 'rgba(255,255,255,0.04)', color: STATUS_COLOR[listing.status] ?? '#7c6fa0', border: `1px solid ${STATUS_COLOR[listing.status] ?? '#7c6fa0'}33`, textTransform: 'capitalize', letterSpacing: '0.3px' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: STATUS_BG[listing.status] ?? 'rgba(140,176,208,0.04)', color: STATUS_COLOR[listing.status] ?? '#9db2c6', border: `1px solid ${STATUS_COLOR[listing.status] ?? '#9db2c6'}33`, textTransform: 'capitalize', letterSpacing: '0.3px' }}>
                   {listing.status}
                 </span>
                 {(unreadCounts[listing.id] ?? 0) > 0 && (
-                  <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#8b5cf6', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                  <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#2f7da3', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
                     {unreadCounts[listing.id]}
                   </span>
                 )}
                 {listing.status === 'active' && (
                   <>
-                    <button onClick={() => setEditTarget(listing)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
-                    <button onClick={() => markSold(listing.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(52,211,153,0.25)', background: 'rgba(52,211,153,0.06)', color: '#34d399', cursor: 'pointer', fontFamily: 'inherit' }}>Mark Sold</button>
+                    <button onClick={() => setEditTarget(listing)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+                    <button onClick={() => markSold(listing.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(59,178,126,0.25)', background: 'rgba(59,178,126,0.06)', color: '#3bb27e', cursor: 'pointer', fontFamily: 'inherit' }}>Mark Sold</button>
                   </>
                 )}
                 {confirmDelete === listing.id ? (
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <button onClick={() => deleteListing(listing.id)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: '#f05252', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Confirm</button>
-                    <button onClick={() => setConfirmDelete(null)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
+                    <button onClick={() => deleteListing(listing.id)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: '#d24a3a', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Confirm</button>
+                    <button onClick={() => setConfirmDelete(null)} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
                   </div>
                 ) : (
-                  <button onClick={() => setConfirmDelete(listing.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.2)', background: 'rgba(240,82,82,0.05)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Delete</button>
+                  <button onClick={() => setConfirmDelete(listing.id)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(210,74,58,0.2)', background: 'rgba(210,74,58,0.05)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>Delete</button>
                 )}
               </div>
             </div>
@@ -1836,12 +1836,12 @@ function MyListingsTab({ session, profile, isMobile }) {
       )}
 
       <div style={{ marginTop: 32 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 14 }}>Looking For</div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 14 }}>Looking For</div>
         <MyWantsSection session={session} profile={profile} isMobile={isMobile} />
       </div>
 
       <div style={{ marginTop: 32 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 14 }}>Messages</div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 14 }}>Messages</div>
         <InboxSection session={session} isMobile={isMobile} />
       </div>
 
@@ -1896,22 +1896,22 @@ function ApplyStorefrontModal({ session, onClose, onSuccess, isMobile }) {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 480, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: 480, maxHeight: isMobile ? '95vh' : '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(140,176,208,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Apply as Storefront</div>
-            <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Your application will be reviewed before going live</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>Apply as Storefront</div>
+            <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 1 }}>Your application will be reviewed before going live</div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           <div style={{ marginBottom: 18 }}>
             <label style={LABEL}>Store Logo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 12, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 12, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
                 {logoPreview ? <img src={logoPreview} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 24 }}>🏪</span>}
               </div>
-              <label style={{ fontSize: 12, fontWeight: 600, padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <label style={{ fontSize: 12, fontWeight: 600, padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>
                 Upload Logo
                 <input type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
               </label>
@@ -1933,11 +1933,11 @@ function ApplyStorefrontModal({ session, onClose, onSuccess, isMobile }) {
             <label style={LABEL}>Website / Social Link</label>
             <input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} style={{ ...INPUT, width: '100%' }} placeholder="https://..." />
           </div>
-          {error && <div style={{ fontSize: 12, color: '#f05252' }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#d24a3a' }}>{error}</div>}
         </div>
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(139,92,246,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-          <button onClick={submit} disabled={saving} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(140,176,208,0.1)', flexShrink: 0, display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={submit} disabled={saving} style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Submitting...' : 'Submit Application'}
           </button>
         </div>
@@ -1964,26 +1964,26 @@ function MyStorefrontSection({ session, isMobile }) {
     setLoading(false)
   }
 
-  const STATUS_COLORS = { pending: '#fbbf24', approved: '#34d399', rejected: '#f05252' }
+  const STATUS_COLORS = { pending: '#dcb35e', approved: '#3bb27e', rejected: '#d24a3a' }
   const STATUS_LABELS = { pending: 'Pending review', approved: 'Live', rejected: 'Rejected' }
 
-  if (loading) return <div style={{ fontSize: 12, color: '#7c6fa0', padding: '12px 0' }}>Loading...</div>
+  if (loading) return <div style={{ fontSize: 12, color: '#9db2c6', padding: '12px 0' }}>Loading...</div>
 
   if (applied && !storefront) return (
-    <div style={{ padding: '14px 16px', background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 10 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#34d399' }}>Application submitted!</div>
-      <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 4 }}>You'll be notified once it's reviewed.</div>
+    <div style={{ padding: '14px 16px', background: 'rgba(59,178,126,0.06)', border: '1px solid rgba(59,178,126,0.2)', borderRadius: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#3bb27e' }}>Application submitted!</div>
+      <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 4 }}>You'll be notified once it's reviewed.</div>
     </div>
   )
 
   if (!storefront) return (
     <>
-      <div style={{ padding: '14px 16px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ padding: '14px 16px', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>Become a Storefront</div>
-          <div style={{ fontSize: 12, color: '#7c6fa0', marginTop: 3 }}>List your store's inventory and reach buyers</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>Become a Storefront</div>
+          <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 3 }}>List your store's inventory and reach buyers</div>
         </div>
-        <button onClick={() => setShowApply(true)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+        <button onClick={() => setShowApply(true)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
           Apply Now
         </button>
       </div>
@@ -1994,19 +1994,19 @@ function MyStorefrontSection({ session, isMobile }) {
   )
 
   return (
-    <div style={{ padding: '14px 16px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-      <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid rgba(139,92,246,0.2)', background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+    <div style={{ padding: '14px 16px', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid rgba(140,176,208,0.2)', background: 'rgba(140,176,208,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
         {storefront.logo_url ? <img src={storefront.logo_url} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 20 }}>🏪</span>}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{storefront.store_name}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{storefront.store_name}</div>
         <div style={{ fontSize: 11, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: STATUS_COLORS[storefront.status] ?? '#7c6fa0', fontWeight: 600 }}>{STATUS_LABELS[storefront.status] ?? storefront.status}</span>
-          {storefront.status === 'pending' && <span style={{ color: '#7c6fa0' }}>· Awaiting approval</span>}
+          <span style={{ color: STATUS_COLORS[storefront.status] ?? '#9db2c6', fontWeight: 600 }}>{STATUS_LABELS[storefront.status] ?? storefront.status}</span>
+          {storefront.status === 'pending' && <span style={{ color: '#9db2c6' }}>· Awaiting approval</span>}
         </div>
       </div>
       {storefront.status === 'approved' && (
-        <button onClick={() => navigate(`/storefront/${storefront.id}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+        <button onClick={() => navigate(`/storefront/${storefront.id}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
           Manage Store
         </button>
       )}
@@ -2018,18 +2018,18 @@ function MyStorefrontSection({ session, isMobile }) {
 
 function StoreCard({ store, onClick }) {
   return (
-    <div onClick={onClick} style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.15s' }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)'; e.currentTarget.style.background = 'rgba(139,92,246,0.08)' }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)'; e.currentTarget.style.background = 'rgba(139,92,246,0.04)' }}>
-      <div style={{ height: 80, background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    <div onClick={onClick} style={{ background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.15s' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(200,162,74,0.35)'; e.currentTarget.style.background = 'rgba(140,176,208,0.08)' }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.12)'; e.currentTarget.style.background = 'rgba(140,176,208,0.04)' }}>
+      <div style={{ height: 80, background: 'rgba(140,176,208,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {store.logo_url
           ? <img src={store.logo_url} alt={store.store_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <span style={{ fontSize: 40 }}>🏪</span>}
       </div>
       <div style={{ padding: '12px 14px' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{store.store_name}</div>
-        {store.address && <div style={{ fontSize: 11, color: '#7c6fa0', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📍 {store.address}</div>}
-        <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 4 }}>{store.inventory_count ?? 0} cards listed</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{store.store_name}</div>
+        {store.address && <div style={{ fontSize: 11, color: '#9db2c6', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📍 {store.address}</div>}
+        <div style={{ fontSize: 11, color: '#67809a', marginTop: 4 }}>{store.inventory_count ?? 0} cards listed</div>
       </div>
     </div>
   )
@@ -2152,32 +2152,32 @@ export default function Marketplace({ session }) {
 
   const tabBtn = isActive => ({
     fontSize: 13, fontWeight: 600, padding: '7px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-    background: isActive ? '#8b5cf6' : 'transparent', color: isActive ? '#fff' : '#7c6fa0', transition: 'all 0.15s',
+    background: isActive ? '#2f7da3' : 'transparent', color: isActive ? '#fff' : '#9db2c6', transition: 'all 0.15s',
   })
 
   return (
     <div>
       <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Trading</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Marketplace</div>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Buy and sell One Piece TCG cards</div>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.6px', color: '#dcb35e', marginBottom: 4 }}>Trading</div>
+        <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 28, fontWeight: 600, color: '#e9f1f8', letterSpacing: '-0.3px', marginBottom: 2 }}>Marketplace</div>
+        <div style={{ fontSize: 13, color: '#9db2c6' }}>Buy and sell One Piece TCG cards</div>
       </div>
 
-      <div style={{ display: 'flex', gap: 4, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
+      <div style={{ display: 'flex', gap: 4, background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
         <button onClick={() => setActiveTab('browse')} style={tabBtn(activeTab === 'browse')}>Browse</button>
-        <button onClick={() => setActiveTab('wants')} style={{ ...tabBtn(activeTab === 'wants'), color: activeTab === 'wants' ? '#fff' : '#fbbf24', background: activeTab === 'wants' ? '#d97706' : 'transparent' }}>Looking For</button>
-        <button onClick={() => setActiveTab('stores')} style={{ ...tabBtn(activeTab === 'stores'), color: activeTab === 'stores' ? '#fff' : '#34d399', background: activeTab === 'stores' ? '#059669' : 'transparent' }}>Stores</button>
+        <button onClick={() => setActiveTab('wants')} style={{ ...tabBtn(activeTab === 'wants'), color: activeTab === 'wants' ? '#fff' : '#dcb35e', background: activeTab === 'wants' ? '#c8a24a' : 'transparent' }}>Looking For</button>
+        <button onClick={() => setActiveTab('stores')} style={{ ...tabBtn(activeTab === 'stores'), color: activeTab === 'stores' ? '#fff' : '#3bb27e', background: activeTab === 'stores' ? '#059669' : 'transparent' }}>Stores</button>
         {session ? (
           <button onClick={() => setActiveTab('mylistings')} style={tabBtn(activeTab === 'mylistings')}>My Listings</button>
         ) : (
-          <button onClick={() => navigate('/login')} style={{ ...tabBtn(false), color: '#3d2d6e' }}>My Listings 🔒</button>
+          <button onClick={() => navigate('/login')} style={{ ...tabBtn(false), color: '#67809a' }}>My Listings 🔒</button>
         )}
       </div>
 
       {activeTab === 'browse' ? (
         <>
           {/* Filter bar */}
-          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(12,8,20,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(139,92,246,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
+          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(8,16,27,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(140,176,208,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
             {/* Row 1: Search */}
             <input
               type="text"
@@ -2200,31 +2200,31 @@ export default function Marketplace({ session }) {
               <input type="number" min="0" placeholder="Max $" value={priceMax} onChange={e => setPriceMax(e.target.value)} style={{ ...INPUT, width: 100 }} />
               <input type="text" placeholder="City..." value={cityFilter} onChange={e => setCityFilter(e.target.value)} style={{ ...INPUT, width: 130 }} />
               {filtersActive && (
-                <button onClick={clearFilters} style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <button onClick={clearFilters} style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>
                   Clear ✕
                 </button>
               )}
             </div>
-            <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 10 }}>
+            <div style={{ fontSize: 11, color: '#67809a', marginTop: 10 }}>
               {loading ? 'Loading...' : `${filteredListings.length} listing${filteredListings.length !== 1 ? 's' : ''} found`}
             </div>
           </div>
 
           {/* Grid */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading listings...</div>
+            <div style={{ textAlign: 'center', padding: 60, color: '#9db2c6', fontSize: 13 }}>Loading listings...</div>
           ) : loadError ? (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <div style={{ fontSize: 36, marginBottom: 14 }}>⚠️</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#f05252', marginBottom: 10 }}>{loadError}</div>
-              <button onClick={loadListings} style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>Try again</button>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#d24a3a', marginBottom: 10 }}>{loadError}</div>
+              <button onClick={loadListings} style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>Try again</button>
             </div>
           ) : filteredListings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#67809a' }}>
               <div style={{ fontSize: 40, marginBottom: 14 }}>{filtersActive ? '🔍' : '🏪'}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>{filtersActive ? 'No listings match your filters' : 'No listings yet'}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>{filtersActive ? 'No listings match your filters' : 'No listings yet'}</div>
               <div style={{ fontSize: 13 }}>{filtersActive ? 'Try adjusting your search' : 'Be the first to list a card!'}</div>
-              {filtersActive && <button onClick={clearFilters} style={{ marginTop: 14, fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>Clear filters</button>}
+              {filtersActive && <button onClick={clearFilters} style={{ marginTop: 14, fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>Clear filters</button>}
             </div>
           ) : (
             <>
@@ -2235,7 +2235,7 @@ export default function Marketplace({ session }) {
               </div>
               {hasMore && (
                 <div style={{ textAlign: 'center', marginTop: 24 }}>
-                  <button onClick={() => setDisplayCount(c => c + 50)} style={{ padding: '10px 28px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <button onClick={() => setDisplayCount(c => c + 50)} style={{ padding: '10px 28px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     Load more ({filteredListings.length - displayCount} remaining)
                   </button>
                 </div>
@@ -2246,7 +2246,7 @@ export default function Marketplace({ session }) {
       ) : activeTab === 'wants' ? (
         <>
           {/* Wants header bar */}
-          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(12,8,20,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(251,191,36,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
+          <div style={{ position: 'sticky', top: 52, zIndex: 30, background: 'rgba(8,16,27,0.93)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(200,162,74,0.1)', marginBottom: 20, marginLeft: isMobile ? '-1rem' : '-1.5rem', marginRight: isMobile ? '-1rem' : '-1.5rem', paddingTop: 12, paddingBottom: 14, paddingLeft: isMobile ? '1rem' : '1.5rem', paddingRight: isMobile ? '1rem' : '1.5rem' }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
               <input
                 type="text"
@@ -2256,16 +2256,16 @@ export default function Marketplace({ session }) {
                 style={{ ...INPUT, flex: 1, padding: '10px 14px' }}
               />
               {session ? (
-                <button onClick={() => setShowCreateWant(true)} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <button onClick={() => setShowCreateWant(true)} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #c8a24a, #dcb35e)', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   + I'm Looking For
                 </button>
               ) : (
-                <button onClick={() => navigate('/login')} style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid rgba(251,191,36,0.2)', background: 'transparent', color: '#fbbf24', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <button onClick={() => navigate('/login')} style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.2)', background: 'transparent', color: '#dcb35e', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   Sign in to post
                 </button>
               )}
             </div>
-            <div style={{ fontSize: 11, color: '#3d2d6e' }}>
+            <div style={{ fontSize: 11, color: '#67809a' }}>
               {wantsLoading ? 'Loading...' : (() => {
                 const count = allWants.filter(w => !wantSearch || w.card_name.toLowerCase().includes(wantSearch.toLowerCase())).length
                 return `${count} want${count !== 1 ? 's' : ''} posted`
@@ -2275,23 +2275,23 @@ export default function Marketplace({ session }) {
 
           {/* Wants grid */}
           {wantsLoading ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading wants...</div>
+            <div style={{ textAlign: 'center', padding: 60, color: '#9db2c6', fontSize: 13 }}>Loading wants...</div>
           ) : wantsLoadError ? (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <div style={{ fontSize: 36, marginBottom: 14 }}>⚠️</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#f05252', marginBottom: 10 }}>{wantsLoadError}</div>
-              <button onClick={loadWants} style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit' }}>Try again</button>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#d24a3a', marginBottom: 10 }}>{wantsLoadError}</div>
+              <button onClick={loadWants} style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'pointer', fontFamily: 'inherit' }}>Try again</button>
             </div>
           ) : (() => {
             const filteredWants = allWants.filter(w => !wantSearch || w.card_name.toLowerCase().includes(wantSearch.toLowerCase()))
             const visibleWants = filteredWants.slice(0, wantDisplayCount)
             if (filteredWants.length === 0) return (
-              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e' }}>
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#67809a' }}>
                 <div style={{ fontSize: 40, marginBottom: 14 }}>{wantSearch ? '🔍' : '🔎'}</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>{wantSearch ? 'No wants match your search' : 'No wants posted yet'}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>{wantSearch ? 'No wants match your search' : 'No wants posted yet'}</div>
                 <div style={{ fontSize: 13 }}>{wantSearch ? 'Try a different card name' : 'Be the first to post a card you\'re looking for!'}</div>
                 {session && !wantSearch && (
-                  <button onClick={() => setShowCreateWant(true)} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <button onClick={() => setShowCreateWant(true)} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #c8a24a, #dcb35e)', color: '#0f1117', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                     + Post a Want
                   </button>
                 )}
@@ -2312,7 +2312,7 @@ export default function Marketplace({ session }) {
                 </div>
                 {filteredWants.length > wantDisplayCount && (
                   <div style={{ textAlign: 'center', marginTop: 24 }}>
-                    <button onClick={() => setWantDisplayCount(c => c + 50)} style={{ padding: '10px 28px', borderRadius: 8, border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.06)', color: '#fbbf24', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <button onClick={() => setWantDisplayCount(c => c + 50)} style={{ padding: '10px 28px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(200,162,74,0.06)', color: '#dcb35e', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                       Load more ({filteredWants.length - wantDisplayCount} remaining)
                     </button>
                   </div>
@@ -2325,19 +2325,19 @@ export default function Marketplace({ session }) {
         <>
           {/* Admin: pending applications */}
           {isAdmin && pendingStorefronts.length > 0 && (
-            <div style={{ marginBottom: 24, padding: '16px 18px', background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#fbbf24', marginBottom: 12 }}>Pending Applications ({pendingStorefronts.length})</div>
+            <div style={{ marginBottom: 24, padding: '16px 18px', background: 'rgba(200,162,74,0.05)', border: '1px solid rgba(200,162,74,0.15)', borderRadius: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#dcb35e', marginBottom: 12 }}>Pending Applications ({pendingStorefronts.length})</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {pendingStorefronts.map(s => (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, flexWrap: 'wrap' }}>
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'rgba(140,176,208,0.03)', borderRadius: 8, flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{s.store_name}</div>
-                      <div style={{ fontSize: 11, color: '#7c6fa0' }}>{s.address || 'No address'} · Applied {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{s.store_name}</div>
+                      <div style={{ fontSize: 11, color: '#9db2c6' }}>{s.address || 'No address'} · Applied {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => navigate(`/storefront/${s.id}`)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>View</button>
-                      <button onClick={() => approveStore(s.id, 'rejected')} disabled={approvingStore === s.id} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.25)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Reject</button>
-                      <button onClick={() => approveStore(s.id, 'approved')} disabled={approvingStore === s.id} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(52,211,153,0.15)', color: '#34d399', cursor: 'pointer', fontFamily: 'inherit' }}>Approve</button>
+                      <button onClick={() => navigate(`/storefront/${s.id}`)} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(200,162,74,0.25)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>View</button>
+                      <button onClick={() => approveStore(s.id, 'rejected')} disabled={approvingStore === s.id} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(210,74,58,0.25)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>Reject</button>
+                      <button onClick={() => approveStore(s.id, 'approved')} disabled={approvingStore === s.id} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(59,178,126,0.15)', color: '#3bb27e', cursor: 'pointer', fontFamily: 'inherit' }}>Approve</button>
                     </div>
                   </div>
                 ))}
@@ -2346,11 +2346,11 @@ export default function Marketplace({ session }) {
           )}
 
           {storefrontsLoading ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#7c6fa0', fontSize: 13 }}>Loading stores...</div>
+            <div style={{ textAlign: 'center', padding: 60, color: '#9db2c6', fontSize: 13 }}>Loading stores...</div>
           ) : storefronts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#67809a' }}>
               <div style={{ fontSize: 40, marginBottom: 14 }}>🏪</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No storefronts yet</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>No storefronts yet</div>
               <div style={{ fontSize: 13 }}>Approved stores will appear here</div>
             </div>
           ) : (
@@ -2365,7 +2365,7 @@ export default function Marketplace({ session }) {
         <>
           <MyListingsTab session={session} profile={profile} isMobile={isMobile} />
           <div style={{ marginTop: 32 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 14 }}>My Storefront</div>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 14 }}>My Storefront</div>
             <MyStorefrontSection session={session} isMobile={isMobile} />
           </div>
         </>

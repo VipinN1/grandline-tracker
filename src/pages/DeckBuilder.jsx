@@ -4,17 +4,17 @@ import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { useNavigate } from 'react-router-dom'
 
-const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
 const MAX_COPIES = 4
 const MAX_DECK = 50
 
 const INPUT = {
-  background: 'rgba(15,8,30,0.92)',
-  border: '1px solid rgba(139,92,246,0.35)',
+  background: 'rgba(26,50,81,0.92)',
+  border: '1px solid rgba(200,162,74,0.35)',
   borderRadius: 8,
   padding: '9px 12px',
-  color: '#f0f2f5',
+  color: '#e9f1f8',
   fontSize: 13,
   outline: 'none',
   fontFamily: 'inherit',
@@ -30,9 +30,9 @@ function pillStyle(isActive, accentColor) {
     fontWeight: 600,
     cursor: 'pointer',
     fontFamily: 'inherit',
-    border: isActive && accentColor ? `1px solid ${accentColor}66` : isActive ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.15)',
-    background: isActive && accentColor ? `${accentColor}26` : isActive ? 'rgba(139,92,246,0.2)' : 'transparent',
-    color: isActive && accentColor ? accentColor : isActive ? '#a78bfa' : '#7c6fa0',
+    border: isActive && accentColor ? `1px solid ${accentColor}66` : isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.15)',
+    background: isActive && accentColor ? `${accentColor}26` : isActive ? 'rgba(140,176,208,0.2)' : 'transparent',
+    color: isActive && accentColor ? accentColor : isActive ? '#52a9cd' : '#9db2c6',
   }
 }
 
@@ -248,7 +248,7 @@ export default function DeckBuilder({ session }) {
   const searchPanel = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Filter pills */}
-      <div style={{ background: 'rgba(139,92,246,0.03)', border: '1px solid rgba(139,92,246,0.1)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ background: 'rgba(140,176,208,0.03)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
           {[['', 'All'], ...CARD_COLORS.map(c => [c, c])].map(([val, label]) => {
             const isActive = val === '' ? filterColor.length === 0 : filterColor.includes(val)
@@ -270,7 +270,7 @@ export default function DeckBuilder({ session }) {
           <select
             value={['', 'ST', 'Promos'].includes(filterSource) ? '' : filterSource}
             onChange={e => setFilterSource(e.target.value)}
-            style={{ padding: '2px 7px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(139,92,246,0.3)' : 'rgba(15,8,30,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(139,92,246,0.3)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#a78bfa' : '#7c6fa0' }}
+            style={{ padding: '2px 7px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(200,162,74,0.3)' : 'rgba(26,50,81,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(200,162,74,0.3)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#52a9cd' : '#9db2c6' }}
           >
             <option value="">Booster Sets</option>
             {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','OP16','EB01','EB02','EB03','EB04','PRB01','PRB02'].map(s => <option key={s} value={s}>{s}</option>)}
@@ -280,7 +280,7 @@ export default function DeckBuilder({ session }) {
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
-            const ac = { parallel: '#e879f9', sp: '#34d399', manga: '#38bdf8', tr: '#f97316' }[val]
+            const ac = { parallel: '#d56a9c', sp: '#3bb27e', manga: '#38bdf8', tr: '#e08a3c' }[val]
             return <button key={val || 'a-all'} onClick={() => setFilterAltArt(val)} style={pillStyle(filterAltArt === val, ac)}>{label}</button>
           })}
         </div>
@@ -300,12 +300,12 @@ export default function DeckBuilder({ session }) {
         style={{ ...INPUT, padding: '10px 14px', fontSize: 14 }}
       />
 
-      {cardSearching && <div style={{ fontSize: 12, color: '#7c6fa0' }}>Searching...</div>}
+      {cardSearching && <div style={{ fontSize: 12, color: '#9db2c6' }}>Searching...</div>}
       {!cardSearching && cardQuery.length >= 2 && filteredResults.length === 0 && (
-        <div style={{ fontSize: 12, color: '#3d2d6e' }}>No cards found. Try adjusting filters or your query.</div>
+        <div style={{ fontSize: 12, color: '#67809a' }}>No cards found. Try adjusting filters or your query.</div>
       )}
       {cardQuery.length < 2 && (
-        <div style={{ fontSize: 12, color: '#3d2d6e' }}>Type at least 2 characters to search</div>
+        <div style={{ fontSize: 12, color: '#67809a' }}>Type at least 2 characters to search</div>
       )}
 
       {filteredResults.length > 0 && (
@@ -328,17 +328,17 @@ export default function DeckBuilder({ session }) {
                 <img
                   src={getCardImageUrl(card)}
                   alt={card.card_name}
-                  style={{ width: cardThumb, borderRadius: 7, border: inDeck ? '2px solid #8b5cf6' : '1px solid rgba(255,255,255,0.08)', display: 'block' }}
+                  style={{ width: cardThumb, borderRadius: 7, border: inDeck ? '2px solid #2f7da3' : '1px solid rgba(140,176,208,0.08)', display: 'block' }}
                   onError={e => { e.target.style.opacity = '0.12' }}
                 />
                 {inDeck && (
-                  <div style={{ position: 'absolute', bottom: 3, right: 3, background: '#8b5cf6', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 }}>
+                  <div style={{ position: 'absolute', bottom: 3, right: 3, background: '#2f7da3', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 }}>
                     {inDeck.count}
                   </div>
                 )}
                 {atMax && (
                   <div style={{ position: 'absolute', inset: 0, borderRadius: 7, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(0,0,0,0.7)', padding: '2px 4px', borderRadius: 3 }}>MAX</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#52a9cd', background: 'rgba(0,0,0,0.7)', padding: '2px 4px', borderRadius: 3 }}>MAX</span>
                   </div>
                 )}
               </div>
@@ -351,22 +351,22 @@ export default function DeckBuilder({ session }) {
 
   // ─── Deck panel ───────────────────────────────────────────────────────────────
   const deckPanel = (
-    <div style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)', borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Leader */}
-      <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(139,92,246,0.1)' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 8 }}>Leader</div>
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(140,176,208,0.1)' }}>
+        <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 8 }}>Leader</div>
         {leader ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 56, borderRadius: 7, border: `2px solid ${COLORS[leader.card_color] ?? '#8b5cf6'}44`, flexShrink: 0, cursor: 'default' }} onError={e => { e.target.style.opacity = '0.2' }} onMouseEnter={e => showPreview(leader, e)} onMouseLeave={hidePreview} />
+            <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 56, borderRadius: 7, border: `2px solid ${COLORS[leader.card_color] ?? '#2f7da3'}44`, flexShrink: 0, cursor: 'default' }} onError={e => { e.target.style.opacity = '0.2' }} onMouseEnter={e => showPreview(leader, e)} onMouseLeave={hidePreview} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leader.card_name}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leader.card_name}</div>
               <div style={{ fontSize: 11, marginTop: 2 }}>
-                <span style={{ color: COLORS[leader.card_color] ?? '#7c6fa0' }}>{leader.card_color}</span>
-                <span style={{ color: '#3d2d6e', margin: '0 4px' }}>·</span>
-                <span style={{ color: '#7c6fa0', fontFamily: 'monospace' }}>{leader.card_set_id}</span>
+                <span style={{ color: COLORS[leader.card_color] ?? '#9db2c6' }}>{leader.card_color}</span>
+                <span style={{ color: '#67809a', margin: '0 4px' }}>·</span>
+                <span style={{ color: '#9db2c6', fontFamily: 'monospace' }}>{leader.card_set_id}</span>
               </div>
             </div>
-            <button onClick={() => setLeader(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
+            <button onClick={() => setLeader(null)} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
           </div>
         ) : (
           <div ref={leaderRef} style={{ position: 'relative' }}>
@@ -379,25 +379,25 @@ export default function DeckBuilder({ session }) {
               style={{ ...INPUT, padding: '8px 11px', fontSize: 12 }}
             />
             {showLeaderDrop && leaderQuery.length >= 2 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 60, background: 'rgba(10,5,22,0.98)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, marginTop: 4, maxHeight: 200, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 60, background: 'rgba(10,22,38,0.98)', border: '1px solid rgba(200,162,74,0.35)', borderRadius: 8, marginTop: 4, maxHeight: 200, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
                 {leaderSearching ? (
-                  <div style={{ padding: 12, fontSize: 12, color: '#7c6fa0' }}>Searching...</div>
+                  <div style={{ padding: 12, fontSize: 12, color: '#9db2c6' }}>Searching...</div>
                 ) : leaderResults.length === 0 ? (
-                  <div style={{ padding: 12, fontSize: 12, color: '#3d2d6e' }}>No leaders found</div>
+                  <div style={{ padding: 12, fontSize: 12, color: '#67809a' }}>No leaders found</div>
                 ) : leaderResults.map(card => (
                   <div
                     key={card.card_image_id ?? card.card_set_id}
                     onClick={() => { setLeader(card); setLeaderQuery(''); setLeaderResults([]); setShowLeaderDrop(false) }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(140,176,208,0.04)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 32, borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
-                      <div style={{ fontSize: 10, color: '#7c6fa0' }}>
-                        <span style={{ color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color}</span>
-                        <span style={{ color: '#3d2d6e', margin: '0 3px' }}>·</span>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
+                      <div style={{ fontSize: 10, color: '#9db2c6' }}>
+                        <span style={{ color: COLORS[card.card_color] ?? '#9db2c6' }}>{card.card_color}</span>
+                        <span style={{ color: '#67809a', margin: '0 3px' }}>·</span>
                         <span style={{ fontFamily: 'monospace' }}>{card.card_set_id}</span>
                       </div>
                     </div>
@@ -410,21 +410,21 @@ export default function DeckBuilder({ session }) {
       </div>
 
       {/* Progress */}
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ fontSize: 12, color: '#7c6fa0', flexShrink: 0 }}>
-          <span style={{ fontWeight: 700, color: totalCards === MAX_DECK ? '#34d399' : '#f0f2f5' }}>{totalCards}</span>
-          <span style={{ color: '#3d2d6e' }}> / {MAX_DECK}</span>
+      <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(140,176,208,0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ fontSize: 12, color: '#9db2c6', flexShrink: 0 }}>
+          <span style={{ fontWeight: 700, color: totalCards === MAX_DECK ? '#3bb27e' : '#e9f1f8' }}>{totalCards}</span>
+          <span style={{ color: '#67809a' }}> / {MAX_DECK}</span>
         </div>
-        <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
-          <div style={{ height: '100%', borderRadius: 2, background: totalCards === MAX_DECK ? '#34d399' : 'linear-gradient(90deg, #7c3aed, #a855f7)', width: `${Math.min((totalCards / MAX_DECK) * 100, 100)}%`, transition: 'width 0.2s' }} />
+        <div style={{ flex: 1, height: 4, background: 'rgba(140,176,208,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{ height: '100%', borderRadius: 2, background: totalCards === MAX_DECK ? '#3bb27e' : 'linear-gradient(90deg, #2f7da3, #1b4a66)', width: `${Math.min((totalCards / MAX_DECK) * 100, 100)}%`, transition: 'width 0.2s' }} />
         </div>
         {deckEntries.length > 0 && (
-          <button onClick={() => setDeckCards({})} style={{ fontSize: 10, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, fontWeight: 600, flexShrink: 0 }}>Clear</button>
+          <button onClick={() => setDeckCards({})} style={{ fontSize: 10, color: '#d24a3a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, fontWeight: 600, flexShrink: 0 }}>Clear</button>
         )}
       </div>
 
       {/* View toggle */}
-      <div style={{ padding: '6px 12px 0', display: 'flex', gap: 4, borderBottom: '1px solid rgba(139,92,246,0.08)' }}>
+      <div style={{ padding: '6px 12px 0', display: 'flex', gap: 4, borderBottom: '1px solid rgba(140,176,208,0.08)' }}>
         {[['list', 'List'], ['visual', 'Visual']].map(([v, label]) => (
           <button key={v} onClick={() => setDeckView(v)} style={{ ...pillStyle(deckView === v, null), fontSize: 10, marginBottom: 6 }}>{label}</button>
         ))}
@@ -434,31 +434,31 @@ export default function DeckBuilder({ session }) {
       {deckView === 'list' ? (
         <div style={{ flex: 1, overflowY: 'auto', maxHeight: listMaxH }}>
           {deckEntries.length === 0 ? (
-            <div style={{ padding: '32px 16px', textAlign: 'center', color: '#3d2d6e', fontSize: 12 }}>
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: '#67809a', fontSize: 12 }}>
               Click cards in the search panel to add them here
             </div>
           ) : grouped.map(([type, entries]) => entries.length === 0 ? null : (
             <div key={type}>
-              <div style={{ padding: '5px 14px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <div style={{ padding: '5px 14px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(140,176,208,0.03)' }}>
                 {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
               </div>
               {entries.map(([key, { card, count }]) => (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(255,255,255,0.03)' }} onMouseEnter={e => showPreview(card, e)} onMouseLeave={hidePreview}>
+                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', borderBottom: '1px solid rgba(140,176,208,0.03)' }} onMouseEnter={e => showPreview(card, e)} onMouseLeave={hidePreview}>
                   <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 32, borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.12' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
-                    <div style={{ fontSize: 10, color: '#3d2d6e', fontFamily: 'monospace' }}>{card.card_set_id}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.card_name}</div>
+                    <div style={{ fontSize: 10, color: '#67809a', fontFamily: 'monospace' }}>{card.card_set_id}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
                     <button
                       onClick={() => adjustCount(key, -1)}
-                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#f0f2f5', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.05)', color: '#e9f1f8', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
                     >−</button>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', minWidth: 18, textAlign: 'center' }}>{count}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#52a9cd', minWidth: 18, textAlign: 'center' }}>{count}</span>
                     <button
                       onClick={() => adjustCount(key, 1)}
                       disabled={count >= MAX_COPIES || totalCards >= MAX_DECK}
-                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'transparent' : 'rgba(255,255,255,0.05)', color: count >= MAX_COPIES || totalCards >= MAX_DECK ? '#3d2d6e' : '#f0f2f5', fontSize: 15, cursor: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(140,176,208,0.1)', background: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'transparent' : 'rgba(140,176,208,0.05)', color: count >= MAX_COPIES || totalCards >= MAX_DECK ? '#67809a' : '#e9f1f8', fontSize: 15, cursor: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
                     >+</button>
                   </div>
                 </div>
@@ -469,14 +469,14 @@ export default function DeckBuilder({ session }) {
       ) : (
         <div style={{ flex: 1, overflowY: 'auto', maxHeight: listMaxH, padding: '12px 14px' }}>
           {deckEntries.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#3d2d6e', fontSize: 12, paddingTop: 28 }}>
+            <div style={{ textAlign: 'center', color: '#67809a', fontSize: 12, paddingTop: 28 }}>
               Click cards in the search panel to add them here
             </div>
           ) : (
             <>
               {grouped.map(([type, entries]) => entries.length === 0 ? null : (
                 <div key={type} style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#3d2d6e', marginBottom: 7 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 7 }}>
                     {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -493,23 +493,23 @@ export default function DeckBuilder({ session }) {
                         <img
                           src={getCardImageUrl(card)}
                           alt={card.card_name}
-                          style={{ width: visualThumb, borderRadius: 6, border: `1px solid ${COLORS[card.card_color] ?? 'rgba(255,255,255,0.08)'}55`, display: 'block' }}
+                          style={{ width: visualThumb, borderRadius: 6, border: `1px solid ${COLORS[card.card_color] ?? 'rgba(140,176,208,0.08)'}55`, display: 'block' }}
                           onError={e => { e.target.style.opacity = '0.12' }}
                         />
-                        <div style={{ position: 'absolute', bottom: 3, right: 3, background: 'rgba(0,0,0,0.8)', color: '#a78bfa', fontSize: 11, fontWeight: 700, borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 }}>{count}</div>
+                        <div style={{ position: 'absolute', bottom: 3, right: 3, background: 'rgba(0,0,0,0.8)', color: '#52a9cd', fontSize: 11, fontWeight: 700, borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 }}>{count}</div>
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
-              <div style={{ fontSize: 10, color: '#3d2d6e', marginTop: 4 }}>Click +1 · Right-click −1</div>
+              <div style={{ fontSize: 10, color: '#67809a', marginTop: 4 }}>Click +1 · Right-click −1</div>
             </>
           )}
         </div>
       )}
 
       {/* Actions */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(139,92,246,0.1)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(140,176,208,0.1)', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <input
           type="text"
           placeholder="Deck name..."
@@ -518,13 +518,13 @@ export default function DeckBuilder({ session }) {
           style={{ ...INPUT, padding: '9px 12px', fontSize: 13 }}
         />
         <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={exportDeck} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Export</button>
-          <button onClick={() => setShowImport(true)} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#f0f2f5', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Import</button>
-          <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '8px 6px', borderRadius: 8, border: 'none', background: saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: saving ? '#7c6fa0' : '#fff', fontSize: 12, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={exportDeck} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.04)', color: '#e9f1f8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Export</button>
+          <button onClick={() => setShowImport(true)} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.04)', color: '#e9f1f8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Import</button>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '8px 6px', borderRadius: 8, border: 'none', background: saving ? 'rgba(140,176,208,0.05)' : 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: saving ? '#9db2c6' : '#fff', fontSize: 12, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
             {saving ? 'Saving...' : saveMsg || (session ? 'Save Deck' : 'Sign in to Save')}
           </button>
         </div>
-        {error && <div style={{ fontSize: 11, color: '#f05252' }}>{error}</div>}
+        {error && <div style={{ fontSize: 11, color: '#d24a3a' }}>{error}</div>}
       </div>
     </div>
   )
@@ -532,10 +532,10 @@ export default function DeckBuilder({ session }) {
   // ─── Import modal ─────────────────────────────────────────────────────────────
   const importModal = showImport && (
     <div onClick={() => setShowImport(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#0c0814', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, width: Math.min(460, window.innerWidth - 32), padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Import Decklist</div>
-        <div style={{ fontSize: 12, color: '#7c6fa0', lineHeight: 1.6 }}>
-          One card per line: <span style={{ fontFamily: 'monospace', color: '#a78bfa' }}>4xOP01-001</span>. Leader line: <span style={{ fontFamily: 'monospace', color: '#a78bfa' }}>Leader: OP01-001</span>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#06101b', border: '1px solid rgba(140,176,208,0.2)', borderRadius: 16, width: Math.min(460, window.innerWidth - 32), padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>Import Decklist</div>
+        <div style={{ fontSize: 12, color: '#9db2c6', lineHeight: 1.6 }}>
+          One card per line: <span style={{ fontFamily: 'monospace', color: '#52a9cd' }}>4xOP01-001</span>. Leader line: <span style={{ fontFamily: 'monospace', color: '#52a9cd' }}>Leader: OP01-001</span>
         </div>
         <textarea
           value={importText}
@@ -544,10 +544,10 @@ export default function DeckBuilder({ session }) {
           style={{ ...INPUT, minHeight: 180, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
           autoFocus
         />
-        {error && <div style={{ fontSize: 11, color: '#f05252' }}>{error}</div>}
+        {error && <div style={{ fontSize: 11, color: '#d24a3a' }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => { setShowImport(false); setImportText(''); setError('') }} style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-          <button onClick={handleImport} disabled={!importText.trim() || importing} style={{ flex: 2, padding: 9, borderRadius: 8, border: 'none', background: importText.trim() && !importing ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : 'rgba(255,255,255,0.05)', color: importText.trim() && !importing ? '#fff' : '#7c6fa0', fontSize: 13, fontWeight: 700, cursor: importText.trim() && !importing ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+          <button onClick={() => { setShowImport(false); setImportText(''); setError('') }} style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={handleImport} disabled={!importText.trim() || importing} style={{ flex: 2, padding: 9, borderRadius: 8, border: 'none', background: importText.trim() && !importing ? 'linear-gradient(135deg, #2f7da3, #1b4a66)' : 'rgba(140,176,208,0.05)', color: importText.trim() && !importing ? '#fff' : '#9db2c6', fontSize: 13, fontWeight: 700, cursor: importText.trim() && !importing ? 'pointer' : 'default', fontFamily: 'inherit' }}>
             {importing ? 'Importing...' : 'Import'}
           </button>
         </div>
@@ -558,9 +558,9 @@ export default function DeckBuilder({ session }) {
   // ─── Page layout ──────────────────────────────────────────────────────────────
   const header = (
     <div style={{ marginBottom: '1.5rem' }}>
-      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Builder</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px' }}>Deck Builder</div>
-      <div style={{ fontSize: 13, color: '#7c6fa0', marginTop: 2 }}>Build and save your competitive decklists</div>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.6px', color: '#dcb35e', marginBottom: 4 }}>Builder</div>
+      <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 28, fontWeight: 600, color: '#e9f1f8', letterSpacing: '-0.3px' }}>Deck Builder</div>
+      <div style={{ fontSize: 13, color: '#9db2c6', marginTop: 2 }}>Build and save your competitive decklists</div>
     </div>
   )
 
@@ -574,7 +574,7 @@ export default function DeckBuilder({ session }) {
     let top = rect.top + rect.height / 2 - imgH / 2
     top = Math.max(10, Math.min(top, window.innerHeight - imgH - 10))
     return (
-      <div style={{ position: 'fixed', left, top, zIndex: 9999, pointerEvents: 'none', width: W, background: 'rgba(12,8,20,0.95)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.8)', padding: 6 }}>
+      <div style={{ position: 'fixed', left, top, zIndex: 9999, pointerEvents: 'none', width: W, background: 'rgba(8,16,27,0.95)', border: '1px solid rgba(200,162,74,0.3)', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.8)', padding: 6 }}>
         <img src={imageUrl} alt={name} style={{ width: '100%', borderRadius: 8, display: 'block' }} />
       </div>
     )
@@ -588,9 +588,9 @@ export default function DeckBuilder({ session }) {
       {isMobile ? (
         <>
           {header}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 4 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: 'rgba(140,176,208,0.03)', borderRadius: 10, padding: 4 }}>
             {[['search', 'Card Search'], ['deck', `Deck (${totalCards}/${MAX_DECK})`]].map(([tab, label]) => (
-              <button key={tab} onClick={() => setMobileTab(tab)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: mobileTab === tab ? 'rgba(139,92,246,0.2)' : 'transparent', color: mobileTab === tab ? '#a78bfa' : '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button key={tab} onClick={() => setMobileTab(tab)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: mobileTab === tab ? 'rgba(140,176,208,0.2)' : 'transparent', color: mobileTab === tab ? '#52a9cd' : '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {label}
               </button>
             ))}

@@ -65,16 +65,16 @@ export default function ProfilePopover({ profile, session, onClose, onFriendActi
   function FriendButton() {
     if (!session || isSelf) return null
     if (friendStatus === 'accepted') return (
-      <button onClick={removeFriend} style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Remove Friend</button>
+      <button onClick={removeFriend} style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Remove Friend</button>
     )
     if (friendStatus === 'pending_sent') return (
-      <button disabled style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', cursor: 'default', fontFamily: 'inherit', flexShrink: 0 }}>Sent</button>
+      <button disabled style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'transparent', color: '#9db2c6', cursor: 'default', fontFamily: 'inherit', flexShrink: 0 }}>Sent</button>
     )
     if (friendStatus === 'pending_received') return (
-      <button onClick={acceptRequest} style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Accept</button>
+      <button onClick={acceptRequest} style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#3bb27e', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Accept</button>
     )
     return (
-      <button onClick={sendFriendRequest} style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>+ Add Friend</button>
+      <button onClick={sendFriendRequest} style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>+ Add Friend</button>
     )
   }
 
@@ -85,21 +85,21 @@ export default function ProfilePopover({ profile, session, onClose, onFriendActi
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: '#0f0b1e', border: '1px solid rgba(139,92,246,0.25)', borderRadius: isMobile ? '18px 18px 0 0' : 16, width: isMobile ? '100%' : 360, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}
+        style={{ background: '#0f1f33', border: '1px solid rgba(200,162,74,0.25)', borderRadius: isMobile ? '18px 18px 0 0' : 16, width: isMobile ? '100%' : 360, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 54, height: 54, borderRadius: 13, background: profile.avatar_url ? 'transparent' : '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ width: 54, height: 54, borderRadius: 13, background: profile.avatar_url ? 'transparent' : '#2f7da3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden', border: '2px solid rgba(140,176,208,0.08)' }}>
             {profile.avatar_url ? <img src={profile.avatar_url} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#f0f2f5' }}>{profile.username}</div>
-            {profile.location && <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 2 }}>📍 {profile.location}</div>}
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#e9f1f8' }}>{profile.username}</div>
+            {profile.location && <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 2 }}>📍 {profile.location}</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#7c6fa0', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.1)', borderRadius: 6, color: '#9db2c6', fontSize: 15, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
         </div>
 
         {profile.bio && (
-          <div style={{ fontSize: 12, color: '#8a9bb0', lineHeight: 1.55, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: 12, color: '#9db2c6', lineHeight: 1.55, padding: '8px 12px', background: 'rgba(140,176,208,0.03)', borderRadius: 8, border: '1px solid rgba(140,176,208,0.06)' }}>
             {profile.bio.length > 120 ? profile.bio.slice(0, 120) + '…' : profile.bio}
           </div>
         )}
@@ -107,21 +107,21 @@ export default function ProfilePopover({ profile, session, onClose, onFriendActi
         {stats ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {[['Win Rate', `${stats.winRate}%`], ['Events', stats.events], ['Top 8s', stats.topEights]].map(([label, val]) => (
-              <div key={label} style={{ textAlign: 'center', padding: '10px 6px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10 }}>
-                <div style={{ fontSize: 10, color: '#7c6fa0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>{label}</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f2f5' }}>{val}</div>
+              <div key={label} style={{ textAlign: 'center', padding: '10px 6px', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 10 }}>
+                <div style={{ fontSize: 10, color: '#9db2c6', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#e9f1f8' }}>{val}</div>
               </div>
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '12px 0', color: '#7c6fa0', fontSize: 12 }}>Loading stats…</div>
+          <div style={{ textAlign: 'center', padding: '12px 0', color: '#9db2c6', fontSize: 12 }}>Loading stats…</div>
         )}
 
         <div style={{ display: 'flex', gap: 8 }}>
           <FriendButton />
           <button
             onClick={() => { onClose(); navigate(`/profile/${profile.id}`) }}
-            style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.3)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             View Full Profile →
           </button>

@@ -447,7 +447,7 @@ export default function CardScanner({ onClose }) {
   return (
     <div style={overlay}>
       <div style={header}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f2f5' }}>Scan Cards</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#e9f1f8' }}>Scan Cards</div>
         <button onClick={onClose} style={doneBtn}>
           Done{snaps.length > 0 ? ` (${doneCount})` : ''}
         </button>
@@ -507,10 +507,10 @@ export default function CardScanner({ onClose }) {
         {(phase === 'denied' || phase === 'error') && (
           <div style={messageWrap}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 6 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8', marginBottom: 6 }}>
               {phase === 'denied' ? 'Camera permission needed' : 'Something went wrong'}
             </div>
-            <div style={{ fontSize: 13, color: '#7c6fa0', maxWidth: 280, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 13, color: '#9db2c6', maxWidth: 280, lineHeight: 1.5 }}>
               {phase === 'denied'
                 ? 'Allow camera access in your browser, then tap Retry.'
                 : errorMsg}
@@ -528,9 +528,9 @@ export default function CardScanner({ onClose }) {
         ) : (
           <>
             <div style={stripHeader}>
-              <span style={{ color: '#34d399' }}>{doneCount} found</span>
-              {pendingCount > 0 && <span style={{ color: '#a78bfa' }}> · {pendingCount} scanning</span>}
-              {failedCount > 0 && <span style={{ color: '#f05252' }}> · {failedCount} missed</span>}
+              <span style={{ color: '#3bb27e' }}>{doneCount} found</span>
+              {pendingCount > 0 && <span style={{ color: '#52a9cd' }}> · {pendingCount} scanning</span>}
+              {failedCount > 0 && <span style={{ color: '#d24a3a' }}> · {failedCount} missed</span>}
             </div>
             <div style={stripScroll}>
               {snaps.map(item => (
@@ -591,17 +591,17 @@ function SnapTile({ item, onRemove, onSelectVariant }) {
 }
 
 const overlay = {
-  position: 'fixed', inset: 0, zIndex: 1000, background: '#0c0814',
+  position: 'fixed', inset: 0, zIndex: 1000, background: '#06101b',
   display: 'flex', flexDirection: 'column',
 }
 const header = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px',
-  borderBottom: '1px solid rgba(139,92,246,0.12)',
+  borderBottom: '1px solid rgba(140,176,208,0.12)',
 }
 const doneBtn = {
   fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
-  background: 'linear-gradient(135deg, #7c3aed, #a855f7)', border: 'none',
+  background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', border: 'none',
   borderRadius: 8, padding: '8px 16px',
 }
 const viewport = {
@@ -622,28 +622,28 @@ const guideBox = {
 }
 const guideStrip = {
   position: 'absolute', left: 0, right: 0, bottom: 0, height: '45%',
-  borderTop: '2px dashed rgba(236,72,153,0.8)',
-  background: 'rgba(236,72,153,0.08)', borderRadius: '0 0 12px 12px',
+  borderTop: '2px dashed rgba(200,162,74,0.8)',
+  background: 'rgba(200,162,74,0.08)', borderRadius: '0 0 12px 12px',
 }
 const torchBtn = {
   position: 'absolute', top: 14, right: 14, zIndex: 6,
   width: 44, height: 44, borderRadius: '50%', padding: 0, fontSize: 20, lineHeight: 1,
   display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-  background: 'rgba(12,8,20,0.7)', border: '1px solid rgba(255,255,255,0.18)',
+  background: 'rgba(8,16,27,0.7)', border: '1px solid rgba(140,176,208,0.18)',
   backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
 }
 const torchBtnOn = {
-  background: 'rgba(251,191,36,0.22)', border: '1px solid rgba(251,191,36,0.7)',
-  boxShadow: '0 0 14px rgba(251,191,36,0.5)',
+  background: 'rgba(200,162,74,0.22)', border: '1px solid rgba(200,162,74,0.7)',
+  boxShadow: '0 0 14px rgba(200,162,74,0.5)',
 }
 const loadingPill = {
   position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
   display: 'flex', alignItems: 'center', gap: 8,
-  background: 'rgba(12,8,20,0.85)', border: '1px solid rgba(139,92,246,0.2)',
+  background: 'rgba(8,16,27,0.85)', border: '1px solid rgba(140,176,208,0.2)',
   borderRadius: 20, padding: '8px 16px', fontSize: 12.5, color: '#cdb8ff',
 }
 const spinnerDot = {
-  width: 7, height: 7, borderRadius: '50%', background: '#a78bfa',
+  width: 7, height: 7, borderRadius: '50%', background: '#52a9cd',
   flexShrink: 0, animation: 'livePulse 1.5s ease-in-out infinite',
 }
 const shutterWrap = {
@@ -652,25 +652,25 @@ const shutterWrap = {
 }
 const shutterBtn = {
   width: 70, height: 70, borderRadius: '50%', padding: 0,
-  background: 'rgba(255,255,255,0.15)', border: '4px solid #fff',
+  background: 'rgba(140,176,208,0.15)', border: '4px solid #fff',
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
 const shutterInner = { width: 54, height: 54, borderRadius: '50%', background: '#fff' }
 const shutterHint = {
   fontSize: 12, color: '#e0d6ff', fontWeight: 500,
-  background: 'rgba(12,8,20,0.6)', padding: '4px 12px', borderRadius: 12,
+  background: 'rgba(8,16,27,0.6)', padding: '4px 12px', borderRadius: 12,
 }
 const messageWrap = {
   position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
   alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center',
 }
 const strip = {
-  flexShrink: 0, borderTop: '1px solid rgba(139,92,246,0.12)',
-  background: 'rgba(12,8,20,0.95)',
+  flexShrink: 0, borderTop: '1px solid rgba(140,176,208,0.12)',
+  background: 'rgba(8,16,27,0.95)',
   padding: '10px 10px calc(env(safe-area-inset-bottom, 0px) + 10px)',
 }
 const emptyHint = {
-  fontSize: 12, color: '#7c6fa0', textAlign: 'center', padding: '14px 20px', lineHeight: 1.5,
+  fontSize: 12, color: '#9db2c6', textAlign: 'center', padding: '14px 20px', lineHeight: 1.5,
 }
 const stripHeader = {
   fontSize: 11.5, fontWeight: 600, padding: '0 4px 8px', display: 'flex', gap: 2,
@@ -681,13 +681,13 @@ const tile = {
 }
 const tileClose = {
   position: 'absolute', top: -6, right: -6, zIndex: 2, width: 20, height: 20,
-  borderRadius: '50%', border: 'none', background: 'rgba(12,8,20,0.9)',
+  borderRadius: '50%', border: 'none', background: 'rgba(8,16,27,0.9)',
   color: '#c0b5d8', fontSize: 11, cursor: 'pointer', lineHeight: 1,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
 const tileImg = {
   position: 'relative', width: 76, aspectRatio: '5 / 7', borderRadius: 8, overflow: 'hidden',
-  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+  background: 'rgba(140,176,208,0.04)', border: '1px solid rgba(140,176,208,0.08)',
 }
 const tileSpinner = {
   position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -699,11 +699,11 @@ const tileFailed = {
   display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, textAlign: 'center',
 }
 const tileLabel = {
-  fontSize: 10, fontWeight: 600, color: '#a78bfa', textAlign: 'center',
+  fontSize: 10, fontWeight: 600, color: '#52a9cd', textAlign: 'center',
   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
 }
 const tileSelect = {
   width: '100%', marginTop: 2, fontSize: 10, fontFamily: 'inherit', fontWeight: 600,
-  color: '#e0d6ff', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)',
+  color: '#e0d6ff', background: 'rgba(140,176,208,0.12)', border: '1px solid rgba(200,162,74,0.3)',
   borderRadius: 6, padding: '3px 4px', cursor: 'pointer', outline: 'none',
 }
