@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 import { useWindowSize } from './hooks/useWindowSize'
 import Navbar from './components/Navbar'
 import FloatingCards from './components/FloatingCards'
+import InstallPrompt from './components/InstallPrompt'
 import Dashboard from './pages/Dashboard'
 import LogResult from './pages/LogResult'
 import Decklists from './pages/Decklists'
@@ -44,6 +45,7 @@ function AppLayout({ session, isMobile }) {
           <Outlet />
         </main>
       </div>
+      <InstallPrompt />
     </div>
   )
 }

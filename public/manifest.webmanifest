@@ -1,0 +1,25 @@
+{
+  "name": "PirateTracker",
+  "short_name": "PirateTracker",
+  "description": "Track your One Piece TCG matches, decks, tournaments and stats.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0814",
+  "theme_color": "#0c0814",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "546x540",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
