@@ -7,35 +7,31 @@ import BugReportModal from './BugReportModal'
 // Lazy-loaded so tesseract.js stays out of the main bundle until a scan starts.
 const CardScanner = lazy(() => import('./CardScanner'))
 
+// Brass compass rose — the brand mark.
+function Compass({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="#c8a24a" strokeWidth="1.4" />
+      <circle cx="12" cy="12" r="6.2" stroke="rgba(200,162,74,0.4)" strokeWidth="1" />
+      <path d="M12 4.5 L13.7 10.3 L12 12 L10.3 10.3 Z" fill="#f0cd82" />
+      <path d="M12 19.5 L10.3 13.7 L12 12 L13.7 13.7 Z" fill="#9a7a30" />
+      <circle cx="12" cy="12" r="1.3" fill="#dcb35e" />
+    </svg>
+  )
+}
+
 const LOGO_STYLE = {
-  fontSize: 15,
-  fontWeight: 700,
-  letterSpacing: '-0.3px',
-  background: 'linear-gradient(90deg, #a78bfa, #ec4899, #f59e0b, #a78bfa)',
-  backgroundSize: '300% 300%',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  animation: 'holoShimmer 4s ease infinite',
-  cursor: 'default',
+  fontFamily: "'Fraunces', Georgia, serif",
+  fontSize: 18,
+  fontWeight: 600,
+  letterSpacing: '0.2px',
+  color: '#e9ddc4',
+  cursor: 'pointer',
   userSelect: 'none',
 }
 
-function tabStyle(isActive) {
-  return {
-    fontSize: 13,
-    fontWeight: 500,
-    padding: '5px 12px',
-    borderRadius: 6,
-    cursor: 'pointer',
-    border: isActive ? '1px solid rgba(139,92,246,0.3)' : '1px solid transparent',
-    background: isActive ? 'rgba(139,92,246,0.12)' : 'transparent',
-    color: isActive ? '#a78bfa' : '#7c6fa0',
-    fontFamily: 'inherit',
-    textDecoration: 'none',
-    transition: 'all 0.15s',
-  }
-}
+// Active state and hover are handled by the .gl-navlink CSS classes.
+const navLinkClass = ({ isActive }) => (isActive ? 'gl-navlink gl-navlink--active' : 'gl-navlink')
 
 const AUTH_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -138,7 +134,7 @@ export default function Navbar({ session }) {
   }
 
   const avatarEl = (
-    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden', border: '1.5px solid rgba(139,92,246,0.4)' }}>
+    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #1b4a66, #2f7da3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#e9ddc4', flexShrink: 0, overflow: 'hidden', border: '1.5px solid rgba(200,162,74,0.45)', boxShadow: '0 0 0 1px rgba(0,0,0,0.3)' }}>
       {avatarUrl
         ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : initials
@@ -150,9 +146,9 @@ export default function Navbar({ session }) {
     <button
       onClick={openScanner}
       style={{
-        fontSize: 16, fontWeight: 700, padding: '16px 24px', textAlign: 'left',
-        color: '#a78bfa', background: 'rgba(139,92,246,0.08)', border: 'none',
-        borderBottom: '1px solid rgba(139,92,246,0.08)', cursor: 'pointer',
+        fontSize: 16, fontWeight: 600, padding: '16px 24px', textAlign: 'left',
+        color: '#dcb35e', background: 'rgba(200,162,74,0.07)', border: 'none',
+        borderBottom: '1px solid rgba(140,176,208,0.10)', cursor: 'pointer',
         fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 10, width: '100%',
       }}
     >
@@ -160,7 +156,7 @@ export default function Navbar({ session }) {
       Scan Card
       <span style={{
         fontSize: 9, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase',
-        color: '#f59e0b', background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.35)',
+        color: '#e08a3c', background: 'rgba(224,138,60,0.14)', border: '1px solid rgba(224,138,60,0.35)',
         borderRadius: 5, padding: '2px 5px', lineHeight: 1,
       }}>
         Beta
@@ -172,7 +168,8 @@ export default function Navbar({ session }) {
     <button
       onClick={() => setBugOpen(true)}
       title="Report a bug"
-      style={{ fontSize: 12, fontWeight: 600, color: '#7c6fa0', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', padding: '5px 9px', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}
+      className="gl-btn"
+      style={{ fontSize: 12, fontWeight: 600, color: '#9db2c6', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.18)', borderRadius: 7, cursor: 'pointer', fontFamily: 'inherit', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}
     >
       🐞 Bug
     </button>
@@ -180,16 +177,19 @@ export default function Navbar({ session }) {
 
   return (
     <>
-      <nav style={{ background: 'rgba(12,8,20,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(139,92,246,0.12)', padding: '0 1.5rem', height: 52, display: 'flex', alignItems: 'center', gap: 4, position: 'sticky', top: 0, zIndex: 50 }}>
-        <NavLink to="/" style={{ ...LOGO_STYLE, textDecoration: 'none' }}>PirateTracker</NavLink>
+      <nav style={{ background: 'rgba(8,16,27,0.82)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(200,162,74,0.16)', boxShadow: '0 1px 0 rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.25)', padding: '0 1.5rem', height: 58, display: 'flex', alignItems: 'center', gap: 4, position: 'sticky', top: 0, zIndex: 50 }}>
+        <NavLink to="/" style={{ ...LOGO_STYLE, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 9 }}>
+          <Compass size={22} />
+          <span>PirateTracker</span>
+        </NavLink>
 
         {isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-            <button onClick={() => setBugOpen(true)} title="Report a bug" style={{ background: 'none', border: 'none', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 6px', lineHeight: 1 }}>Bug</button>
+            <button onClick={() => setBugOpen(true)} title="Report a bug" style={{ background: 'none', border: 'none', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 6px', lineHeight: 1 }}>Bug</button>
             {session && avatarEl}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              style={{ background: 'none', border: 'none', color: '#f0f2f5', fontSize: 22, cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', color: '#e9ddc4', fontSize: 22, cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
               aria-label="Toggle menu"
             >
               {menuOpen ? '✕' : '☰'}
@@ -197,18 +197,18 @@ export default function Navbar({ session }) {
           </div>
         ) : session ? (
           <>
-            <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ marginLeft: 14, paddingLeft: 14, borderLeft: '1px solid rgba(140,176,208,0.14)', display: 'flex', alignItems: 'center', gap: 2 }}>
               {links.map(link => (
-                <NavLink key={link.to} to={link.to} style={({ isActive }) => tabStyle(isActive)}>
+                <NavLink key={link.to} to={link.to} className={navLinkClass}>
                   <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     {link.label}
                     {link.to === '/marketplace' && unreadMktCount > 0 && (
-                      <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#f05252', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
+                      <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#d24a3a', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
                         {unreadMktCount > 9 ? '9+' : unreadMktCount}
                       </span>
                     )}
                     {link.to === '/community' && unreadDmCount > 0 && (
-                      <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#f05252', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
+                      <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#d24a3a', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
                         {unreadDmCount > 9 ? '9+' : unreadDmCount}
                       </span>
                     )}
@@ -216,30 +216,30 @@ export default function Navbar({ session }) {
                 </NavLink>
               ))}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto', paddingLeft: 14, borderLeft: '1px solid rgba(140,176,208,0.14)' }}>
               {bugButton}
               {avatarEl}
-              <button onClick={handleSignOut} style={{ fontSize: 12, fontWeight: 600, color: '#4a5068', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+              <button onClick={handleSignOut} className="gl-btn" style={{ fontSize: 12, fontWeight: 600, color: '#67809a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                 Sign out
               </button>
             </div>
           </>
         ) : (
           <>
-            <div style={{ marginLeft: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <NavLink to="/deck-builder" style={({ isActive }) => tabStyle(isActive)}>Deck Builder</NavLink>
-              <NavLink to="/bounty" style={({ isActive }) => tabStyle(isActive)}>☠ Bounty</NavLink>
-              <NavLink to="/community" style={({ isActive }) => tabStyle(isActive)}>Community</NavLink>
-              <NavLink to="/tournaments" style={({ isActive }) => tabStyle(isActive)}>Tournaments</NavLink>
-              <NavLink to="/marketplace" style={({ isActive }) => tabStyle(isActive)}>Market</NavLink>
-              <NavLink to="/about" style={({ isActive }) => tabStyle(isActive)}>About</NavLink>
+            <div style={{ marginLeft: 14, paddingLeft: 14, borderLeft: '1px solid rgba(140,176,208,0.14)', display: 'flex', alignItems: 'center', gap: 2 }}>
+              <NavLink to="/deck-builder" className={navLinkClass}>Deck Builder</NavLink>
+              <NavLink to="/bounty" className={navLinkClass}>☠ Bounty</NavLink>
+              <NavLink to="/community" className={navLinkClass}>Community</NavLink>
+              <NavLink to="/tournaments" className={navLinkClass}>Tournaments</NavLink>
+              <NavLink to="/marketplace" className={navLinkClass}>Market</NavLink>
+              <NavLink to="/about" className={navLinkClass}>About</NavLink>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
               {bugButton}
-              <button onClick={() => navigate('/login')} style={{ fontSize: 13, fontWeight: 600, color: '#7c6fa0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '5px 10px' }}>
+              <button onClick={() => navigate('/login')} className="gl-btn" style={{ fontSize: 13, fontWeight: 600, color: '#9db2c6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '6px 10px' }}>
                 Log In
               </button>
-              <button onClick={() => navigate('/signup')} style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '6px 14px', borderRadius: 8 }}>
+              <button onClick={() => navigate('/signup')} className="gl-btn" style={{ fontSize: 13, fontWeight: 700, color: '#0a1626', background: 'linear-gradient(135deg, #dcb35e, #c8a24a)', border: '1px solid rgba(200,162,74,0.5)', cursor: 'pointer', fontFamily: 'inherit', padding: '7px 16px', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.35)' }}>
                 Sign Up
               </button>
             </div>
@@ -248,7 +248,7 @@ export default function Navbar({ session }) {
       </nav>
 
       {isMobile && menuOpen && (
-        <div style={{ position: 'fixed', top: 52, left: 0, right: 0, bottom: 0, background: '#0c0814', zIndex: 49, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: 58, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, #0a1626, #06101b)', zIndex: 49, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
           {session ? (
             <>
               {scanMenuButton}
@@ -261,10 +261,11 @@ export default function Navbar({ session }) {
                     fontSize: 16,
                     fontWeight: 600,
                     padding: '16px 24px',
-                    color: isActive ? '#a78bfa' : '#f0f2f5',
+                    color: isActive ? '#dcb35e' : '#e9f1f8',
                     textDecoration: 'none',
-                    borderBottom: '1px solid rgba(139,92,246,0.08)',
-                    background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
+                    borderBottom: '1px solid rgba(140,176,208,0.08)',
+                    borderLeft: isActive ? '3px solid #c8a24a' : '3px solid transparent',
+                    background: isActive ? 'rgba(200,162,74,0.08)' : 'transparent',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
@@ -272,19 +273,19 @@ export default function Navbar({ session }) {
                 >
                   {link.label}
                   {link.to === '/marketplace' && unreadMktCount > 0 && (
-                    <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                    <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#d24a3a', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
                       {unreadMktCount > 9 ? '9+' : unreadMktCount}
                     </span>
                   )}
                   {link.to === '/community' && unreadDmCount > 0 && (
-                    <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#f05252', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                    <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: '#d24a3a', color: '#fff', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
                       {unreadDmCount > 9 ? '9+' : unreadDmCount}
                     </span>
                   )}
                 </NavLink>
               ))}
-              <div style={{ padding: '16px 24px', marginTop: 'auto', borderTop: '1px solid rgba(139,92,246,0.08)' }}>
-                <button onClick={handleSignOut} style={{ fontSize: 15, fontWeight: 600, color: '#f05252', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+              <div style={{ padding: '16px 24px', marginTop: 'auto', borderTop: '1px solid rgba(140,176,208,0.08)' }}>
+                <button onClick={handleSignOut} style={{ fontSize: 15, fontWeight: 600, color: '#d24a3a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                   Sign out
                 </button>
               </div>
@@ -305,24 +306,25 @@ export default function Navbar({ session }) {
                   to={link.to}
                   onClick={() => setMenuOpen(false)}
                   style={({ isActive }) => ({
-                    fontSize: 16, fontWeight: 600, padding: '16px 24px', color: isActive ? '#a78bfa' : '#f0f2f5',
-                    textDecoration: 'none', borderBottom: '1px solid rgba(139,92,246,0.08)',
-                    background: isActive ? 'rgba(139,92,246,0.08)' : 'transparent',
+                    fontSize: 16, fontWeight: 600, padding: '16px 24px', color: isActive ? '#dcb35e' : '#e9f1f8',
+                    textDecoration: 'none', borderBottom: '1px solid rgba(140,176,208,0.08)',
+                    borderLeft: isActive ? '3px solid #c8a24a' : '3px solid transparent',
+                    background: isActive ? 'rgba(200,162,74,0.08)' : 'transparent',
                   })}
                 >
                   {link.label}
                 </NavLink>
               ))}
-              <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(139,92,246,0.08)', marginTop: 'auto' }}>
+              <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(140,176,208,0.08)', marginTop: 'auto' }}>
                 <button
                   onClick={() => { setMenuOpen(false); navigate('/signup') }}
-                  style={{ padding: '11px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                  style={{ padding: '12px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.5)', background: 'linear-gradient(135deg, #dcb35e, #c8a24a)', color: '#0a1626', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                 >
                   Sign Up Free
                 </button>
                 <button
                   onClick={() => { setMenuOpen(false); navigate('/login') }}
-                  style={{ padding: '11px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                  style={{ padding: '12px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.22)', background: 'transparent', color: '#c2d2e0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                 >
                   Log In
                 </button>

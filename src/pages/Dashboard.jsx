@@ -3,19 +3,22 @@ import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import TournamentModal from '../components/TournamentModal'
+import { colors, radius, shadow, font, eyebrow, pageHeader, btnPrimary } from '../theme'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts'
 
+// OPTCG card colors — semantic, harmonized with the nautical palette.
 const COLORS = {
-  Red: '#f05252',
-  Blue: '#3d7fff',
-  Green: '#34d399',
+  Red: '#e05545',
+  Blue: '#3f8fd6',
+  Green: '#3bb27e',
   Purple: '#a78bfa',
-  Yellow: '#fbbf24',
+  Yellow: '#e6b84f',
   Black: '#94a3b8',
 }
+const FALLBACK = colors.ocean
 
 const TOP_LEADERS_LIMIT = 3
 
@@ -27,23 +30,23 @@ function placementLabel(n) {
 }
 
 function placementStyle(n) {
-  if (n === 1) return { background: 'rgba(251,191,36,0.12)', color: '#fbbf24' }
-  if (n === 2) return { background: 'rgba(148,163,184,0.1)', color: '#94a3b8' }
-  if (n === 3) return { background: 'rgba(251,146,60,0.1)', color: '#fb923c' }
-  return { background: 'rgba(255,255,255,0.04)', color: '#3d2d6e' }
+  if (n === 1) return { background: 'rgba(220,179,94,0.14)', color: colors.gold, border: '1px solid rgba(200,162,74,0.34)' }
+  if (n === 2) return { background: 'rgba(157,178,198,0.12)', color: '#b9c7d6', border: '1px solid rgba(157,178,198,0.26)' }
+  if (n === 3) return { background: 'rgba(224,138,60,0.12)', color: colors.orange, border: '1px solid rgba(224,138,60,0.3)' }
+  return { background: 'rgba(140,176,208,0.06)', color: colors.faint, border: `1px solid ${colors.line}` }
 }
 
 const tooltipStyle = {
-  contentStyle: { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12, color: '#f0f2f5' },
-  labelStyle: { color: '#7c6fa0' },
-  cursor: { fill: 'rgba(255,255,255,0.04)' },
+  contentStyle: { background: colors.surface2, border: `1px solid ${colors.lineStrong}`, borderRadius: 8, fontSize: 12, color: colors.text },
+  labelStyle: { color: colors.muted },
+  cursor: { fill: 'rgba(140,176,208,0.06)' },
 }
 
 function ChartCard({ title, children, action }) {
   return (
-    <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '16px 20px' }}>
+    <div style={{ background: `linear-gradient(180deg, ${colors.surface}, ${colors.deep})`, border: `1px solid ${colors.line}`, borderRadius: radius.md, padding: '18px 22px', boxShadow: shadow.md }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#7c6fa0' }}>{title}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: colors.gold }}>{title}</div>
         {action}
       </div>
       {children}
@@ -66,7 +69,7 @@ function CustomPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent })
 
 function EmptyChart({ message }) {
   return (
-    <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3d2d6e', fontSize: 13 }}>
+    <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.faint, fontSize: 13 }}>
       {message}
     </div>
   )
@@ -76,12 +79,12 @@ function EmptyChart({ message }) {
 function LeaderMini({ leaderId, color }) {
   const [errored, setErrored] = useState(false)
   return (
-    <div style={{ width: 36, height: 50, borderRadius: 4, overflow: 'hidden', flexShrink: 0, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+    <div style={{ width: 36, height: 50, borderRadius: 4, overflow: 'hidden', flexShrink: 0, background: 'rgba(140,176,208,0.05)', border: `1px solid ${colors.line}` }}>
       {!errored ? (
         <img src={getCardImageUrl(leaderId)} alt={leaderId} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setErrored(true)} />
       ) : (
-        <div style={{ width: '100%', height: '100%', background: (COLORS[color] ?? '#8b5cf6') + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[color] ?? '#8b5cf6' }} />
+        <div style={{ width: '100%', height: '100%', background: (COLORS[color] ?? FALLBACK) + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[color] ?? FALLBACK }} />
         </div>
       )}
     </div>
@@ -126,7 +129,7 @@ export default function Dashboard({ session }) {
   const leaderUsage = Object.values(
     tournaments.reduce((acc, t) => {
       if (!acc[t.leader_id]) {
-        const primaryColor = (t.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? '#8b5cf6'
+        const primaryColor = (t.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? FALLBACK
         acc[t.leader_id] = { name: t.leader_name, fullName: t.leader_name, leaderColor: t.leader_color, color: primaryColor, count: 0, wins: 0, losses: 0 }
       }
       acc[t.leader_id].count++
@@ -139,7 +142,7 @@ export default function Dashboard({ session }) {
 
   const colorUsage = Object.values(
     tournaments.reduce((acc, t) => {
-      if (!acc[t.leader_color]) acc[t.leader_color] = { name: t.leader_color, value: 0, color: COLORS[t.leader_color] ?? '#8b5cf6' }
+      if (!acc[t.leader_color]) acc[t.leader_color] = { name: t.leader_color, value: 0, color: COLORS[t.leader_color] ?? FALLBACK }
       acc[t.leader_color].value++
       return acc
     }, {})
@@ -150,42 +153,48 @@ export default function Dashboard({ session }) {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Loading dashboard...</div>
+      <div className="gl-page-enter">
+        <div className="skeleton" style={{ height: 64, width: 240, borderRadius: radius.md, marginBottom: 24 }} />
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 14 }}>
+          {[0, 1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 88, borderRadius: radius.md }} />)}
+        </div>
+        <div className="skeleton" style={{ height: 220, borderRadius: radius.md }} />
       </div>
     )
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Overview</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Dashboard</div>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Your competitive performance at a glance</div>
+    <div className="gl-page-enter">
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ ...eyebrow, marginBottom: 8 }}>⚓ Captain's Log</div>
+        <div style={{ ...pageHeader(), fontSize: 30, marginBottom: 6 }}>Dashboard</div>
+        <div style={{ fontSize: 14, color: colors.muted }}>Your competitive performance at a glance</div>
       </div>
 
       {/* Stat cards — 2×2 on mobile, 4×1 on desktop */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 14 }}>
         {[
           { label: 'Win Rate', value: totalEvents > 0 ? `${winRate}%` : '—', sub: null },
           { label: 'Tournaments', value: totalEvents, sub: `${topEights} top 8` },
           { label: 'Best Finish', value: bestFinish ? placementLabel(bestFinish) : '—', sub: null },
           { label: 'Record', value: totalEvents > 0 ? `${totalWins}–${totalLosses}` : '—', sub: null },
         ].map(s => (
-          <div key={s.label} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: isMobile ? '12px 14px' : 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#7c6fa0', marginBottom: 8 }}>{s.label}</div>
-            <div style={s.label === 'Win Rate' ? { fontSize: isMobile ? 22 : 36, fontWeight: 700, fontFamily: "'Space Mono', monospace", letterSpacing: '-1px', lineHeight: 1, background: 'linear-gradient(90deg, #a78bfa, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' } : { fontSize: isMobile ? 22 : 28, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-1px', lineHeight: 1 }}>{s.value}</div>
-            {s.sub && <div style={{ fontSize: 11, color: '#3d2d6e', marginTop: 5 }}>{s.sub}</div>}
+          <div key={s.label} style={{ background: `linear-gradient(180deg, ${colors.surface}, ${colors.deep})`, border: `1px solid ${colors.line}`, borderRadius: radius.md, padding: isMobile ? '14px 16px' : 18, boxShadow: shadow.md }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: colors.muted, marginBottom: 10 }}>{s.label}</div>
+            <div style={s.label === 'Win Rate'
+              ? { fontSize: isMobile ? 24 : 38, fontWeight: 700, fontFamily: font.mono, letterSpacing: '-1px', lineHeight: 1, color: colors.gold }
+              : { fontSize: isMobile ? 22 : 30, fontWeight: 600, fontFamily: font.display, color: colors.text, letterSpacing: '-0.5px', lineHeight: 1 }}>{s.value}</div>
+            {s.sub && <div style={{ fontSize: 11, color: colors.faint, marginTop: 6 }}>{s.sub}</div>}
           </div>
         ))}
       </div>
 
       {totalEvents === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 20px', color: '#3d2d6e' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>📊</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>No data yet</div>
+        <div style={{ textAlign: 'center', padding: '80px 20px', color: colors.faint }}>
+          <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.7 }}>🧭</div>
+          <div style={{ fontSize: 16, fontWeight: 600, fontFamily: font.display, color: colors.textSoft, marginBottom: 6 }}>No data yet</div>
           <div style={{ fontSize: 13, marginBottom: 20 }}>Log your first tournament to start seeing stats and charts</div>
-          <a href="/log" style={{ fontSize: 13, fontWeight: 600, color: '#8b5cf6', textDecoration: 'none' }}>→ Log a result</a>
+          <a href="/log" style={{ fontSize: 13, fontWeight: 700, color: colors.gold, textDecoration: 'none' }}>→ Log a result</a>
         </div>
       ) : (
         <>
@@ -195,26 +204,26 @@ export default function Dashboard({ session }) {
               {placementOverTime.length < 2 ? <EmptyChart message="Need at least 2 events" /> : (
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={placementOverTime}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,92,246,0.08)" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#7c6fa0' }} axisLine={false} tickLine={false} />
-                    <YAxis reversed domain={[1, 'auto']} tick={{ fontSize: 11, fill: '#7c6fa0' }} axisLine={false} tickLine={false} tickFormatter={v => `#${v}`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(140,176,208,0.08)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: colors.muted }} axisLine={false} tickLine={false} />
+                    <YAxis reversed domain={[1, 'auto']} tick={{ fontSize: 11, fill: colors.muted }} axisLine={false} tickLine={false} tickFormatter={v => `#${v}`} />
                     <Tooltip
                       {...tooltipStyle}
                       content={({ active, payload }) => {
                         if (!active || !payload?.length) return null
                         const d = payload[0].payload
                         return (
-                          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 12px', fontSize: 12 }}>
-                            <div style={{ color: '#7c6fa0', marginBottom: 4 }}>{d.date}</div>
-                            <div style={{ color: '#f0f2f5', fontWeight: 600 }}>{placementLabel(d.placement)} of {d.players}</div>
-                            <div style={{ color: '#7c6fa0', marginTop: 2, fontSize: 11 }}>{d.name}</div>
+                          <div style={{ background: colors.surface2, border: `1px solid ${colors.lineStrong}`, borderRadius: 8, padding: '8px 12px', fontSize: 12 }}>
+                            <div style={{ color: colors.muted, marginBottom: 4 }}>{d.date}</div>
+                            <div style={{ color: colors.text, fontWeight: 600 }}>{placementLabel(d.placement)} of {d.players}</div>
+                            <div style={{ color: colors.muted, marginTop: 2, fontSize: 11 }}>{d.name}</div>
                           </div>
                         )
                       }}
                     />
-                    <Line type="monotone" dataKey="placement" stroke="#a78bfa" strokeWidth={2}
+                    <Line type="monotone" dataKey="placement" stroke={colors.oceanBright} strokeWidth={2}
                       dot={({ cx, cy, payload }) => {
-                        const c = payload.placement === 1 ? '#fbbf24' : payload.placement <= 3 ? '#fb923c' : payload.placement <= 8 ? '#8b5cf6' : '#3d2d6e'
+                        const c = payload.placement === 1 ? colors.gold : payload.placement <= 3 ? colors.orange : payload.placement <= 8 ? colors.ocean : colors.faint
                         return <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={5} fill={c} stroke="none" />
                       }}
                       activeDot={{ r: 7 }}
@@ -258,12 +267,12 @@ export default function Dashboard({ session }) {
                 })
                 const getFill = (l, i) => {
                   const cols = (l.leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
-                  if (cols.length === 0) return '#8b5cf6'
+                  if (cols.length === 0) return FALLBACK
                   return cols.length > 1 ? `url(#plg-${i})` : cols[0]
                 }
                 const getDotBg = l => {
                   const cols = (l.leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).filter(Boolean)
-                  if (cols.length === 0) return '#8b5cf6'
+                  if (cols.length === 0) return FALLBACK
                   return cols.length > 1 ? `linear-gradient(135deg, ${cols[0]}, ${cols[1]})` : cols[0]
                 }
                 return (
@@ -279,9 +288,9 @@ export default function Dashboard({ session }) {
                       {pl.map((l, i) => (
                         <div key={l.fullName} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ width: 8, height: 8, borderRadius: '50%', background: getDotBg(l), flexShrink: 0 }} />
-                          <div style={{ fontSize: 12, color: '#f0f2f5', fontWeight: 600, flex: 1 }}>{l.fullName.replace(/\s*\([^)]*\)$/, '').trim()}</div>
-                          <div style={{ fontSize: 12, color: '#7c6fa0' }}>{l.count}</div>
-                          <div style={{ fontSize: 11, color: '#3d2d6e', minWidth: 34, textAlign: 'right' }}>{Math.round(l.count / pieTotal * 100)}%</div>
+                          <div style={{ fontSize: 12, color: colors.text, fontWeight: 600, flex: 1 }}>{l.fullName.replace(/\s*\([^)]*\)$/, '').trim()}</div>
+                          <div style={{ fontSize: 12, color: colors.muted }}>{l.count}</div>
+                          <div style={{ fontSize: 11, color: colors.faint, minWidth: 34, textAlign: 'right' }}>{Math.round(l.count / pieTotal * 100)}%</div>
                         </div>
                       ))}
                     </div>
@@ -296,24 +305,24 @@ export default function Dashboard({ session }) {
             <ChartCard
               title="Win Rate by Leader"
               action={leaderUsage.length > TOP_LEADERS_LIMIT ? (
-                <button onClick={() => setShowAllLeaders(!showAllLeaders)} style={{ fontSize: 11, fontWeight: 600, color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                <button onClick={() => setShowAllLeaders(!showAllLeaders)} style={{ fontSize: 11, fontWeight: 600, color: colors.gold, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
                   {showAllLeaders ? '▲ Show less' : `▼ Show all (${leaderUsage.length})`}
                 </button>
               ) : null}
             >
               {leaderUsage.length === 0 ? <EmptyChart message="No data yet" /> : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {displayedLeaders.map(l => (
                     <div key={l.fullName}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5' }}>{l.fullName}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: colors.text }}>{l.fullName}</div>
                         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                          <div style={{ fontSize: 11, color: '#3d2d6e' }}>{l.count} events</div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: l.color, minWidth: 36, textAlign: 'right' }}>{l.wr}%</div>
+                          <div style={{ fontSize: 11, color: colors.faint }}>{l.count} events</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, fontFamily: font.mono, color: l.color, minWidth: 36, textAlign: 'right' }}>{l.wr}%</div>
                         </div>
                       </div>
-                      <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${l.wr}%`, background: 'linear-gradient(90deg, #7c3aed, #a855f7)', borderRadius: 3, transition: 'width 0.4s ease' }} />
+                      <div style={{ height: 7, background: 'rgba(140,176,208,0.08)', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${l.wr}%`, background: `linear-gradient(90deg, ${colors.teal}, ${colors.oceanBright})`, borderRadius: 4, transition: 'width 0.5s ease' }} />
                       </div>
                     </div>
                   ))}
@@ -323,42 +332,42 @@ export default function Dashboard({ session }) {
           </div>
 
           {/* Recent results */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#7c6fa0', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Recent Results</div>
-            <a href="/log" style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontFamily: 'inherit', textDecoration: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: colors.gold, textTransform: 'uppercase', letterSpacing: '1px' }}>Recent Results</div>
+            <a href="/log" className="gl-btn" style={{ ...btnPrimary, fontSize: 12, padding: '8px 16px', textDecoration: 'none', display: 'inline-block' }}>
               + Log Result
             </a>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {recentResults.map(r => (
               <div
                 key={r.id}
                 onClick={() => setSelectedTournament(r)}
-                style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: isMobile ? '10px 12px' : '12px 16px', display: 'grid', gridTemplateColumns: isMobile ? '36px 1fr auto' : '44px 1fr auto auto', alignItems: 'center', gap: isMobile ? 10 : 16, cursor: 'pointer', transition: 'all 0.1s' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = 'rgba(139,92,246,0.05)' }}
+                style={{ background: colors.surface, border: `1px solid ${colors.line}`, borderRadius: radius.md, padding: isMobile ? '11px 13px' : '13px 18px', display: 'grid', gridTemplateColumns: isMobile ? '36px 1fr auto' : '46px 1fr auto auto', alignItems: 'center', gap: isMobile ? 10 : 16, cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = colors.goldLine; e.currentTarget.style.background = colors.surface2 }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = colors.line; e.currentTarget.style.background = colors.surface }}
               >
-                <div style={{ width: isMobile ? 30 : 36, height: isMobile ? 30 : 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? 11 : 13, fontWeight: 700, flexShrink: 0, ...placementStyle(r.placement) }}>
+                <div style={{ width: isMobile ? 32 : 38, height: isMobile ? 32 : 38, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? 11 : 13, fontWeight: 700, flexShrink: 0, ...placementStyle(r.placement) }}>
                   {placementLabel(r.placement)}
                 </div>
                 <div>
-                  <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#f0f2f5' }}>{r.name}</div>
-                  <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>{r.date} · {r.player_count} players{!isMobile && r.location ? ` · ${r.location}` : ''}</div>
+                  <div style={{ fontSize: isMobile ? 13 : 14.5, fontWeight: 600, color: colors.text }}>{r.name}</div>
+                  <div style={{ fontSize: 11, color: colors.muted, marginTop: 2 }}>{r.date} · {r.player_count} players{!isMobile && r.location ? ` · ${r.location}` : ''}</div>
                 </div>
                 {!isMobile && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 12px 6px 8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(140,176,208,0.05)', border: `1px solid ${colors.line}`, borderRadius: 8, padding: '6px 12px 6px 8px' }}>
                     <LeaderMini leaderId={r.leader_id} color={r.leader_color} />
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#f0f2f5' }}>{r.leader_name}</div>
-                      <div style={{ fontSize: 11, color: COLORS[r.leader_color] ?? '#7c6fa0' }}>{r.leader_color} · {r.leader_id}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: colors.text }}>{r.leader_name}</div>
+                      <div style={{ fontSize: 11, color: COLORS[r.leader_color] ?? colors.muted }}>{r.leader_color} · {r.leader_id}</div>
                     </div>
                   </div>
                 )}
-                <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
-                  <span style={{ color: '#34d399' }}>{r.wins}W</span>
-                  <span style={{ color: '#3d2d6e', margin: '0 3px' }}>·</span>
-                  <span style={{ color: '#f05252' }}>{r.losses}L</span>
+                <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', fontFamily: font.mono }}>
+                  <span style={{ color: colors.emerald }}>{r.wins}W</span>
+                  <span style={{ color: colors.faint, margin: '0 3px' }}>·</span>
+                  <span style={{ color: colors.crimson }}>{r.losses}L</span>
                 </div>
               </div>
             ))}

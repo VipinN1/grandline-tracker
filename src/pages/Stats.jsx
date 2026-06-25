@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
+import { colors, radius, shadow, font, eyebrow, pageHeader } from '../theme'
 
-const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
+const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#a78bfa', Yellow: '#e6b84f', Black: '#94a3b8' }
 
 function cleanName(name) {
   if (!name) return ''
@@ -93,11 +94,11 @@ function buildMatrix(tournaments, symmetric) {
   return { myLeaders, oppLeaders, matrix, myTotals: rowTotals }
 }
 
-// Red (low) → green (high) tint, layered over the dark grid.
+// Crimson (low) → emerald (high) tint, layered over the dark grid.
 function cellBg(wr) {
   const t = (wr - 0.5) * 2 // -1 .. 1
-  if (t >= 0) return `rgba(52,211,153,${(0.1 + t * 0.5).toFixed(3)})`
-  return `rgba(240,82,82,${(0.1 + (-t) * 0.5).toFixed(3)})`
+  if (t >= 0) return `rgba(59,178,126,${(0.1 + t * 0.5).toFixed(3)})`
+  return `rgba(210,74,58,${(0.1 + (-t) * 0.5).toFixed(3)})`
 }
 
 function Toggle({ options, value, onChange }) {
@@ -107,11 +108,12 @@ function Toggle({ options, value, onChange }) {
         <button
           key={o.key}
           onClick={() => onChange(o.key)}
+          className="gl-btn"
           style={{
-            fontSize: 12, fontWeight: 600, padding: '6px 13px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
-            border: `1px solid ${value === o.key ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`,
-            background: value === o.key ? 'rgba(139,92,246,0.16)' : 'transparent',
-            color: value === o.key ? '#c4b5fd' : '#7c6fa0',
+            fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
+            border: `1px solid ${value === o.key ? colors.goldLine : colors.lineStrong}`,
+            background: value === o.key ? colors.goldSoft : 'transparent',
+            color: value === o.key ? colors.gold : colors.muted,
           }}
         >
           {o.label}
@@ -121,7 +123,7 @@ function Toggle({ options, value, onChange }) {
   )
 }
 
-const HEAD_BG = '#0f0b1e'
+const HEAD_BG = '#0b1828'
 
 export default function Stats({ session }) {
   const [scope, setScope] = useState('mine')
@@ -156,46 +158,46 @@ export default function Stats({ session }) {
   const CELL_H = 52
 
   return (
-    <div>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#8b5cf6', marginBottom: 4 }}>Analytics</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px', marginBottom: 2 }}>Stats</div>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Your leaders (rows) vs leaders you've faced (columns). Cell = your win rate in that matchup.</div>
+    <div className="gl-page-enter">
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ ...eyebrow, marginBottom: 8 }}>⚓ Navigator's Charts</div>
+        <div style={{ ...pageHeader(), fontSize: 30, marginBottom: 6 }}>Stats</div>
+        <div style={{ fontSize: 14, color: colors.muted }}>Your leaders (rows) vs leaders you've faced (columns). Cell = your win rate in that matchup.</div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', marginBottom: 6 }}>Data</div>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: colors.faint, marginBottom: 7 }}>Data</div>
           <Toggle options={[{ key: 'mine', label: 'Mine' }, { key: 'global', label: 'Global' }]} value={scope} onChange={setScope} />
         </div>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', marginBottom: 6 }}>Condition</div>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: colors.faint, marginBottom: 7 }}>Condition</div>
           <Toggle options={METRICS} value={metric} onChange={setMetric} />
         </div>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 80, color: '#7c6fa0', fontSize: 13 }}>Loading matchups…</div>
+        <div className="skeleton" style={{ height: 320, borderRadius: radius.lg }} />
       ) : myLeaders.length === 0 || oppLeaders.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>📊</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0' }}>Not enough matchup data yet</div>
-          <div style={{ fontSize: 13, color: '#3d2d6e', marginTop: 6 }}>Log tournaments with round-by-round opponents to build your matchup chart.</div>
+          <div style={{ fontSize: 40, marginBottom: 14, opacity: 0.7 }}>🗺️</div>
+          <div style={{ fontSize: 16, fontWeight: 600, fontFamily: font.display, color: colors.textSoft }}>Not enough matchup data yet</div>
+          <div style={{ fontSize: 13, color: colors.faint, marginTop: 6 }}>Log tournaments with round-by-round opponents to build your matchup chart.</div>
         </div>
       ) : (
         <>
-          <div style={{ overflow: 'auto', maxHeight: '72vh', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14 }}>
+          <div style={{ overflow: 'auto', maxHeight: '72vh', border: `1px solid ${colors.line}`, borderRadius: radius.lg, boxShadow: shadow.md }}>
             <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 4, background: HEAD_BG, width: ROW_W, minWidth: ROW_W, borderRight: '1px solid rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ fontSize: 10, color: '#3d2d6e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 10px', textAlign: 'left' }}>You ↓ / vs →</div>
+                  <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 4, background: HEAD_BG, width: ROW_W, minWidth: ROW_W, borderRight: '1px solid rgba(140,176,208,0.16)', borderBottom: '1px solid rgba(140,176,208,0.16)' }}>
+                    <div style={{ fontSize: 10, color: '#67809a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 10px', textAlign: 'left' }}>You ↓ / vs →</div>
                   </th>
                   {oppLeaders.map(o => (
-                    <th key={o.key} style={{ position: 'sticky', top: 0, zIndex: 3, background: HEAD_BG, width: CELL_W, minWidth: CELL_W, padding: '6px 2px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    <th key={o.key} style={{ position: 'sticky', top: 0, zIndex: 3, background: HEAD_BG, width: CELL_W, minWidth: CELL_W, padding: '6px 2px', borderBottom: '1px solid rgba(140,176,208,0.16)' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                         <img src={getCardImageUrl(o.id)} alt={o.name} style={{ width: 34, height: 47, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: `1.5px solid ${(COLORS[o.color] ?? '#94a3b8')}66` }} onError={e => { e.target.style.opacity = '0.2' }} />
-                        <div style={{ fontSize: 9, color: '#9b8fc4', fontWeight: 600, maxWidth: CELL_W - 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>{o.name}</div>
+                        <div style={{ fontSize: 9, color: '#9db2c6', fontWeight: 600, maxWidth: CELL_W - 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>{o.name}</div>
                       </div>
                     </th>
                   ))}
@@ -207,12 +209,12 @@ export default function Stats({ session }) {
                   const lwr = lt[1] > 0 ? Math.round(lt[0] / lt[1] * 100) : 0
                   return (
                     <tr key={m.key}>
-                      <th style={{ position: 'sticky', left: 0, zIndex: 2, background: HEAD_BG, width: ROW_W, minWidth: ROW_W, padding: '6px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <th style={{ position: 'sticky', left: 0, zIndex: 2, background: HEAD_BG, width: ROW_W, minWidth: ROW_W, padding: '6px 10px', textAlign: 'left', borderRight: '1px solid rgba(140,176,208,0.16)', borderBottom: '1px solid rgba(140,176,208,0.07)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <img src={getCardImageUrl(m.id)} alt={m.name} style={{ width: 30, height: 41, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0, border: `1.5px solid ${(COLORS[m.color] ?? '#94a3b8')}66` }} onError={e => { e.target.style.opacity = '0.2' }} />
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: ROW_W - 50 }}>{m.name}</div>
-                            <div style={{ fontSize: 10, color: '#7c6fa0', fontFamily: 'monospace' }}>{lwr}% · {lt[0]}-{lt[1] - lt[0]}</div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: ROW_W - 50 }}>{m.name}</div>
+                            <div style={{ fontSize: 10, color: '#9db2c6', fontFamily: 'monospace' }}>{lwr}% · {lt[0]}-{lt[1] - lt[0]}</div>
                           </div>
                         </div>
                       </th>
@@ -226,11 +228,11 @@ export default function Stats({ session }) {
                             <div style={{ width: CELL_W, height: CELL_H, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: wr !== null ? cellBg(wr) : 'rgba(255,255,255,0.015)', opacity: wr !== null && tot < 3 ? 0.4 : 1 }} title={m.name + ' vs ' + o.name + (tot > 0 ? ` — ${w}W ${tot - w}L` : ' — no games')}>
                               {wr !== null ? (
                                 <>
-                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>{Math.round(wr * 100)}%</div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{Math.round(wr * 100)}%</div>
                                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>{w}-{tot - w}</div>
                                 </>
                               ) : (
-                                <div style={{ fontSize: 12, color: '#2a1f4a' }}>—</div>
+                                <div style={{ fontSize: 12, color: '#3a526a' }}>—</div>
                               )}
                             </div>
                           </td>
@@ -244,10 +246,10 @@ export default function Stats({ session }) {
           </div>
 
           {/* Legend */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap', fontSize: 11, color: '#7c6fa0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap', fontSize: 11, color: '#9db2c6' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span>Lower</span>
-              <div style={{ width: 120, height: 10, borderRadius: 5, background: 'linear-gradient(to right, rgba(240,82,82,0.6), rgba(240,82,82,0.12), rgba(52,211,153,0.12), rgba(52,211,153,0.6))' }} />
+              <div style={{ width: 120, height: 10, borderRadius: 5, background: 'linear-gradient(to right, rgba(210,74,58,0.6), rgba(210,74,58,0.12), rgba(59,178,126,0.12), rgba(59,178,126,0.6))' }} />
               <span>Higher win rate</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

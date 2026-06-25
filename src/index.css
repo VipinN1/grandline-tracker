@@ -1,14 +1,151 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Grand Line — global foundation
+   CSS variables mirror src/theme.js. Base element styling, nautical chart
+   background atmosphere, scrollbars, keyframes, skeletons, focus states.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Ocean backgrounds */
+  --abyss: #06101b;
+  --deep: #0a1626;
+  --surface: #0f1f33;
+  --surface-2: #13273f;
+  --surface-3: #1a3251;
+  --line: rgba(140, 176, 208, 0.12);
+  --line-strong: rgba(140, 176, 208, 0.20);
+
+  /* Ocean / teal */
+  --ocean: #2f7da3;
+  --ocean-bright: #52a9cd;
+  --ocean-deep: #1b4a66;
+  --teal: #127f76;
+
+  /* Brass / gold */
+  --brass: #c8a24a;
+  --gold: #dcb35e;
+  --gold-bright: #f0cd82;
+
+  /* Parchment */
+  --parchment: #e9ddc4;
+  --sand: #ccb98f;
+
+  /* Accents */
+  --crimson: #d24a3a;
+  --emerald: #3bb27e;
+  --orange: #e08a3c;
+
+  /* Text */
+  --text: #e9f1f8;
+  --text-soft: #c2d2e0;
+  --muted: #9db2c6;
+  --faint: #67809a;
+
+  /* Type */
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { overflow-x: hidden; max-width: 100vw; }
+
 body {
-  background: #0c0814;
-  color: #e8eaf0;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background-color: var(--abyss);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+/* Layered dark-ocean atmosphere: depth gradient + faint chart contour lines +
+   a low-opacity compass rose, fixed behind everything. No literal pirate art. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 700px at 78% -8%, rgba(47, 125, 163, 0.16), transparent 60%),
+    radial-gradient(1000px 800px at 8% 105%, rgba(18, 127, 118, 0.12), transparent 60%),
+    radial-gradient(900px 600px at 50% 50%, rgba(27, 74, 102, 0.10), transparent 70%),
+    linear-gradient(180deg, #07121f 0%, var(--abyss) 55%, #050d17 100%);
+}
+
+/* Subtle topographic / sailing-route texture overlay (very low opacity). */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 39px, rgba(140, 176, 208, 0.022) 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, rgba(140, 176, 208, 0.022) 39px 40px);
+  -webkit-mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+}
+
 input, textarea, select, button { font-family: inherit; }
 a { color: inherit; text-decoration: none; }
 
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.3px; }
+
+/* ── Focus visibility (keyboard accessibility) ───────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Don't show the ring for mouse users on already-styled controls */
+:focus:not(:focus-visible) { outline: none; }
+
+/* ── Scrollbars ──────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 176, 208, 0.22) transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 176, 208, 0.20);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(200, 162, 74, 0.35); background-clip: padding-box; }
+
+::selection { background: rgba(220, 179, 94, 0.28); color: #fff; }
+
+/* ── Number input spinners off ───────────────────────────────────────────── */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* ── Loading skeleton ────────────────────────────────────────────────────── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(140, 176, 208, 0.07);
+  border-radius: 8px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(140, 176, 208, 0.10), transparent);
+  animation: skeletonSweep 1.4s ease-in-out infinite;
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
 @keyframes cardFloat {
   0%   { transform: translateY(0px) rotate(var(--rot)); }
   50%  { transform: translateY(-18px) rotate(calc(var(--rot) + 3deg)); }
@@ -31,9 +168,72 @@ a { color: inherit; text-decoration: none; }
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-input[type=number] { -moz-appearance: textfield; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes skeletonSweep {
+  100% { transform: translateX(100%); }
+}
+@keyframes compassSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Page content gets a gentle entrance */
+.gl-page-enter { animation: fadeInUp 0.32s var(--ease) both; }
+
+/* ── Navbar (captain's navigation) ───────────────────────────────────────── */
+.gl-navlink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 12px;
+  border-radius: 7px;
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: color 0.18s var(--ease), background 0.18s var(--ease), border-color 0.18s var(--ease);
+  white-space: nowrap;
+}
+.gl-navlink:hover { color: var(--text); background: rgba(140, 176, 208, 0.07); }
+.gl-navlink--active {
+  color: var(--gold);
+  background: rgba(200, 162, 74, 0.10);
+  border-color: rgba(200, 162, 74, 0.26);
+}
+.gl-navlink--active::after {
+  content: '';
+  position: absolute;
+  left: 12px; right: 12px; bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* Generic hover-lift for cards/rows — apply with className="gl-lift" */
+.gl-lift { transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s var(--ease), background 0.22s var(--ease); }
+.gl-lift:hover { transform: translateY(-3px); }
+
+/* Pressable buttons */
+.gl-btn { transition: transform 0.15s var(--ease), box-shadow 0.18s var(--ease), filter 0.18s var(--ease), background 0.18s var(--ease), border-color 0.18s var(--ease); }
+.gl-btn:hover { filter: brightness(1.06); }
+.gl-btn:active { transform: translateY(1px); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
 
 @media (max-width: 768px) {
   input, textarea, select { font-size: 16px !important; }

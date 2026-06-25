@@ -68,7 +68,7 @@ function generatePositions(count) {
     return {
       top:     `${rf(topMin, topMax).toFixed(1)}%`,
       rot:     `${rf(-20, 20).toFixed(1)}deg`,
-      opacity: rf(0.10, 0.18),
+      opacity: rf(0.05, 0.11),
       dur:     `${rf(8, 14).toFixed(1)}s`,
       delay:   `${rf(0, 6).toFixed(2)}s`,
       size:    ri(60, 118),
@@ -106,13 +106,13 @@ function FloatingCard({ cardId, position }) {
       }}
     >
       {errored ? (
-        <div style={{ width: size, height: Math.round(size * 1.4), borderRadius: 8, background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)', opacity }} />
+        <div style={{ width: size, height: Math.round(size * 1.4), borderRadius: 8, background: 'rgba(47,125,163,0.06)', border: '1px solid rgba(140,176,208,0.14)', opacity }} />
       ) : (
         <img
           src={url}
           alt=""
           width={size}
-          style={{ borderRadius: 8, opacity, border: '1px solid rgba(139,92,246,0.2)', display: 'block' }}
+          style={{ borderRadius: 8, opacity, border: '1px solid rgba(140,176,208,0.18)', display: 'block', filter: 'saturate(0.7) brightness(0.85) hue-rotate(-8deg)' }}
           onError={() => setErrored(true)}
         />
       )}

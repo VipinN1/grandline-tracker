@@ -33,14 +33,11 @@ function ProtectedRoute({ session, children }) {
 
 function AppLayout({ session, isMobile }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#0c0814', color: '#f0f2f5', fontFamily: "'Space Grotesk', system-ui, sans-serif", position: 'relative' }}>
-      <div style={{ position: 'fixed', width: 400, height: 400, borderRadius: '50%', background: '#7c3aed', top: -100, left: -100, opacity: 0.12, filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbPulse 8s ease-in-out infinite' }} />
-      <div style={{ position: 'fixed', width: 300, height: 300, borderRadius: '50%', background: '#ec4899', bottom: -80, right: -80, opacity: 0.1, filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbPulse 10s ease-in-out 2s infinite' }} />
-      <div style={{ position: 'fixed', width: 250, height: 250, borderRadius: '50%', background: '#0ea5e9', top: '40%', left: '60%', opacity: 0.08, filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbPulse 12s ease-in-out 4s infinite' }} />
+    <div style={{ minHeight: '100vh', color: '#e9f1f8', fontFamily: "'Inter', system-ui, sans-serif", position: 'relative' }}>
       <FloatingCards />
       <div style={{ position: 'relative', zIndex: 10 }}>
         <Navbar session={session} />
-        <main style={{ maxWidth: 980, margin: '0 auto', padding: isMobile ? '1rem' : 'clamp(1rem, 4vw, 1.5rem)' }}>
+        <main style={{ maxWidth: 1040, margin: '0 auto', padding: isMobile ? '20px 16px 48px' : 'clamp(24px, 4vw, 40px) clamp(16px, 4vw, 28px) 64px' }}>
           <Outlet />
         </main>
       </div>
@@ -73,8 +70,9 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0c0814', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontSize: 13, color: '#7c6fa0' }}>Loading...</div>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, position: 'relative', zIndex: 10 }}>
+        <div style={{ width: 30, height: 30, borderRadius: '50%', border: '2px solid rgba(220,179,94,0.2)', borderTopColor: '#dcb35e', animation: 'compassSpin 0.9s linear infinite' }} />
+        <div style={{ fontSize: 12, letterSpacing: '1.4px', textTransform: 'uppercase', color: '#9db2c6', fontWeight: 600 }}>Charting course…</div>
       </div>
     )
   }

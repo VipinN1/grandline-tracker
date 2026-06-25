@@ -5,10 +5,9 @@ import { searchLeaders, getCardImageUrl } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
 import ProfilePopover from '../components/ProfilePopover'
 import MatchChat from '../components/MatchChat'
+import { colors as T, font as F, input as INPUT, label as LABEL } from '../theme'
 
-const COLORS = { Red: '#f05252', Blue: '#3d7fff', Green: '#34d399', Purple: '#a78bfa', Yellow: '#fbbf24', Black: '#94a3b8' }
-const INPUT = { width: '100%', background: 'rgba(15,8,30,0.92)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '9px 12px', color: '#f0f2f5', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }
-const LABEL = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#7c6fa0', marginBottom: 5, display: 'block' }
+const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
 // ─── Swiss pairing algorithm ─────────────────────────────────────────────────
 // Find a complete pairing of `pool` (assumed even length) that minimizes the
@@ -110,7 +109,7 @@ function computeStandings(players, matches) {
 function Avatar({ profile, size = 32, radius = 8 }) {
   const ini = profile?.username?.slice(0, 2).toUpperCase() ?? '??'
   return (
-    <div style={{ width: size, height: size, borderRadius: radius, background: '#8b5cf622', border: '1px solid #8b5cf644', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.3, fontWeight: 700, color: '#8b5cf6', flexShrink: 0, overflow: 'hidden' }}>
+    <div style={{ width: size, height: size, borderRadius: radius, background: 'rgba(47,125,163,0.16)', border: '1px solid rgba(47,125,163,0.34)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.3, fontWeight: 700, color: '#52a9cd', flexShrink: 0, overflow: 'hidden' }}>
       {profile?.avatar_url ? <img src={profile.avatar_url} alt={ini} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : ini}
     </div>
   )
@@ -124,16 +123,16 @@ function WinnerOverlay({ winner, tournament, onClose }) {
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ textAlign: 'center', maxWidth: 440 }}>
         <div style={{ fontSize: 64, marginBottom: 16, animation: 'orbPulse 2s ease-in-out infinite' }}>🏆</div>
-        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '3px', color: '#fbbf24', marginBottom: 12 }}>Tournament Champion</div>
-        <div style={{ fontSize: 28, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.5px', marginBottom: 24 }}>{tournament?.name}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '3px', color: '#dcb35e', marginBottom: 12 }}>Tournament Champion</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: '#e9f1f8', letterSpacing: '-0.5px', marginBottom: 24 }}>{tournament?.name}</div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 32 }}>
-          <div style={{ width: 80, height: 80, borderRadius: 20, background: profile?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #fbbf24, #f59e0b)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 700, color: '#0f1117', overflow: 'hidden', border: '3px solid #fbbf24', boxShadow: '0 0 40px rgba(251,191,36,0.4)' }}>
+          <div style={{ width: 80, height: 80, borderRadius: 20, background: profile?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #dcb35e, #c8a24a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 700, color: '#0a1626', overflow: 'hidden', border: '3px solid #dcb35e', boxShadow: '0 0 40px rgba(200,162,74,0.4)' }}>
             {profile?.avatar_url ? <img src={profile.avatar_url} alt={ini} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : ini}
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#fbbf24' }}>{profile?.username ?? 'Champion'}</div>
-          {profile?.location && <div style={{ fontSize: 13, color: '#7c6fa0' }}>{profile.location}</div>}
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#dcb35e' }}>{profile?.username ?? 'Champion'}</div>
+          {profile?.location && <div style={{ fontSize: 13, color: '#9db2c6' }}>{profile.location}</div>}
         </div>
-        <button onClick={onClose} style={{ padding: '10px 28px', borderRadius: 10, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.1)', color: '#fbbf24', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={onClose} style={{ padding: '10px 28px', borderRadius: 10, border: '1px solid rgba(200,162,74,0.3)', background: 'rgba(200,162,74,0.1)', color: '#dcb35e', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
           View Standings
         </button>
       </div>
@@ -169,13 +168,13 @@ function LeaderPicker({ value, onChange }) {
 
   if (value) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(15,8,30,0.95)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, padding: '8px 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(26,50,81,0.6)', border: '1px solid rgba(140,176,208,0.20)', borderRadius: 8, padding: '8px 12px' }}>
         <img src={getCardImageUrl(value)} alt={value.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{value.card_name}</div>
-          <div style={{ fontSize: 11, color: COLORS[value.card_color] ?? '#7c6fa0' }}>{value.card_color}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{value.card_name}</div>
+          <div style={{ fontSize: 11, color: COLORS[value.card_color] ?? '#9db2c6' }}>{value.card_color}</div>
         </div>
-        <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontSize: 16 }}>✕</button>
+        <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16 }}>✕</button>
       </div>
     )
   }
@@ -184,15 +183,15 @@ function LeaderPicker({ value, onChange }) {
     <div ref={ref} style={{ position: 'relative' }}>
       <input style={INPUT} placeholder="Search leader..." value={query} onChange={handleChange} onFocus={() => query.length >= 2 && setOpen(true)} />
       {open && query.length >= 2 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(10,5,22,0.97)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 8, marginTop: 4, maxHeight: 240, overflowY: 'auto' }}>
-          {searching ? <div style={{ padding: '10px 14px', fontSize: 12, color: '#7c6fa0' }}>Searching...</div>
-            : results.length === 0 ? <div style={{ padding: '10px 14px', fontSize: 12, color: '#3d2d6e' }}>No leaders found</div>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'rgba(10,22,38,0.98)', border: '1px solid rgba(140,176,208,0.20)', borderRadius: 8, marginTop: 4, maxHeight: 240, overflowY: 'auto' }}>
+          {searching ? <div style={{ padding: '10px 14px', fontSize: 12, color: '#9db2c6' }}>Searching...</div>
+            : results.length === 0 ? <div style={{ padding: '10px 14px', fontSize: 12, color: '#67809a' }}>No leaders found</div>
             : results.map(card => (
-              <div key={card.card_image_id ?? card.card_set_id} onClick={() => { onChange(card); setQuery(''); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <div key={card.card_image_id ?? card.card_set_id} onClick={() => { onChange(card); setQuery(''); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(140,176,208,0.06)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.06)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <img src={getCardImageUrl(card)} alt={card.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{card.card_name}</div>
-                  <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#7c6fa0' }}>{card.card_color} · {card.card_set_id}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{card.card_name}</div>
+                  <div style={{ fontSize: 11, color: COLORS[card.card_color] ?? '#9db2c6' }}>{card.card_color} · {card.card_set_id}</div>
                 </div>
               </div>
             ))}
@@ -545,18 +544,18 @@ export default function TournamentDetailPage({ session }) {
   // ── Render ─────────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-      <div style={{ fontSize: 13, color: '#7c6fa0' }}>Loading tournament...</div>
+      <div style={{ fontSize: 13, color: '#9db2c6' }}>Loading tournament...</div>
     </div>
   )
 
   if (!tournament) return (
     <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: '#7c6fa0', marginBottom: 8 }}>Tournament not found</div>
-      <button onClick={() => navigate('/tournaments')} style={{ color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>← Back to Tournaments</button>
+      <div style={{ fontSize: 15, fontWeight: 600, color: '#9db2c6', marginBottom: 8 }}>Tournament not found</div>
+      <button onClick={() => navigate('/tournaments')} style={{ color: '#2f7da3', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>← Back to Tournaments</button>
     </div>
   )
 
-  const statusColors = { registration: '#8b5cf6', active: '#34d399', completed: '#94a3b8' }
+  const statusColors = { registration: '#2f7da3', active: '#3bb27e', completed: '#94a3b8' }
   const statusLabels = { registration: 'Registration Open', active: 'In Progress', completed: 'Completed' }
 
   // Tab list
@@ -564,51 +563,51 @@ export default function TournamentDetailPage({ session }) {
   if (tournament.status === 'completed') tabs.push('decklists')
 
   return (
-    <div>
+    <div className="gl-page-enter">
       {showWinner && winnerEntry && (
         <WinnerOverlay winner={winnerEntry} tournament={tournament} onClose={() => { setShowWinner(false); setActiveTab('standings') }} />
       )}
 
       {/* Back + header */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <button onClick={() => navigate('/tournaments')} style={{ background: 'none', border: 'none', color: '#7c6fa0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, padding: 0, marginBottom: 12 }}>← Tournaments</button>
+      <div style={{ marginBottom: '1.75rem' }}>
+        <button onClick={() => navigate('/tournaments')} className="gl-btn" style={{ background: 'none', border: 'none', color: T.gold, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: 0, marginBottom: 14 }}>← Tournaments</button>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#f0f2f5', letterSpacing: '-0.4px' }}>{tournament.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+              <div style={{ fontFamily: F.display, fontSize: 28, fontWeight: 600, color: '#e9f1f8', letterSpacing: '-0.4px' }}>{tournament.name}</div>
               <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: `${statusColors[tournament.status]}22`, color: statusColors[tournament.status], border: `1px solid ${statusColors[tournament.status]}44` }}>
                 {statusLabels[tournament.status]}{tournament.status === 'active' ? ` · Round ${tournament.current_round}` : ''}
               </span>
             </div>
-            {tournament.description && <div style={{ fontSize: 13, color: '#8a9bb0', marginBottom: 6, lineHeight: 1.5 }}>{tournament.description}</div>}
+            {tournament.description && <div style={{ fontSize: 13, color: '#9db2c6', marginBottom: 6, lineHeight: 1.5 }}>{tournament.description}</div>}
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, color: '#7c6fa0' }}>👥 {players.length} players</span>
+              <span style={{ fontSize: 12, color: '#9db2c6' }}>👥 {players.length} players</span>
               {tournament.registration_deadline && (
-                <span style={{ fontSize: 12, color: '#7c6fa0' }}>
+                <span style={{ fontSize: 12, color: '#9db2c6' }}>
                   ⏰ {new Date() < new Date(tournament.registration_deadline) ? 'Deadline:' : 'Closed:'} {new Date(tournament.registration_deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
               {tournament.discord_link && (
-                <a href={tournament.discord_link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 12, color: '#a78bfa', textDecoration: 'none' }}>💬 Join Discord</a>
+                <a href={tournament.discord_link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 12, color: '#52a9cd', textDecoration: 'none' }}>💬 Join Discord</a>
               )}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
             {isParticipant && tournament.status !== 'completed' && (
-              <button onClick={() => { setDecklistModal(true); const me = myEntry; if (me?.decklist?.raw) setDecklistText(me.decklist.raw) }} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: myEntry?.decklist_submitted ? 'rgba(52,211,153,0.08)' : 'rgba(139,92,246,0.08)', color: myEntry?.decklist_submitted ? '#34d399' : '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => { setDecklistModal(true); const me = myEntry; if (me?.decklist?.raw) setDecklistText(me.decklist.raw) }} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.34)', background: myEntry?.decklist_submitted ? 'rgba(59,178,126,0.08)' : 'rgba(140,176,208,0.07)', color: myEntry?.decklist_submitted ? '#3bb27e' : '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {myEntry?.decklist_submitted ? 'Decklist ✓' : 'Submit Decklist'}
               </button>
             )}
             {session && regOpen && !isParticipant && (
-              <button onClick={join} disabled={joining} style={{ fontSize: 12, fontWeight: 700, padding: '7px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={join} disabled={joining} style={{ fontSize: 12, fontWeight: 700, padding: '7px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {joining ? 'Joining...' : 'Join Tournament'}
               </button>
             )}
             {session && isParticipant && !hasDropped && tournament.status !== 'completed' && (
-              <span style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: 'rgba(52,211,153,0.08)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)' }}>Registered ✓</span>
+              <span style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: 'rgba(59,178,126,0.08)', color: '#3bb27e', border: '1px solid rgba(59,178,126,0.25)' }}>Registered ✓</span>
             )}
             {session && isParticipant && !hasDropped && tournament.status === 'active' && (
-              <button onClick={() => { setDroppingUserId(session.user.id); setShowDropConfirm(true) }} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => { setDroppingUserId(session.user.id); setShowDropConfirm(true) }} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>
                 Drop
               </button>
             )}
@@ -616,7 +615,7 @@ export default function TournamentDetailPage({ session }) {
               <span style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: 'rgba(148,163,184,0.08)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' }}>Dropped</span>
             )}
             {!session && regOpen && (
-              <button onClick={() => navigate('/login')} style={{ fontSize: 12, fontWeight: 700, padding: '7px 18px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.25)', background: 'transparent', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>Sign in to Join</button>
+              <button onClick={() => navigate('/login')} style={{ fontSize: 12, fontWeight: 700, padding: '7px 18px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.30)', background: 'transparent', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>Sign in to Join</button>
             )}
           </div>
         </div>
@@ -624,8 +623,8 @@ export default function TournamentDetailPage({ session }) {
 
       {/* Admin panel */}
       {isAdmin && (
-        <div style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#fbbf24', marginBottom: 10 }}>Admin Controls</div>
+        <div style={{ background: 'rgba(200,162,74,0.05)', border: '1px solid rgba(200,162,74,0.15)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#dcb35e', marginBottom: 10 }}>Admin Controls</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Start / Next round button */}
             {(tournament.status === 'registration' || (tournament.status === 'active' && allMatchesDone && disputedMatches.length === 0)) && (
@@ -633,7 +632,7 @@ export default function TournamentDetailPage({ session }) {
                 const activePlayers = players.filter(p => !p.dropped)
                 const notEnough = activePlayers.length < 2
                 return (
-                  <button onClick={startRound} disabled={startingRound || notEnough} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: notEnough ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #7c3aed, #a855f7)', color: notEnough ? '#3d2d6e' : '#fff', cursor: notEnough ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                  <button onClick={startRound} disabled={startingRound || notEnough} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: notEnough ? 'rgba(140,176,208,0.06)' : 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: notEnough ? '#67809a' : '#fff', cursor: notEnough ? 'default' : 'pointer', fontFamily: 'inherit' }}>
                     {startingRound ? 'Starting...' : tournament.status === 'registration' ? `Start Round 1 (${activePlayers.length} players)` : `Start Round ${(currentRound?.round_number ?? 0) + 1}`}
                   </button>
                 )
@@ -641,44 +640,44 @@ export default function TournamentDetailPage({ session }) {
             )}
             {/* Declare winner — auto when exactly 1 undefeated */}
             {tournament.status === 'active' && allMatchesDone && undefeated.length === 1 && (
-              <button onClick={() => declareWinner(undefeated[0].user_id)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #d97706, #fbbf24)', color: '#0f1117', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => declareWinner(undefeated[0].user_id)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #c8a24a, #dcb35e)', color: '#0a1626', cursor: 'pointer', fontFamily: 'inherit' }}>
                 🏆 Declare Winner: {undefeated[0].profiles?.username}
               </button>
             )}
             {/* Force end — when round is done but winner can't be auto-determined */}
             {tournament.status === 'active' && allMatchesDone && undefeated.length !== 1 && (
-              <button onClick={() => setShowForceEndModal(true)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.08)', color: '#fbbf24', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setShowForceEndModal(true)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.3)', background: 'rgba(200,162,74,0.08)', color: '#dcb35e', cursor: 'pointer', fontFamily: 'inherit' }}>
                 🏆 End Tournament
               </button>
             )}
             {/* Status info */}
             {tournament.status === 'active' && !allMatchesDone && (
-              <span style={{ fontSize: 12, color: '#7c6fa0' }}>
+              <span style={{ fontSize: 12, color: '#9db2c6' }}>
                 {currentMatches.filter(m => m.status === 'pending').length} match{currentMatches.filter(m => m.status === 'pending').length !== 1 ? 'es' : ''} pending · {currentMatches.filter(m => m.status === 'disputed').length > 0 ? `${currentMatches.filter(m => m.status === 'disputed').length} disputed` : ''}
               </span>
             )}
             {roundError && (
-              <span style={{ fontSize: 12, color: '#f05252', flexBasis: '100%', marginTop: 4 }}>{roundError}</span>
+              <span style={{ fontSize: 12, color: '#d24a3a', flexBasis: '100%', marginTop: 4 }}>{roundError}</span>
             )}
-            <button onClick={() => setShowDeleteConfirm(true)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }}>
+            <button onClick={() => setShowDeleteConfirm(true)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit', marginLeft: 'auto' }}>
               Delete Tournament
             </button>
           </div>
           {/* Disputed matches */}
           {disputedMatches.length > 0 && (
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(251,191,36,0.1)' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#f97316', marginBottom: 8 }}>⚠️ Disputes to resolve</div>
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(200,162,74,0.1)' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#e08a3c', marginBottom: 8 }}>⚠️ Disputes to resolve</div>
               {disputedMatches.map(m => {
                 const p1 = playerProfile(m.player1_id)
                 const p2 = playerProfile(m.player2_id)
                 return (
-                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: 'rgba(249,115,22,0.06)', borderRadius: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13, color: '#f0f2f5', flex: 1 }}>{p1?.username} vs {p2?.username}</span>
-                    <span style={{ fontSize: 11, color: '#7c6fa0' }}>
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: 'rgba(224,138,60,0.06)', borderRadius: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, color: '#e9f1f8', flex: 1 }}>{p1?.username} vs {p2?.username}</span>
+                    <span style={{ fontSize: 11, color: '#9db2c6' }}>
                       {p1?.username}: {m.player1_reported ?? '—'} · {p2?.username}: {m.player2_reported ?? '—'}
                     </span>
-                    <button onClick={() => resolveDispute(m.id, 'player1_win')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(52,211,153,0.15)', color: '#34d399', cursor: 'pointer', fontFamily: 'inherit' }}>{p1?.username} wins</button>
-                    <button onClick={() => resolveDispute(m.id, 'player2_win')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(52,211,153,0.15)', color: '#34d399', cursor: 'pointer', fontFamily: 'inherit' }}>{p2?.username} wins</button>
+                    <button onClick={() => resolveDispute(m.id, 'player1_win')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(59,178,126,0.15)', color: '#3bb27e', cursor: 'pointer', fontFamily: 'inherit' }}>{p1?.username} wins</button>
+                    <button onClick={() => resolveDispute(m.id, 'player2_win')} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(59,178,126,0.15)', color: '#3bb27e', cursor: 'pointer', fontFamily: 'inherit' }}>{p2?.username} wins</button>
                   </div>
                 )
               })}
@@ -688,9 +687,9 @@ export default function TournamentDetailPage({ session }) {
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid rgba(140,176,208,0.12)' }}>
         {tabs.map(t => (
-          <button key={t} onClick={() => setActiveTab(t)} style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: activeTab === t ? 'rgba(139,92,246,0.05)' : 'transparent', color: activeTab === t ? '#f0f2f5' : '#7c6fa0', borderBottom: activeTab === t ? '2px solid #8b5cf6' : '2px solid transparent', transition: 'all 0.1s', textTransform: 'capitalize' }}>
+          <button key={t} onClick={() => setActiveTab(t)} style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: activeTab === t ? 'rgba(140,176,208,0.05)' : 'transparent', color: activeTab === t ? '#e9f1f8' : '#9db2c6', borderBottom: activeTab === t ? '2px solid #c8a24a' : '2px solid transparent', transition: 'all 0.15s', textTransform: 'capitalize' }}>
             {t === 'pairings' ? `Round ${currentRound?.round_number ?? tournament.current_round ?? '—'}` : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
@@ -703,30 +702,30 @@ export default function TournamentDetailPage({ session }) {
             <div>
               <div style={{ textAlign: 'center', padding: '40px 20px 24px' }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>⚔️</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#7c6fa0', marginBottom: 6 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#9db2c6', marginBottom: 6 }}>
                   {tournament.status === 'registration' ? 'Waiting for tournament to start' : 'No pairings yet'}
                 </div>
-                <div style={{ fontSize: 13, color: '#3d2d6e' }}>{players.length} player{players.length !== 1 ? 's' : ''} registered</div>
+                <div style={{ fontSize: 13, color: '#67809a' }}>{players.length} player{players.length !== 1 ? 's' : ''} registered</div>
               </div>
               {players.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e', marginBottom: 4, paddingLeft: 4 }}>Registered Players</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#67809a', marginBottom: 4, paddingLeft: 4 }}>Registered Players</div>
                   {players.map((p, i) => (
                     <div
                       key={p.user_id}
                       onClick={() => p.profiles && setSelectedProfile(p.profiles)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: p.user_id === session?.user?.id ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.04)', border: `1px solid ${p.user_id === session?.user?.id ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, cursor: p.profiles ? 'pointer' : 'default' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: p.user_id === session?.user?.id ? 'rgba(47,125,163,0.12)' : 'rgba(140,176,208,0.05)', border: `1px solid ${p.user_id === session?.user?.id ? 'rgba(200,162,74,0.34)' : 'rgba(140,176,208,0.12)'}`, borderRadius: 10, cursor: p.profiles ? 'pointer' : 'default' }}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#3d2d6e', width: 20, textAlign: 'right', flexShrink: 0 }}>{i + 1}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#67809a', width: 20, textAlign: 'right', flexShrink: 0 }}>{i + 1}</div>
                       <Avatar profile={p.profiles} size={32} radius={8} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {p.profiles?.username ?? 'Unknown'}
-                          {p.user_id === session?.user?.id && <span style={{ fontSize: 10, marginLeft: 6, color: '#8b5cf6', fontWeight: 700 }}>you</span>}
+                          {p.user_id === session?.user?.id && <span style={{ fontSize: 10, marginLeft: 6, color: '#2f7da3', fontWeight: 700 }}>you</span>}
                         </div>
-                        {p.profiles?.location && <div style={{ fontSize: 11, color: '#7c6fa0' }}>{p.profiles.location}</div>}
+                        {p.profiles?.location && <div style={{ fontSize: 11, color: '#9db2c6' }}>{p.profiles.location}</div>}
                       </div>
-                      {p.decklist_submitted && <span style={{ fontSize: 10, fontWeight: 600, color: '#34d399', flexShrink: 0 }}>Decklist ✓</span>}
+                      {p.decklist_submitted && <span style={{ fontSize: 10, fontWeight: 600, color: '#3bb27e', flexShrink: 0 }}>Decklist ✓</span>}
                     </div>
                   ))}
                 </div>
@@ -743,27 +742,27 @@ export default function TournamentDetailPage({ session }) {
               const winner = m.result === 'player1_win' ? p1 : m.result === 'player2_win' ? p2 : null
 
               return (
-                <div key={m.id} style={{ background: 'rgba(139,92,246,0.05)', border: `1px solid ${m.status === 'disputed' ? 'rgba(249,115,22,0.3)' : m.status === 'completed' ? 'rgba(255,255,255,0.07)' : inMatch ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 12, padding: isMobile ? '12px 14px' : '14px 20px', marginBottom: 10 }}>
+                <div key={m.id} style={{ background: 'rgba(140,176,208,0.05)', border: `1px solid ${m.status === 'disputed' ? 'rgba(224,138,60,0.3)' : m.status === 'completed' ? 'rgba(140,176,208,0.12)' : inMatch ? 'rgba(200,162,74,0.30)' : 'rgba(140,176,208,0.12)'}`, borderRadius: 12, padding: isMobile ? '12px 14px' : '14px 20px', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                     {/* Player 1 */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: isMobile ? '40%' : 0, cursor: p1 ? 'pointer' : 'default' }} onClick={() => p1 && setSelectedProfile(players.find(p => p.user_id === m.player1_id)?.profiles)}>
                       <Avatar profile={p1} size={36} radius={9} />
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: m.result === 'player1_win' ? '#34d399' : m.result === 'player2_win' ? '#3d2d6e' : '#f0f2f5' }}>{p1?.username ?? 'Unknown'}</div>
-                        {m.player1_reported && m.status !== 'completed' && <div style={{ fontSize: 10, color: '#7c6fa0' }}>Reported {m.player1_reported}</div>}
+                        <div style={{ fontSize: 14, fontWeight: 700, color: m.result === 'player1_win' ? '#3bb27e' : m.result === 'player2_win' ? '#67809a' : '#e9f1f8' }}>{p1?.username ?? 'Unknown'}</div>
+                        {m.player1_reported && m.status !== 'completed' && <div style={{ fontSize: 10, color: '#9db2c6' }}>Reported {m.player1_reported}</div>}
                       </div>
                     </div>
 
                     {/* VS / result */}
                     <div style={{ textAlign: 'center', flexShrink: 0 }}>
                       {m.result === 'bye' ? (
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(139,92,246,0.12)', color: '#a78bfa' }}>BYE</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(200,162,74,0.14)', color: '#52a9cd' }}>BYE</span>
                       ) : m.status === 'completed' ? (
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#34d399' }}>✓</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#3bb27e' }}>✓</span>
                       ) : m.status === 'disputed' ? (
                         <span style={{ fontSize: 16 }}>⚠️</span>
                       ) : (
-                        <span style={{ fontSize: 12, color: '#3d2d6e', fontWeight: 700 }}>vs</span>
+                        <span style={{ fontSize: 12, color: '#67809a', fontWeight: 700 }}>vs</span>
                       )}
                     </div>
 
@@ -771,13 +770,13 @@ export default function TournamentDetailPage({ session }) {
                     {p2 ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: isMobile ? '40%' : 0, justifyContent: isMobile ? 'flex-start' : 'flex-end', cursor: 'pointer' }} onClick={() => setSelectedProfile(players.find(p => p.user_id === m.player2_id)?.profiles)}>
                         {isMobile ? null : <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: m.result === 'player2_win' ? '#34d399' : m.result === 'player1_win' ? '#3d2d6e' : '#f0f2f5' }}>{p2?.username ?? 'Unknown'}</div>
-                          {m.player2_reported && m.status !== 'completed' && <div style={{ fontSize: 10, color: '#7c6fa0' }}>Reported {m.player2_reported}</div>}
+                          <div style={{ fontSize: 14, fontWeight: 700, color: m.result === 'player2_win' ? '#3bb27e' : m.result === 'player1_win' ? '#67809a' : '#e9f1f8' }}>{p2?.username ?? 'Unknown'}</div>
+                          {m.player2_reported && m.status !== 'completed' && <div style={{ fontSize: 10, color: '#9db2c6' }}>Reported {m.player2_reported}</div>}
                         </div>}
                         <Avatar profile={p2} size={36} radius={9} />
                         {isMobile && <div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: m.result === 'player2_win' ? '#34d399' : m.result === 'player1_win' ? '#3d2d6e' : '#f0f2f5' }}>{p2?.username ?? 'Unknown'}</div>
-                          {m.player2_reported && m.status !== 'completed' && <div style={{ fontSize: 10, color: '#7c6fa0' }}>Reported {m.player2_reported}</div>}
+                          <div style={{ fontSize: 14, fontWeight: 700, color: m.result === 'player2_win' ? '#3bb27e' : m.result === 'player1_win' ? '#67809a' : '#e9f1f8' }}>{p2?.username ?? 'Unknown'}</div>
+                          {m.player2_reported && m.status !== 'completed' && <div style={{ fontSize: 10, color: '#9db2c6' }}>Reported {m.player2_reported}</div>}
                         </div>}
                       </div>
                     ) : <div style={{ flex: 1 }} />}
@@ -785,28 +784,28 @@ export default function TournamentDetailPage({ session }) {
                     {/* Result submission */}
                     {inMatch && m.status === 'pending' && !myReport && (
                       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                        <button onClick={() => submitResult(m, 'win')} disabled={submittingMatches.has(m.id)} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: 'none', background: '#34d399', color: '#0f1117', cursor: submittingMatches.has(m.id) ? 'default' : 'pointer', fontFamily: 'inherit', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>I Won</button>
-                        <button onClick={() => submitResult(m, 'loss')} disabled={submittingMatches.has(m.id)} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: submittingMatches.has(m.id) ? 'default' : 'pointer', fontFamily: 'inherit', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>I Lost</button>
+                        <button onClick={() => submitResult(m, 'win')} disabled={submittingMatches.has(m.id)} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: 'none', background: '#3bb27e', color: '#0f1117', cursor: submittingMatches.has(m.id) ? 'default' : 'pointer', fontFamily: 'inherit', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>I Won</button>
+                        <button onClick={() => submitResult(m, 'loss')} disabled={submittingMatches.has(m.id)} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: submittingMatches.has(m.id) ? 'default' : 'pointer', fontFamily: 'inherit', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>I Lost</button>
                       </div>
                     )}
                     {inMatch && m.status === 'pending' && myReport && (
-                      <span style={{ fontSize: 11, color: '#7c6fa0', flexShrink: 0 }}>Waiting for opponent...</span>
+                      <span style={{ fontSize: 11, color: '#9db2c6', flexShrink: 0 }}>Waiting for opponent...</span>
                     )}
                     {m.status === 'completed' && winner && (
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#34d399', flexShrink: 0 }}>🏆 {winner.username}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#3bb27e', flexShrink: 0 }}>🏆 {winner.username}</span>
                     )}
                     {m.status === 'disputed' && !isAdmin && (
-                      <span style={{ fontSize: 11, color: '#f97316', flexShrink: 0 }}>Awaiting admin</span>
+                      <span style={{ fontSize: 11, color: '#e08a3c', flexShrink: 0 }}>Awaiting admin</span>
                     )}
                     {isAdmin && m.status !== 'completed' && m.result !== 'bye' && (
                       <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
-                        <button onClick={() => resolveDispute(m.id, 'player1_win')} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: 'rgba(139,92,246,0.18)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>▲ {p1?.username ?? 'P1'}</button>
-                        <button onClick={() => resolveDispute(m.id, 'player2_win')} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: 'rgba(139,92,246,0.18)', color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>▲ {p2?.username ?? 'P2'}</button>
+                        <button onClick={() => resolveDispute(m.id, 'player1_win')} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: 'rgba(47,125,163,0.18)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>▲ {p1?.username ?? 'P1'}</button>
+                        <button onClick={() => resolveDispute(m.id, 'player2_win')} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: 'rgba(47,125,163,0.18)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>▲ {p2?.username ?? 'P2'}</button>
                       </div>
                     )}
                   </div>
                   {reportErrors[m.id] && (
-                    <div style={{ fontSize: 11, color: '#f05252', marginTop: 8 }}>{reportErrors[m.id]}</div>
+                    <div style={{ fontSize: 11, color: '#d24a3a', marginTop: 8 }}>{reportErrors[m.id]}</div>
                   )}
                   <MatchChat
                     matchId={m.id}
@@ -829,12 +828,12 @@ export default function TournamentDetailPage({ session }) {
       {activeTab === 'standings' && (
         <div>
           {standings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e', fontSize: 13 }}>No players yet</div>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#67809a', fontSize: 13 }}>No players yet</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${isAdmin && tournament.status === 'active' ? ' 60px' : ''}`, gap: 12, padding: '6px 14px', marginBottom: 4 }}>
                 {['#', 'Player', 'W', 'L', 'OWR', ...(isAdmin && tournament.status === 'active' ? [''] : [])].map(h => (
-                  <div key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#3d2d6e' }}>{h}</div>
+                  <div key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#67809a' }}>{h}</div>
                 ))}
               </div>
               {standings.map((s, i) => {
@@ -845,25 +844,25 @@ export default function TournamentDetailPage({ session }) {
                   <div
                     key={s.user_id}
                     onClick={() => s.profiles && setSelectedProfile(s.profiles)}
-                    style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${isAdmin && tournament.status === 'active' ? ' 60px' : ''}`, gap: 12, alignItems: 'center', padding: '10px 14px', background: isDropped ? 'rgba(255,255,255,0.02)' : isWinner ? 'rgba(251,191,36,0.06)' : 'rgba(139,92,246,0.05)', border: `1px solid ${isDropped ? 'rgba(255,255,255,0.04)' : isWinner ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, cursor: 'pointer', opacity: isDropped ? 0.5 : 1, transition: 'all 0.1s' }}
-                    onMouseEnter={e => { if (!isDropped) e.currentTarget.style.borderColor = isWinner ? 'rgba(251,191,36,0.35)' : 'rgba(255,255,255,0.14)' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDropped ? 'rgba(255,255,255,0.04)' : isWinner ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.07)' }}
+                    style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${isAdmin && tournament.status === 'active' ? ' 60px' : ''}`, gap: 12, alignItems: 'center', padding: '10px 14px', background: isDropped ? 'rgba(140,176,208,0.04)' : isWinner ? 'rgba(200,162,74,0.08)' : 'rgba(140,176,208,0.05)', border: `1px solid ${isDropped ? 'rgba(140,176,208,0.06)' : isWinner ? 'rgba(200,162,74,0.2)' : 'rgba(140,176,208,0.12)'}`, borderRadius: 10, cursor: 'pointer', opacity: isDropped ? 0.5 : 1, transition: 'all 0.1s' }}
+                    onMouseEnter={e => { if (!isDropped) e.currentTarget.style.borderColor = isWinner ? 'rgba(200,162,74,0.35)' : 'rgba(140,176,208,0.20)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDropped ? 'rgba(140,176,208,0.06)' : isWinner ? 'rgba(200,162,74,0.2)' : 'rgba(140,176,208,0.12)' }}
                   >
-                    <div style={{ fontSize: 14, fontWeight: 700, color: i === 0 && !isDropped ? '#fbbf24' : '#3d2d6e' }}>{i + 1}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: i === 0 && !isDropped ? '#dcb35e' : '#67809a' }}>{i + 1}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                       <Avatar profile={s.profiles} size={28} radius={7} />
-                      <span style={{ fontSize: 13, fontWeight: 600, color: isDropped ? '#7c6fa0' : '#f0f2f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.profiles?.username ?? 'Unknown'}</span>
-                      {isWinner && <span style={{ fontSize: 10, color: '#fbbf24' }}>🏆</span>}
+                      <span style={{ fontSize: 13, fontWeight: 600, color: isDropped ? '#9db2c6' : '#e9f1f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.profiles?.username ?? 'Unknown'}</span>
+                      {isWinner && <span style={{ fontSize: 10, color: '#dcb35e' }}>🏆</span>}
                       {isDropped && <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', flexShrink: 0 }}>dropped</span>}
-                      {!isDropped && s.losses === 0 && !isWinner && tournament.status === 'active' && <span style={{ fontSize: 10, color: '#34d399', flexShrink: 0 }}>undefeated</span>}
+                      {!isDropped && s.losses === 0 && !isWinner && tournament.status === 'active' && <span style={{ fontSize: 10, color: '#3bb27e', flexShrink: 0 }}>undefeated</span>}
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>{s.wins}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: s.losses > 0 ? '#f05252' : '#3d2d6e' }}>{s.losses}</div>
-                    <div style={{ fontSize: 12, color: '#7c6fa0', fontFamily: 'monospace' }}>{s.wins + s.losses > 0 ? `${Math.round(s.owr * 100)}%` : '—'}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#3bb27e' }}>{s.wins}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: s.losses > 0 ? '#d24a3a' : '#67809a' }}>{s.losses}</div>
+                    <div style={{ fontSize: 12, color: '#9db2c6', fontFamily: 'monospace' }}>{s.wins + s.losses > 0 ? `${Math.round(s.owr * 100)}%` : '—'}</div>
                     {isAdmin && tournament.status === 'active' && (
                       <div onClick={e => e.stopPropagation()}>
                         {!isDropped && (
-                          <button onClick={() => { setDroppingUserId(s.user_id); setShowDropConfirm(true) }} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(240,82,82,0.3)', background: 'rgba(240,82,82,0.08)', color: '#f05252', cursor: 'pointer', fontFamily: 'inherit' }}>Drop</button>
+                          <button onClick={() => { setDroppingUserId(s.user_id); setShowDropConfirm(true) }} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>Drop</button>
                         )}
                       </div>
                     )}
@@ -879,14 +878,14 @@ export default function TournamentDetailPage({ session }) {
       {activeTab === 'history' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {rounds.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#3d2d6e', fontSize: 13 }}>No rounds played yet</div>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#67809a', fontSize: 13 }}>No rounds played yet</div>
           ) : rounds.map(round => {
             const rMatches = matches.filter(m => m.round_id === round.id)
             return (
               <div key={round.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f2f5' }}>Round {round.round_number}</div>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: round.status === 'completed' ? 'rgba(52,211,153,0.1)' : 'rgba(139,92,246,0.1)', color: round.status === 'completed' ? '#34d399' : '#8b5cf6' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>Round {round.round_number}</div>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: round.status === 'completed' ? 'rgba(59,178,126,0.1)' : 'rgba(47,125,163,0.12)', color: round.status === 'completed' ? '#3bb27e' : '#2f7da3' }}>
                     {round.status === 'completed' ? 'Complete' : 'In Progress'}
                   </span>
                 </div>
@@ -895,13 +894,13 @@ export default function TournamentDetailPage({ session }) {
                   const p2 = m.player2_id ? playerProfile(m.player2_id) : null
                   const winner = m.result === 'player1_win' ? p1 : m.result === 'player2_win' ? p2 : null
                   return (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, marginBottom: 5 }}>
-                      <span style={{ fontSize: 13, color: m.result === 'player1_win' ? '#34d399' : '#7c6fa0', fontWeight: m.result === 'player1_win' ? 700 : 400, flex: 1, cursor: 'pointer' }} onClick={() => p1 && setSelectedProfile(p1)}>{p1?.username ?? '?'}</span>
-                      {m.result === 'bye' ? <span style={{ fontSize: 11, color: '#a78bfa' }}>BYE</span> : <span style={{ fontSize: 11, color: '#3d2d6e' }}>vs</span>}
-                      {p2 && <span style={{ fontSize: 13, color: m.result === 'player2_win' ? '#34d399' : '#7c6fa0', fontWeight: m.result === 'player2_win' ? 700 : 400, flex: 1, textAlign: 'right', cursor: 'pointer' }} onClick={() => setSelectedProfile(p2)}>{p2.username}</span>}
-                      {winner && <span style={{ fontSize: 11, color: '#34d399', flexShrink: 0 }}>🏆 {winner.username}</span>}
-                      {m.status === 'pending' && <span style={{ fontSize: 11, color: '#3d2d6e', flexShrink: 0 }}>Pending</span>}
-                      {m.status === 'disputed' && <span style={{ fontSize: 11, color: '#f97316', flexShrink: 0 }}>Disputed</span>}
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', background: 'rgba(140,176,208,0.04)', borderRadius: 8, marginBottom: 5 }}>
+                      <span style={{ fontSize: 13, color: m.result === 'player1_win' ? '#3bb27e' : '#9db2c6', fontWeight: m.result === 'player1_win' ? 700 : 400, flex: 1, cursor: 'pointer' }} onClick={() => p1 && setSelectedProfile(p1)}>{p1?.username ?? '?'}</span>
+                      {m.result === 'bye' ? <span style={{ fontSize: 11, color: '#52a9cd' }}>BYE</span> : <span style={{ fontSize: 11, color: '#67809a' }}>vs</span>}
+                      {p2 && <span style={{ fontSize: 13, color: m.result === 'player2_win' ? '#3bb27e' : '#9db2c6', fontWeight: m.result === 'player2_win' ? 700 : 400, flex: 1, textAlign: 'right', cursor: 'pointer' }} onClick={() => setSelectedProfile(p2)}>{p2.username}</span>}
+                      {winner && <span style={{ fontSize: 11, color: '#3bb27e', flexShrink: 0 }}>🏆 {winner.username}</span>}
+                      {m.status === 'pending' && <span style={{ fontSize: 11, color: '#67809a', flexShrink: 0 }}>Pending</span>}
+                      {m.status === 'disputed' && <span style={{ fontSize: 11, color: '#e08a3c', flexShrink: 0 }}>Disputed</span>}
                     </div>
                   )
                 })}
@@ -918,17 +917,17 @@ export default function TournamentDetailPage({ session }) {
             const dl = p.decklist
             const leaderImg = dl?.card_image ?? (dl?.leader_id ? getCardImageUrl(dl.leader_id) : null)
             return (
-              <div key={p.id} style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div key={p.id} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid rgba(140,176,208,0.12)' }}>
                   <Avatar profile={p.profiles} size={36} radius={9} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f2f5', cursor: 'pointer' }} onClick={() => setSelectedProfile(p.profiles)}>{p.profiles?.username}</div>
-                    {dl?.leader_name && <div style={{ fontSize: 11, color: COLORS[dl.leader_color] ?? '#7c6fa0' }}>{dl.leader_name}</div>}
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#e9f1f8', cursor: 'pointer' }} onClick={() => setSelectedProfile(p.profiles)}>{p.profiles?.username}</div>
+                    {dl?.leader_name && <div style={{ fontSize: 11, color: COLORS[dl.leader_color] ?? '#9db2c6' }}>{dl.leader_name}</div>}
                   </div>
-                  {leaderImg && <img src={leaderImg} alt={dl?.leader_name} style={{ height: 52, borderRadius: 5, border: '1px solid rgba(255,255,255,0.08)' }} onError={e => { e.target.style.display = 'none' }} />}
+                  {leaderImg && <img src={leaderImg} alt={dl?.leader_name} style={{ height: 52, borderRadius: 5, border: '1px solid rgba(140,176,208,0.12)' }} onError={e => { e.target.style.display = 'none' }} />}
                 </div>
                 {dl?.raw && (
-                  <pre style={{ margin: 0, padding: '12px 16px', fontSize: 12, color: '#8a9bb0', fontFamily: 'monospace', whiteSpace: 'pre-wrap', lineHeight: 1.7, overflowX: 'auto' }}>
+                  <pre style={{ margin: 0, padding: '12px 16px', fontSize: 12, color: '#9db2c6', fontFamily: 'monospace', whiteSpace: 'pre-wrap', lineHeight: 1.7, overflowX: 'auto' }}>
                     {dl.raw}
                   </pre>
                 )}
@@ -936,7 +935,7 @@ export default function TournamentDetailPage({ session }) {
             )
           })}
           {players.filter(p => !p.decklist_submitted).length > 0 && (
-            <div style={{ fontSize: 12, color: '#3d2d6e', padding: 10 }}>
+            <div style={{ fontSize: 12, color: '#67809a', padding: 10 }}>
               {players.filter(p => !p.decklist_submitted).length} player{players.filter(p => !p.decklist_submitted).length !== 1 ? 's' : ''} did not submit a decklist.
             </div>
           )}
@@ -946,19 +945,19 @@ export default function TournamentDetailPage({ session }) {
       {/* ── Drop confirmation modal ──────────────────────────────────────── */}
       {showDropConfirm && (
         <div onClick={() => { if (droppingPlayer) return; setShowDropConfirm(false); setDroppingUserId(null); setDropError(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(240,82,82,0.25)', borderRadius: 16, width: 360, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(210,74,58,0.25)', borderRadius: 16, width: 360, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>
               {droppingUserId === session?.user?.id ? 'Drop from Tournament?' : `Drop ${players.find(p => p.user_id === droppingUserId)?.profiles?.username ?? 'Player'}?`}
             </div>
-            <div style={{ fontSize: 13, color: '#8a9bb0', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: '#9db2c6', lineHeight: 1.6 }}>
               {droppingUserId === session?.user?.id
                 ? 'You will be removed from future pairings. Your current record will remain in the standings. This cannot be undone.'
                 : 'This player will be removed from future pairings. Their current record stays in standings. Any pending match this round will be forfeited.'}
             </div>
-            {dropError && <div style={{ fontSize: 12, color: '#f05252', background: 'rgba(240,82,82,0.08)', border: '1px solid rgba(240,82,82,0.2)', borderRadius: 6, padding: '8px 10px' }}>{dropError}</div>}
+            {dropError && <div style={{ fontSize: 12, color: '#d24a3a', background: 'rgba(210,74,58,0.08)', border: '1px solid rgba(210,74,58,0.2)', borderRadius: 6, padding: '8px 10px' }}>{dropError}</div>}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setShowDropConfirm(false); setDroppingUserId(null); setDropError(null) }} disabled={droppingPlayer} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: droppingPlayer ? 'default' : 'pointer', fontFamily: 'inherit', opacity: droppingPlayer ? 0.5 : 1 }}>Cancel</button>
-              <button onClick={() => dropPlayer(droppingUserId)} disabled={droppingPlayer} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: droppingPlayer ? 'default' : 'pointer', fontFamily: 'inherit', opacity: droppingPlayer ? 0.7 : 1 }}>
+              <button onClick={() => { setShowDropConfirm(false); setDroppingUserId(null); setDropError(null) }} disabled={droppingPlayer} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(140,176,208,0.18)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: droppingPlayer ? 'default' : 'pointer', fontFamily: 'inherit', opacity: droppingPlayer ? 0.5 : 1 }}>Cancel</button>
+              <button onClick={() => dropPlayer(droppingUserId)} disabled={droppingPlayer} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#d24a3a', color: '#fff', fontSize: 13, fontWeight: 700, cursor: droppingPlayer ? 'default' : 'pointer', fontFamily: 'inherit', opacity: droppingPlayer ? 0.7 : 1 }}>
                 {droppingPlayer ? 'Dropping...' : droppingUserId === session?.user?.id ? 'Drop Me' : 'Drop Player'}
               </button>
             </div>
@@ -969,31 +968,31 @@ export default function TournamentDetailPage({ session }) {
       {/* ── Force end tournament modal ───────────────────────────────────── */}
       {showForceEndModal && (
         <div onClick={() => setShowForceEndModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 16, width: 400, maxHeight: '80vh', overflow: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(200,162,74,0.25)', borderRadius: 16, width: 400, maxHeight: '80vh', overflow: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5', marginBottom: 4 }}>End Tournament</div>
-              <div style={{ fontSize: 12, color: '#7c6fa0' }}>Select the winner from the current standings.</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8', marginBottom: 4 }}>End Tournament</div>
+              <div style={{ fontSize: 12, color: '#9db2c6' }}>Select the winner from the current standings.</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {standings.map((s, i) => (
                 <div
                   key={s.user_id}
                   onClick={() => { declareWinner(s.user_id); setShowForceEndModal(false) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, cursor: 'pointer' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(251,191,36,0.3)'; e.currentTarget.style.background = 'rgba(251,191,36,0.05)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = 'rgba(139,92,246,0.05)' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 10, cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(200,162,74,0.3)'; e.currentTarget.style.background = 'rgba(200,162,74,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.12)'; e.currentTarget.style.background = 'rgba(140,176,208,0.05)' }}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#3d2d6e', width: 20, textAlign: 'right', flexShrink: 0 }}>{i + 1}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#67809a', width: 20, textAlign: 'right', flexShrink: 0 }}>{i + 1}</div>
                   <Avatar profile={s.profiles} size={28} radius={7} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f0f2f5' }}>{s.profiles?.username ?? 'Unknown'}</div>
-                    <div style={{ fontSize: 11, color: '#7c6fa0', fontFamily: 'monospace' }}>{s.wins}W · {s.losses}L</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{s.profiles?.username ?? 'Unknown'}</div>
+                    <div style={{ fontSize: 11, color: '#9db2c6', fontFamily: 'monospace' }}>{s.wins}W · {s.losses}L</div>
                   </div>
-                  <span style={{ fontSize: 11, color: '#fbbf24' }}>Declare 🏆</span>
+                  <span style={{ fontSize: 11, color: '#dcb35e' }}>Declare 🏆</span>
                 </div>
               ))}
             </div>
-            <button onClick={() => setShowForceEndModal(false)} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+            <button onClick={() => setShowForceEndModal(false)} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(140,176,208,0.18)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
           </div>
         </div>
       )}
@@ -1001,14 +1000,14 @@ export default function TournamentDetailPage({ session }) {
       {/* ── Delete confirmation modal ────────────────────────────────────── */}
       {showDeleteConfirm && (
         <div onClick={() => setShowDeleteConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(240,82,82,0.3)', borderRadius: 16, width: 360, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>Delete Tournament</div>
-            <div style={{ fontSize: 13, color: '#8a9bb0', lineHeight: 1.6 }}>
-              Are you sure you want to delete <strong style={{ color: '#f0f2f5' }}>{tournament.name}</strong>? This will permanently remove all rounds, matches, and player registrations. This cannot be undone.
+          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(210,74,58,0.3)', borderRadius: 16, width: 360, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>Delete Tournament</div>
+            <div style={{ fontSize: 13, color: '#9db2c6', lineHeight: 1.6 }}>
+              Are you sure you want to delete <strong style={{ color: '#e9f1f8' }}>{tournament.name}</strong>? This will permanently remove all rounds, matches, and player registrations. This cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-              <button onClick={deleteTournament} disabled={deleting} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#f05252', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.6 : 1 }}>
+              <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(140,176,208,0.18)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={deleteTournament} disabled={deleting} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#d24a3a', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.6 : 1 }}>
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
@@ -1019,9 +1018,9 @@ export default function TournamentDetailPage({ session }) {
       {/* ── Decklist submission modal ─────────────────────────────────────── */}
       {decklistModal && (
         <div onClick={() => setDecklistModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#0f0b1e', border: '1px solid rgba(139,92,246,0.25)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 520, maxHeight: '85vh', overflow: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f2f5' }}>Submit Decklist</div>
-            <div style={{ fontSize: 12, color: '#7c6fa0', lineHeight: 1.5 }}>Your decklist is hidden from other players until the tournament ends.</div>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(200,162,74,0.30)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 520, maxHeight: '85vh', overflow: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>Submit Decklist</div>
+            <div style={{ fontSize: 12, color: '#9db2c6', lineHeight: 1.5 }}>Your decklist is hidden from other players until the tournament ends.</div>
             <div>
               <label style={LABEL}>Leader Card</label>
               <LeaderPicker value={decklistLeader ?? myEntry?.decklist?.leader_id} onChange={setDecklistLeader} />
@@ -1036,8 +1035,8 @@ export default function TournamentDetailPage({ session }) {
               />
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setDecklistModal(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7c6fa0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-              <button onClick={saveDecklist} disabled={savingDecklist || !decklistLeader} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: savingDecklist || !decklistLeader ? 0.5 : 1 }}>
+              <button onClick={() => setDecklistModal(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(140,176,208,0.18)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={saveDecklist} disabled={savingDecklist || !decklistLeader} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: savingDecklist || !decklistLeader ? 0.5 : 1 }}>
                 {savingDecklist ? 'Saving...' : 'Submit Decklist'}
               </button>
             </div>
