@@ -70,7 +70,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
   const hasRounds = rounds.length > 0
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#06030f', zIndex: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', padding: isMobile ? '18px 0 28px' : '24px 20px 36px' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#06101b', zIndex: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', padding: isMobile ? '18px 0 28px' : '24px 20px 36px' }}>
 
       {/* Screenshot hint — above card, not part of it */}
       <div style={{ textAlign: 'center', marginBottom: 16, flexShrink: 0 }}>
@@ -147,7 +147,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
         {/* Brand bar — kept high so screenshots can't crop it out */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 18px', background: 'rgba(140,176,208,0.06)', borderBottom: '1px solid rgba(140,176,208,0.12)' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#2f7da3', letterSpacing: '-0.2px' }}>☠ PirateTracker</div>
-          <div style={{ fontSize: 9.5, color: '#4a3a6e' }}>piratetracker.vercel.app</div>
+          <div style={{ fontSize: 9.5, color: '#5f7589' }}>piratetracker.vercel.app</div>
         </div>
 
         {/* Round-by-round table */}
@@ -200,7 +200,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                     {r.went_first === null ? (
                       <span style={{ color: '#3a526a', fontSize: 13 }}>—</span>
                     ) : (
-                      <span style={{ fontSize: 10, fontWeight: 800, fontFamily: 'monospace', width: 20, height: 20, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: r.went_first ? 'rgba(200,162,74,0.16)' : 'rgba(167,139,250,0.16)', color: r.went_first ? '#dcb35e' : '#52a9cd' }}>
+                      <span style={{ fontSize: 10, fontWeight: 800, fontFamily: 'monospace', width: 20, height: 20, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: r.went_first ? 'rgba(200,162,74,0.16)' : 'rgba(82,169,205,0.16)', color: r.went_first ? '#dcb35e' : '#52a9cd' }}>
                         {r.went_first ? '1' : '2'}
                       </span>
                     )}
@@ -281,7 +281,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#110a1e', border: '1px solid rgba(140,176,208,0.18)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 620, maxHeight: isMobile ? '95vh' : '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(140,176,208,0.18)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 620, maxHeight: isMobile ? '95vh' : '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header with leader art */}
           <div style={{ position: 'relative', height: 120, background: 'rgba(140,176,208,0.03)', flexShrink: 0 }}>
@@ -432,7 +432,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
 
       {showConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: zIndex + 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#110a1e', border: '1px solid rgba(210,74,58,0.25)', borderRadius: 14, padding: '28px 24px', maxWidth: 360, width: '100%', textAlign: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(210,74,58,0.25)', borderRadius: 14, padding: '28px 24px', maxWidth: 360, width: '100%', textAlign: 'center' }}>
             <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(210,74,58,0.12)', border: '1px solid rgba(210,74,58,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, margin: '0 auto 16px' }}>🗑️</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8', marginBottom: 8 }}>Delete Tournament?</div>
             <div style={{ fontSize: 13, color: '#9db2c6', lineHeight: 1.6, marginBottom: 24 }}>

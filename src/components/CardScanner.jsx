@@ -617,7 +617,7 @@ const guideWrap = {
 }
 const guideBox = {
   position: 'relative', width: '84%', maxWidth: 340, aspectRatio: '5 / 7',
-  border: '2px solid rgba(167,139,250,0.9)', borderRadius: 14,
+  border: '2px solid rgba(82,169,205,0.9)', borderRadius: 14,
   boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
 }
 const guideStrip = {

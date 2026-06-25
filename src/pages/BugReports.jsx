@@ -97,7 +97,7 @@ export default function BugReports({ session }) {
                     {resolved ? 'Resolved' : 'Open'}
                   </span>
                   {r.user_id ? (
-                    <button onClick={() => navigate(`/profile/${r.user_id}`)} title="View profile" style={{ fontSize: 12, fontWeight: 600, color: '#52a9cd', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(167,139,250,0.4)', textUnderlineOffset: 2 }}>
+                    <button onClick={() => navigate(`/profile/${r.user_id}`)} title="View profile" style={{ fontSize: 12, fontWeight: 600, color: '#52a9cd', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(82,169,205,0.4)', textUnderlineOffset: 2 }}>
                       {r.username ?? 'View profile'}
                     </button>
                   ) : (

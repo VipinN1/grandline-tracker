@@ -184,8 +184,13 @@ input[type=number] { -moz-appearance: textfield; }
   to   { transform: rotate(360deg); }
 }
 
-/* Page content gets a gentle entrance */
-.gl-page-enter { animation: fadeInUp 0.32s var(--ease) both; }
+/* Page content gets a gentle entrance.
+   NOTE: fill-mode is `backwards` (not `both`/`forwards`) on purpose — fadeInUp
+   ends at transform: translateY(0), and a lingering non-none transform would
+   make this element the containing block for any position:fixed descendant
+   (e.g. modals rendered inside the page), breaking full-screen overlays. With
+   `backwards` the resting transform returns to `none` after the animation. */
+.gl-page-enter { animation: fadeInUp 0.32s var(--ease) backwards; }
 
 /* ── Navbar (captain's navigation) ───────────────────────────────────────── */
 .gl-navlink {
