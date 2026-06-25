@@ -166,7 +166,6 @@ export default function Dashboard({ session }) {
   return (
     <div className="gl-page-enter">
       <div style={{ marginBottom: 28 }}>
-        <div style={{ ...eyebrow, marginBottom: 8 }}>⚓ Captain's Log</div>
         <div style={{ ...pageHeader(), fontSize: 30, marginBottom: 6 }}>Dashboard</div>
         <div style={{ fontSize: 14, color: colors.muted }}>Your competitive performance at a glance</div>
       </div>
