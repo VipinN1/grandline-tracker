@@ -284,6 +284,24 @@ export async function searchLeaders(query) {
       }
     } catch {}
 
+    // The API's card_name filter is a literal substring match, so multi-word
+    // queries with spaces won't match names that use periods (e.g. "Monkey D
+    // Luffy" vs "Monkey.D.Luffy"). For multi-word queries, re-query by the first
+    // token and filter locally on the normalized full query.
+    const firstToken = q.split(/\s+/)[0]
+    if (firstToken && firstToken.toLowerCase() !== ql) {
+      try {
+        const nameRes = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(firstToken)}&card_type=Leader`)
+        if (nameRes.ok) {
+          const nameData = (await nameRes.json() ?? []).filter(card =>
+            card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedQ)
+          )
+          nameData.forEach(addResult)
+          await fetchVariants(nameData)
+        }
+      } catch {}
+    }
+
     stCards
       .filter(card =>
         card.card_type === 'Leader' && (
@@ -383,11 +401,29 @@ export async function searchCards(query) {
     // Name-based search
     const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '')
 
-    // 1. API name search (booster sets)
+    // 1. API name search (booster sets).
+    //    The API's card_name filter is a literal substring match, so multi-word
+    //    queries with spaces won't match names that use periods
+    //    (e.g. "Monkey D Luffy" vs "Monkey.D.Luffy"). Try the raw query first...
     try {
       const res = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(q)}`)
       if (res.ok) addResults(await res.json())
     } catch {}
+
+    // ...then, for multi-word queries, re-query by the first token (a contiguous
+    //    substring that survives the period/space mismatch) and filter locally
+    //    on the normalized full query.
+    const firstToken = q.split(/\s+/)[0]
+    if (firstToken && firstToken.toLowerCase() !== q.toLowerCase()) {
+      try {
+        const res = await fetch(`${BASE}/sets/filtered/?card_name=${encodeURIComponent(firstToken)}`)
+        if (res.ok) {
+          addResults((await res.json() ?? []).filter(card =>
+            card.card_name?.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalizedQ)
+          ))
+        }
+      } catch {}
+    }
 
     // 2. ST cards by name or ID
     addResults(stCards.filter(card =>
