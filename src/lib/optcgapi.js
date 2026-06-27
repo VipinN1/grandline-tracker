@@ -447,7 +447,7 @@ export async function searchCards(query) {
     )
   }
 
-  return results.slice(0, 60)
+  return results.slice(0, 250)
 }
 
 export function getCardImageUrl(cardOrId) {
