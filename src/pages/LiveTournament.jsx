@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getCardImageUrl, searchLeaders } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { useWindowSize } from '../hooks/useWindowSize'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
@@ -94,6 +95,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
 }
 
 function SetupScreen({ session, onStart }) {
+  const { isMobile } = useWindowSize()
   const [name, setName] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [location, setLocation] = useState('')
@@ -186,7 +188,7 @@ function SetupScreen({ session, onStart }) {
         <div style={{ fontSize: 13, color: '#9db2c6' }}>Track your rounds in real time</div>
       </div>
 
-      <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: isMobile ? 16 : 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* Store picker */}
         <div ref={storeRef} style={{ position: 'relative' }}>
@@ -238,7 +240,7 @@ function SetupScreen({ session, onStart }) {
         </div>
 
         {/* Name + date */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
           <div>
             <label style={labelStyle}>Tournament Name {selectedSeries && <span style={{ color: '#67809a', fontWeight: 400 }}>(auto)</span>}</label>
             <input type="text" placeholder="e.g. Weekly Locals" value={selectedSeries ? selectedSeries.name : name} onChange={e => setName(e.target.value)} disabled={!!selectedSeries} style={{ ...inputStyle, opacity: selectedSeries ? 0.5 : 1 }} />
@@ -249,7 +251,7 @@ function SetupScreen({ session, onStart }) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
           <div>
             <label style={labelStyle}>Player Count</label>
             <input type="number" placeholder="e.g. 32" value={playerCount} onChange={e => setPlayerCount(e.target.value)} style={inputStyle} />
@@ -464,6 +466,7 @@ function RoundHistory({ rounds }) {
 }
 
 function ActiveTournament({ tournament, session, onFinish }) {
+  const { isMobile } = useWindowSize()
   const [rounds, setRounds] = useState([])
   const [finishing, setFinishing] = useState(false)
   const [showFinishConfirm, setShowFinishConfirm] = useState(false)
@@ -533,8 +536,8 @@ function ActiveTournament({ tournament, session, onFinish }) {
   return (
     <div>
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, rgba(47,125,163,0.12), rgba(47,125,163,0.06))', border: '1px solid rgba(140,176,208,0.2)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(47,125,163,0.12), rgba(47,125,163,0.06))', border: '1px solid rgba(140,176,208,0.2)', borderRadius: 14, padding: isMobile ? 16 : 20, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
           <img src={getCardImageUrl(tournament.leader_id)} alt={tournament.leader_name} style={{ width: 48, height: 66, objectFit: 'cover', objectPosition: 'top', borderRadius: 6, border: `2px solid ${COLORS[tournament.leader_color] ?? '#2f7da3'}` }} onError={e => { e.target.style.display = 'none' }} />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -569,7 +572,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
         </div>
 
         {/* Live stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
           {[
             { label: 'Record', value: `${wins}W - ${losses}L` },
             { label: 'Win Rate', value: rounds.length > 0 ? `${winRate}%` : '—' },
@@ -584,7 +587,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, alignItems: 'start' }}>
         <RoundLogger tournament={tournament} rounds={rounds} onRoundLogged={r => setRounds(prev => [...prev, r])} session={session} />
         <RoundHistory rounds={rounds} />
       </div>
