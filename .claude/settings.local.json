@@ -41,7 +41,12 @@
       "Bash(grep -rohE \"eyJ[A-Za-z0-9_-]{20,}\\\\.[A-Za-z0-9_-]{20,}\\\\.[A-Za-z0-9_-]{10,}\" dist)",
       "Bash(node \"C:\\\\Users\\\\siris\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-siris-OneDrive-Desktop-New-folder--5--grandline-tracker\\\\d7a60f4a-d69d-4a51-8074-6af11117457a\\\\scratchpad\\\\convert.mjs\" \"C:/Users/siris/OneDrive/Desktop/New folder \\(5\\)/grandline-tracker\")",
       "Bash(ls -la public/)",
-      "Bash(identify \"C:/Users/siris/.claude/image-cache/d7a60f4a-d69d-4a51-8074-6af11117457a/1.png\")"
+      "Bash(identify \"C:/Users/siris/.claude/image-cache/d7a60f4a-d69d-4a51-8074-6af11117457a/1.png\")",
+      "Bash(curl -s \"https://optcgapi.com/api/sets/filtered/?card_name=Luffy&card_type=Leader\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('count',len\\(d\\)\\); ids=[c.get\\('card_set_id'\\) for c in d]; print\\('OP16 ids:',[i for i in ids if i and i.startswith\\('OP16'\\)]\\); print\\('sample names:',list\\({c.get\\('card_name'\\) for c in d}\\)[:8]\\)\")",
+      "Bash(curl -s \"https://optcgapi.com/api/sets/filtered/?card_name=luffy&card_type=Leader\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('count', len\\(d\\) if isinstance\\(d,list\\) else d\\)\")",
+      "Bash(python -c *)"
     ]
   }
 }

@@ -131,7 +131,7 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
     if (val.length < 2) { setResults([]); return }
     debounceRef.current = setTimeout(async () => {
       setSearching(true)
-      try { const data = await searchLeaders(val); setResults(data.slice(0, 12)) }
+      try { const data = await searchLeaders(val); setResults(data.slice(0, 50)) }
       catch { setResults([]) }
       setSearching(false)
     }, 400)

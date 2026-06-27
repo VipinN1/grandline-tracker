@@ -161,7 +161,7 @@ function LeaderPicker({ value, onChange }) {
     if (val.length < 2) { setResults([]); return }
     debounce.current = setTimeout(async () => {
       setSearching(true)
-      try { setResults((await searchLeaders(val)).slice(0, 10)) } catch { setResults([]) }
+      try { setResults((await searchLeaders(val)).slice(0, 50)) } catch { setResults([]) }
       setSearching(false)
     }, 350)
   }

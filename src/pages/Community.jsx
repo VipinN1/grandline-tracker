@@ -328,7 +328,7 @@ function CreatePostModal({ session, onClose, onSubmit, isMobile }) {
     if (val.length < 2) { setLeaderResults([]); return }
     debounceRef.current = setTimeout(async () => {
       setLeaderSearching(true)
-      try { const data = await searchLeaders(val); setLeaderResults(data.slice(0, 12)) }
+      try { const data = await searchLeaders(val); setLeaderResults(data.slice(0, 50)) }
       catch { setLeaderResults([]) }
       setLeaderSearching(false)
     }, 400)
