@@ -48,6 +48,7 @@ export default function BountyBoard({ session }) {
       const { data } = await supabase
         .from('tournaments')
         .select('id, user_id, name, date, placement, wins, losses, leader_id, leader_name, leader_color, profiles(username, avatar_url)')
+        .eq('is_practice', false)
         .order('date', { ascending: false })
       setTournaments(data ?? [])
       setLoading(false)

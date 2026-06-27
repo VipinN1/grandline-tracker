@@ -265,6 +265,7 @@ function PastTournamentForm({ session, editTournament = null }) {
   const [placement, setPlacement] = useState(editTournament?.placement != null ? String(editTournament.placement) : '')
   const [notes, setNotes] = useState(editTournament?.notes ?? '')
   const [deckName, setDeckName] = useState(editTournament?.deck_name ?? '')
+  const [isPractice, setIsPractice] = useState(editTournament?.is_practice ?? false)
 
   const [stores, setStores] = useState([])
   const [series, setSeries] = useState([])
@@ -406,6 +407,7 @@ function PastTournamentForm({ session, editTournament = null }) {
       decklist_id: decklistId,
       store_id: selectedStore?.id ?? null,
       series_id: selectedSeries?.id ?? null,
+      is_practice: isPractice,
     }
 
     let tournamentId
@@ -519,6 +521,20 @@ function PastTournamentForm({ session, editTournament = null }) {
               <div>
                 <label style={labelStyle}>Final Placement</label>
                 <input type="number" placeholder="e.g. 1" value={placement} onChange={e => setPlacement(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Match Type</label>
+                <button
+                  type="button"
+                  onClick={() => setIsPractice(p => !p)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${isPractice ? 'rgba(82,169,205,0.5)' : 'rgba(140,176,208,0.12)'}`, background: isPractice ? 'rgba(82,169,205,0.12)' : 'rgba(140,176,208,0.03)', color: isPractice ? '#52a9cd' : '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                >
+                  <span style={{ width: 36, height: 20, borderRadius: 10, background: isPractice ? '#52a9cd' : 'rgba(140,176,208,0.2)', position: 'relative', flexShrink: 0, transition: 'background 0.15s' }}>
+                    <span style={{ position: 'absolute', top: 2, left: isPractice ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.15s' }} />
+                  </span>
+                  <span style={{ flex: 1 }}>Mark as Practice</span>
+                </button>
+                <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Practice games are saved to your history but excluded from win rate, bounty and all global stats.</div>
               </div>
             </div>
           </div>

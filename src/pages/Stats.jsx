@@ -140,6 +140,7 @@ export default function Stats({ session }) {
       let q = supabase
         .from('tournaments')
         .select('leader_id, leader_name, leader_color, tournament_rounds(opponent_leader_id, opponent_leader_name, opponent_leader_color, won_dice_roll, went_first, result)')
+        .eq('is_practice', false)
         .limit(5000)
       if (scope === 'mine') q = q.eq('user_id', session.user.id)
       const { data } = await q

@@ -318,7 +318,10 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
               {pLabel(tournament.placement)}
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{tournament.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8', display: 'flex', alignItems: 'center', gap: 7 }}>
+                {tournament.name}
+                {tournament.is_practice && <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '2px 6px', borderRadius: 5, background: 'rgba(82,169,205,0.12)', color: '#52a9cd', border: '1px solid rgba(82,169,205,0.3)' }}>Practice</span>}
+              </div>
               <div style={{ fontSize: 11, color: '#9db2c6' }}>{tournament.date} · {tournament.player_count} players{tournament.location ? ` · ${tournament.location}` : ''}</div>
             </div>
             <div style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, fontFamily: 'monospace' }}>

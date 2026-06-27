@@ -122,13 +122,15 @@ export default function UserProfilePage({ session }) {
     )
   }
 
-  const totalWins = tournaments.reduce((s, t) => s + t.wins, 0)
-  const totalLosses = tournaments.reduce((s, t) => s + t.losses, 0)
+  // Practice (voided) games are kept in history but excluded from all stats.
+  const ranked = tournaments.filter(t => !t.is_practice)
+  const totalWins = ranked.reduce((s, t) => s + t.wins, 0)
+  const totalLosses = ranked.reduce((s, t) => s + t.losses, 0)
   const winRate = totalWins + totalLosses > 0 ? Math.round((totalWins / (totalWins + totalLosses)) * 100) : 0
-  const topEights = tournaments.filter(t => t.placement <= 8).length
-  const bestFinish = tournaments.length > 0 ? Math.min(...tournaments.map(t => t.placement)) : null
+  const topEights = ranked.filter(t => t.placement <= 8).length
+  const bestFinish = ranked.length > 0 ? Math.min(...ranked.map(t => t.placement)) : null
 
-  const leaderCounts = tournaments.reduce((acc, t) => {
+  const leaderCounts = ranked.reduce((acc, t) => {
     if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, color: t.leader_color, count: 0 }
     acc[t.leader_id].count++
     return acc
@@ -173,7 +175,7 @@ export default function UserProfilePage({ session }) {
             </div>
             <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
               {bestFinish === 1 && <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(200,162,74,0.1)', color: '#dcb35e', border: '1px solid rgba(200,162,74,0.2)' }}>1st Place</span>}
-              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(140,176,208,0.1)', color: '#2f7da3', border: '1px solid rgba(140,176,208,0.2)' }}>{tournaments.length} Events</span>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(140,176,208,0.1)', color: '#2f7da3', border: '1px solid rgba(140,176,208,0.2)' }}>{ranked.length} Events</span>
               {topEights > 0 && <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(59,178,126,0.1)', color: '#3bb27e', border: '1px solid rgba(59,178,126,0.2)' }}>Top 8 ×{topEights}</span>}
               {isMobile && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: 'rgba(140,176,208,0.06)', color: '#e9f1f8', border: '1px solid rgba(140,176,208,0.1)' }}>{winRate}% WR</span>}
             </div>
@@ -201,7 +203,7 @@ export default function UserProfilePage({ session }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
         {[
-          { label: 'Tournaments', value: tournaments.length },
+          { label: 'Tournaments', value: ranked.length },
           { label: 'Top 8s', value: topEights },
           { label: 'Best Finish', value: bestFinish ? placementLabel(bestFinish) : '—' },
           { label: 'Fav. Leader', value: Object.values(leaderCounts).sort((a, b) => b.count - a.count)[0]?.name.replace(/\s*\([^)]*\)$/, '').trim().split(' ').slice(-1)[0] ?? '—' },
@@ -242,7 +244,10 @@ export default function UserProfilePage({ session }) {
                 {placementLabel(t.placement)}
               </div>
               <div>
-                <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#e9f1f8' }}>{t.name}</div>
+                <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#e9f1f8', display: 'flex', alignItems: 'center', gap: 7 }}>
+                  {t.name}
+                  {t.is_practice && <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '2px 6px', borderRadius: 5, background: 'rgba(82,169,205,0.12)', color: '#52a9cd', border: '1px solid rgba(82,169,205,0.3)' }}>Practice</span>}
+                </div>
                 <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 1 }}>{t.date} · {t.player_count} players{t.location ? ` · ${t.location}` : ''}</div>
               </div>
               {!isMobile && (
@@ -267,7 +272,7 @@ export default function UserProfilePage({ session }) {
       {activeTab === 'leaders' && tournaments.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
           {Object.entries(leaderCounts).map(([id, data]) => {
-            const leaderTournaments = tournaments.filter(t => t.leader_id === id)
+            const leaderTournaments = ranked.filter(t => t.leader_id === id)
             return (
               <div key={id} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ position: 'relative', height: isMobile ? 100 : 140 }}>

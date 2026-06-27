@@ -12,7 +12,7 @@ export default function ProfilePopover({ profile, session, onClose, onFriendActi
   useEffect(() => {
     async function load() {
       const promises = [
-        supabase.from('tournaments').select('placement, wins, losses').eq('user_id', profile.id),
+        supabase.from('tournaments').select('placement, wins, losses').eq('user_id', profile.id).eq('is_practice', false),
       ]
       if (session) {
         promises.push(

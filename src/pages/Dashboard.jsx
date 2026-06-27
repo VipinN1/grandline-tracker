@@ -112,14 +112,16 @@ export default function Dashboard({ session }) {
     load()
   }, [session])
 
-  const totalWins = tournaments.reduce((s, t) => s + t.wins, 0)
-  const totalLosses = tournaments.reduce((s, t) => s + t.losses, 0)
+  // Practice (voided) games are excluded from every stat and chart on the dashboard.
+  const ranked = tournaments.filter(t => !t.is_practice)
+  const totalWins = ranked.reduce((s, t) => s + t.wins, 0)
+  const totalLosses = ranked.reduce((s, t) => s + t.losses, 0)
   const winRate = totalWins + totalLosses > 0 ? Math.round((totalWins / (totalWins + totalLosses)) * 100) : 0
-  const topEights = tournaments.filter(t => t.placement <= 8).length
-  const bestFinish = tournaments.length > 0 ? Math.min(...tournaments.map(t => t.placement)) : null
-  const totalEvents = tournaments.length
+  const topEights = ranked.filter(t => t.placement <= 8).length
+  const bestFinish = ranked.length > 0 ? Math.min(...ranked.map(t => t.placement)) : null
+  const totalEvents = ranked.length
 
-  const placementOverTime = [...tournaments].reverse().map(t => ({
+  const placementOverTime = [...ranked].reverse().map(t => ({
     date: new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     placement: t.placement,
     name: t.name,
@@ -127,7 +129,7 @@ export default function Dashboard({ session }) {
   }))
 
   const leaderUsage = Object.values(
-    tournaments.reduce((acc, t) => {
+    ranked.reduce((acc, t) => {
       if (!acc[t.leader_id]) {
         const primaryColor = (t.leader_color ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? FALLBACK
         acc[t.leader_id] = { name: t.leader_name, fullName: t.leader_name, leaderColor: t.leader_color, color: primaryColor, count: 0, wins: 0, losses: 0 }
@@ -141,7 +143,7 @@ export default function Dashboard({ session }) {
     .sort((a, b) => b.count - a.count)
 
   const colorUsage = Object.values(
-    tournaments.reduce((acc, t) => {
+    ranked.reduce((acc, t) => {
       if (!acc[t.leader_color]) acc[t.leader_color] = { name: t.leader_color, value: 0, color: COLORS[t.leader_color] ?? FALLBACK }
       acc[t.leader_color].value++
       return acc
@@ -149,7 +151,7 @@ export default function Dashboard({ session }) {
   )
 
   const displayedLeaders = showAllLeaders ? leaderUsage : leaderUsage.slice(0, TOP_LEADERS_LIMIT)
-  const recentResults = tournaments.slice(0, 5)
+  const recentResults = ranked.slice(0, 5)
 
   if (loading) {
     return (
