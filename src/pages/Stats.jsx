@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { colors, radius, shadow, font, eyebrow, pageHeader } from '../theme'
+import { colors, radius, shadow, font, eyebrow, pageHeader, input } from '../theme'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
@@ -128,6 +128,8 @@ const HEAD_BG = '#0b1828'
 export default function Stats({ session }) {
   const [scope, setScope] = useState('mine')
   const [metric, setMetric] = useState('overall')
+  const [rowSearch, setRowSearch] = useState('')
+  const [colSearch, setColSearch] = useState('')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const { isMobile } = useWindowSize()
@@ -154,6 +156,15 @@ export default function Stats({ session }) {
 
   const { myLeaders, oppLeaders, matrix, myTotals } = useMemo(() => buildMatrix(rows, scope === 'global'), [rows, scope])
 
+  const shownMy = useMemo(() => {
+    const q = rowSearch.trim().toLowerCase()
+    return q ? myLeaders.filter(m => m.name.toLowerCase().includes(q)) : myLeaders
+  }, [myLeaders, rowSearch])
+  const shownOpp = useMemo(() => {
+    const q = colSearch.trim().toLowerCase()
+    return q ? oppLeaders.filter(o => o.name.toLowerCase().includes(q)) : oppLeaders
+  }, [oppLeaders, colSearch])
+
   const ROW_W = isMobile ? 128 : 152
   const CELL_W = isMobile ? 58 : 66
   const CELL_H = 52
@@ -175,6 +186,13 @@ export default function Stats({ session }) {
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: colors.faint, marginBottom: 7 }}>Condition</div>
           <Toggle options={METRICS} value={metric} onChange={setMetric} />
         </div>
+        <div style={{ flex: 1, minWidth: isMobile ? '100%' : 320 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: colors.faint, marginBottom: 7 }}>Search</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input type="text" placeholder={scope === 'mine' ? 'Your leaders...' : 'Leaders (rows)...'} value={rowSearch} onChange={e => setRowSearch(e.target.value)} style={{ ...input, width: 'auto', flex: 1, minWidth: 140, padding: '7px 12px', fontSize: 13 }} />
+            <input type="text" placeholder={scope === 'mine' ? 'Opponent leaders...' : 'Opponents (columns)...'} value={colSearch} onChange={e => setColSearch(e.target.value)} style={{ ...input, width: 'auto', flex: 1, minWidth: 140, padding: '7px 12px', fontSize: 13 }} />
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -185,6 +203,12 @@ export default function Stats({ session }) {
           <div style={{ fontSize: 16, fontWeight: 600, fontFamily: font.display, color: colors.textSoft }}>Not enough matchup data yet</div>
           <div style={{ fontSize: 13, color: colors.faint, marginTop: 6 }}>Log tournaments with round-by-round opponents to build your matchup chart.</div>
         </div>
+      ) : shownMy.length === 0 || shownOpp.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+          <div style={{ fontSize: 40, marginBottom: 14, opacity: 0.7 }}>🔍</div>
+          <div style={{ fontSize: 16, fontWeight: 600, fontFamily: font.display, color: colors.textSoft }}>No leaders match your search</div>
+          <button onClick={() => { setRowSearch(''); setColSearch('') }} className="gl-btn" style={{ marginTop: 12, fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${colors.lineStrong}`, background: 'transparent', color: colors.muted }}>Clear search</button>
+        </div>
       ) : (
         <>
           <div style={{ overflow: 'auto', maxHeight: '72vh', border: `1px solid ${colors.line}`, borderRadius: radius.lg, boxShadow: shadow.md }}>
@@ -194,7 +218,7 @@ export default function Stats({ session }) {
                   <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 4, background: HEAD_BG, width: ROW_W, minWidth: ROW_W, borderRight: '1px solid rgba(140,176,208,0.16)', borderBottom: '1px solid rgba(140,176,208,0.16)' }}>
                     <div style={{ fontSize: 10, color: '#67809a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 10px', textAlign: 'left' }}>You ↓ / vs →</div>
                   </th>
-                  {oppLeaders.map(o => (
+                  {shownOpp.map(o => (
                     <th key={o.key} style={{ position: 'sticky', top: 0, zIndex: 3, background: HEAD_BG, width: CELL_W, minWidth: CELL_W, padding: '6px 2px', borderBottom: '1px solid rgba(140,176,208,0.16)' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                         <img src={getCardImageUrl(o.id)} alt={o.name} style={{ width: 34, height: 47, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, border: `1.5px solid ${(COLORS[o.color] ?? '#94a3b8')}66` }} onError={e => { e.target.style.opacity = '0.2' }} />
@@ -205,7 +229,7 @@ export default function Stats({ session }) {
                 </tr>
               </thead>
               <tbody>
-                {myLeaders.map(m => {
+                {shownMy.map(m => {
                   const lt = myTotals.get(m.key) ?? [0, 0]
                   const lwr = lt[1] > 0 ? Math.round(lt[0] / lt[1] * 100) : 0
                   return (
@@ -219,7 +243,7 @@ export default function Stats({ session }) {
                           </div>
                         </div>
                       </th>
-                      {oppLeaders.map(o => {
+                      {shownOpp.map(o => {
                         const agg = matrix.get(`${m.key}|${o.key}`)
                         const pair = agg ? agg[metric] : [0, 0]
                         const [w, tot] = pair
