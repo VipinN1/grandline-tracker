@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, FlatList, RefreshControl, ActivityIndicator } from 'react-native'
+import { View, Text, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native'
+import { router } from 'expo-router'
+import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { colors, font, radius, card, eyebrow } from '../../theme'
@@ -35,6 +37,9 @@ export default function Dashboard() {
   }, [session])
 
   useEffect(() => { load() }, [load])
+
+  // Refresh when returning to this tab (e.g. after logging or deleting a result).
+  useFocusEffect(useCallback(() => { load() }, [load]))
 
   async function onRefresh() {
     setRefreshing(true)
@@ -79,7 +84,7 @@ export default function Dashboard() {
         </View>
       }
       renderItem={({ item: t }) => (
-        <View style={{ ...card, padding: 14 }}>
+        <TouchableOpacity onPress={() => router.push(`/tournament/${t.id}`)} style={{ ...card, padding: 14 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text numberOfLines={1} style={{ fontFamily: font.semi, fontSize: 14, color: colors.text }}>{t.name}</Text>
@@ -96,7 +101,7 @@ export default function Dashboard() {
               </Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       )}
     />
   )
