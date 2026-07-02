@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Switch, KeyboardAvoidingView, Platform } from 'react-native'
 import { router } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { getCardImageUrl, enrichCards } from '../../lib/optcgapi'
@@ -101,6 +102,7 @@ function RoundRow({ round, index, onChange, onRemove }) {
 
 export default function LogResult() {
   const { session } = useSession()
+  const insets = useSafeAreaInsets()
 
   const [tournamentName, setTournamentName] = useState('')
   const [date, setDate] = useState(todayStr())
@@ -260,7 +262,12 @@ export default function LogResult() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90, gap: 12 }} keyboardShouldPersistTaps="handled">
+
+        <View>
+          <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Logbook</Text>
+          <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text }}>Log Result</Text>
+        </View>
 
         {/* Your Leader */}
         <View style={{ ...panel, backgroundColor: 'rgba(140,176,208,0.07)', borderColor: colors.lineStrong }}>

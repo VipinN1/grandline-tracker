@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
@@ -17,6 +18,7 @@ const UPCOMING = [
 
 export default function More() {
   const { session } = useSession()
+  const insets = useSafeAreaInsets()
   const username = session?.user?.user_metadata?.username ?? 'Captain'
 
   function handleSignOut() {
@@ -27,7 +29,7 @@ export default function More() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+    <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}>
       <View style={{ ...card, padding: 16, marginBottom: 16 }}>
         <Text style={{ fontFamily: font.display, fontSize: 18, color: colors.text }}>{username}</Text>
         <Text style={{ fontSize: 12, color: colors.muted, fontFamily: font.body, marginTop: 2 }}>{session?.user?.email}</Text>

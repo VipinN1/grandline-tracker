@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { getCardImageUrl } from '../../lib/optcgapi'
@@ -126,6 +127,7 @@ const CELL_H = 52
 
 export default function Stats() {
   const { session } = useSession()
+  const insets = useSafeAreaInsets()
   const [scope, setScope] = useState('mine')
   const [metric, setMetric] = useState('overall')
   const [rowSearch, setRowSearch] = useState('')
@@ -165,9 +167,10 @@ export default function Stats() {
   }, [oppLeaders, colSearch])
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+    <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}>
       <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 6 }}>⚓ Navigator's Charts</Text>
+        <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Navigator's Charts</Text>
+        <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 6 }}>Stats</Text>
         <Text style={{ fontSize: 13, color: colors.muted, fontFamily: font.body }}>
           Your leaders (rows) vs leaders you've faced (columns). Cell = your win rate in that matchup.
         </Text>

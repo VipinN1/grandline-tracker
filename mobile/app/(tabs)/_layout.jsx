@@ -1,8 +1,10 @@
-import { Tabs, Redirect } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs'
+import { Redirect } from 'expo-router'
 import { useSession } from '../../lib/auth'
-import { colors, font } from '../../theme'
+import { colors } from '../../theme'
 
+// Native UITabBar — renders as floating Liquid Glass on iOS 26+,
+// classic translucent tab bar on older iOS.
 export default function TabsLayout() {
   const { session, loading } = useSession()
 
@@ -10,54 +12,27 @@ export default function TabsLayout() {
   if (!session) return <Redirect href="/login" />
 
   return (
-    <Tabs
-      screenOptions={{
-        headerStyle: { backgroundColor: '#08101b' },
-        headerTitleStyle: { fontFamily: font.display, fontSize: 19, color: colors.parchment },
-        headerTintColor: colors.parchment,
-        headerShadowVisible: false,
-        tabBarStyle: { backgroundColor: '#08101b', borderTopColor: 'rgba(200,162,74,0.16)' },
-        tabBarActiveTintColor: colors.gold,
-        tabBarInactiveTintColor: colors.faint,
-        tabBarLabelStyle: { fontFamily: font.semi, fontSize: 10 },
-        sceneStyle: { backgroundColor: colors.abyss },
-      }}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: 'Stats',
-          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="log"
-        options={{
-          title: 'Log Result',
-          tabBarIcon: ({ color, size }) => <Ionicons name="add-circle-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="decklists"
-        options={{
-          title: 'Decklists',
-          tabBarIcon: ({ color, size }) => <Ionicons name="albums-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: 'More',
-          tabBarIcon: ({ color, size }) => <Ionicons name="menu-outline" color={color} size={size} />,
-        }}
-      />
-    </Tabs>
+    <NativeTabs tintColor={colors.gold} minimizeBehavior="onScrollDown">
+      <NativeTabs.Trigger name="dashboard">
+        <Icon sf="house.fill" />
+        <Label>Dashboard</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="stats">
+        <Icon sf="chart.bar.fill" />
+        <Label>Stats</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="log">
+        <Icon sf="plus.circle.fill" />
+        <Label>Log</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="decklists">
+        <Icon sf="rectangle.stack.fill" />
+        <Label>Decklists</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="more">
+        <Icon sf="ellipsis" />
+        <Label>More</Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   )
 }

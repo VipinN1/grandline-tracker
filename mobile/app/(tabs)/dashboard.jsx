@@ -2,23 +2,35 @@ import { useState, useEffect, useCallback } from 'react'
 import { View, Text, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
-import { colors, font, radius, card, eyebrow } from '../../theme'
+import { colors, font, radius, card, eyebrow, pageHeader } from '../../theme'
 
 const LEADER_COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
+const hasGlass = isLiquidGlassAvailable()
 
 function StatBox({ label, value, accent }) {
-  return (
-    <View style={{ ...card, flex: 1, padding: 14, alignItems: 'center' }}>
+  const inner = (
+    <>
       <Text style={{ fontFamily: font.mono, fontSize: 22, color: accent ?? colors.text }}>{value}</Text>
-      <Text style={{ fontSize: 10, fontFamily: font.semi, color: colors.faint, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 4 }}>{label}</Text>
-    </View>
+      <Text style={{ fontSize: 10, fontFamily: font.semi, color: hasGlass ? colors.muted : colors.faint, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 4 }}>{label}</Text>
+    </>
   )
+  if (hasGlass) {
+    return (
+      <GlassView glassEffectStyle="regular" style={{ flex: 1, padding: 14, alignItems: 'center', borderRadius: radius.lg, overflow: 'hidden' }}>
+        {inner}
+      </GlassView>
+    )
+  }
+  return <View style={{ ...card, flex: 1, padding: 14, alignItems: 'center' }}>{inner}</View>
 }
 
 export default function Dashboard() {
   const { session } = useSession()
+  const insets = useSafeAreaInsets()
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -63,11 +75,12 @@ export default function Dashboard() {
     <FlatList
       data={tournaments}
       keyExtractor={t => t.id}
-      contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 10 }}
+      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90, gap: 10 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
       ListHeaderComponent={
         <View style={{ marginBottom: 12 }}>
-          <Text style={{ ...eyebrow, marginBottom: 6 }}>⚓ Captain's Log</Text>
+          <Text style={{ ...eyebrow, marginBottom: 4 }}>⚓ Captain's Log</Text>
+          <Text style={{ ...pageHeader, marginBottom: 14 }}>Dashboard</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <StatBox label="Tournaments" value={tournaments.length} />
             <StatBox label="Record" value={`${totalWins}-${totalLosses}`} />
