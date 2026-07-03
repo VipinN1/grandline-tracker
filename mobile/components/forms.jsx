@@ -1,9 +1,11 @@
 // Shared form primitives for tournament logging — RN ports of the inline
 // components in src/pages/LogResult.jsx (web).
 import { useState, useRef } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, Pressable, Image, ScrollView, ActivityIndicator } from 'react-native'
+import { GlassView } from 'expo-glass-effect'
 import { getCardImageUrl, searchLeaders } from '../lib/optcgapi'
 import { colors, font, radius } from '../theme'
+import { hasGlass } from './glass'
 
 export const LEADER_COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
@@ -145,18 +147,35 @@ export function ToggleGroup({ label, value, onChange, options }) {
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {options.map(opt => {
           const active = value === opt.value
+          const toggle = () => onChange(active ? null : opt.value)
+          if (hasGlass) {
+            return (
+              // Key includes active so the tint remounts cleanly on toggle.
+              <GlassView
+                key={`${String(opt.value)}-${active}`}
+                isInteractive
+                glassEffectStyle="regular"
+                tintColor={active ? opt.color + '55' : undefined}
+                style={{ flex: 1, borderRadius: 999, overflow: 'hidden' }}
+              >
+                <Pressable onPress={toggle} style={{ paddingVertical: 13, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 14, fontFamily: font.semi, color: active ? colors.text : colors.muted }}>{opt.label}</Text>
+                </Pressable>
+              </GlassView>
+            )
+          }
           return (
             <TouchableOpacity
               key={String(opt.value)}
-              onPress={() => onChange(active ? null : opt.value)}
+              onPress={toggle}
               style={{
-                flex: 1, paddingVertical: 8, paddingHorizontal: 12, borderRadius: radius.sm,
+                flex: 1, paddingVertical: 13, paddingHorizontal: 12, borderRadius: 999,
                 borderWidth: 1, borderColor: active ? opt.color : 'rgba(140,176,208,0.07)',
                 backgroundColor: active ? opt.color + '22' : 'rgba(140,176,208,0.03)',
                 alignItems: 'center',
               }}
             >
-              <Text style={{ fontSize: 13, fontFamily: font.semi, color: active ? opt.color : colors.muted }}>{opt.label}</Text>
+              <Text style={{ fontSize: 14, fontFamily: font.semi, color: active ? opt.color : colors.muted }}>{opt.label}</Text>
             </TouchableOpacity>
           )
         })}

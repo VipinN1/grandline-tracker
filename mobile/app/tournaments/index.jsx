@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { colors, font, radius, card } from '../../theme'
 import { fieldInput, FieldLabel } from '../../components/forms'
+import { GlassButton } from '../../components/glass'
 
 function statusInfo(status, deadline) {
   if (status === 'completed') return { label: 'Completed', color: colors.muted }
@@ -62,12 +63,12 @@ function CreateTournamentModal({ session, onClose, onSuccess }) {
             </View>
             {error ? <Text style={{ fontSize: 12, color: colors.crimson, fontFamily: font.body }}>{error}</Text> : null}
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity onPress={onClose} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center' }}>
+              <GlassButton onPress={onClose} pad={{ paddingVertical: 11, paddingHorizontal: 16 }} style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.textSoft }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={create} disabled={creating} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.sm, backgroundColor: colors.gold, alignItems: 'center', opacity: creating ? 0.6 : 1 }}>
+              </GlassButton>
+              <GlassButton onPress={create} disabled={creating} tint={colors.gold} pad={{ paddingVertical: 11, paddingHorizontal: 16 }} style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.onAccent }}>{creating ? 'Creating...' : 'Create'}</Text>
-              </TouchableOpacity>
+              </GlassButton>
             </View>
           </ScrollView>
         </View>
@@ -118,9 +119,9 @@ export default function TournamentsPage() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <Text style={{ fontSize: 13, color: colors.muted, fontFamily: font.body }}>Online sim tournaments run on Discord</Text>
                 {isAdmin && (
-                  <TouchableOpacity onPress={() => setShowCreate(true)} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.gold }}>
+                  <GlassButton onPress={() => setShowCreate(true)} tint={colors.gold} pad={{ paddingVertical: 7, paddingHorizontal: 14 }}>
                     <Text style={{ fontSize: 12, fontFamily: font.bold, color: colors.onAccent }}>+ Create</Text>
-                  </TouchableOpacity>
+                  </GlassButton>
                 )}
               </View>
             }

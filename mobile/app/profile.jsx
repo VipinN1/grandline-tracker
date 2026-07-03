@@ -8,6 +8,7 @@ import { getCardImageUrl } from '../lib/optcgapi'
 import { pickAndUploadImage } from '../lib/upload'
 import { colors, font, radius, card } from '../theme'
 import { fieldInput, FieldLabel, LEADER_COLORS } from '../components/forms'
+import { GlassButton } from '../components/glass'
 
 function placementLabel(n) {
   if (n === 1) return '1st'
@@ -195,9 +196,9 @@ export default function Profile() {
                       </View>
                     ) : null}
                   </View>
-                  <TouchableOpacity onPress={() => setEditing(true)} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 6, backgroundColor: colors.ocean }}>
+                  <GlassButton onPress={() => setEditing(true)} tint={colors.ocean} pad={{ paddingVertical: 5, paddingHorizontal: 12 }} style={{ alignSelf: 'flex-start', marginTop: 10 }}>
                     <Text style={{ fontSize: 11, fontFamily: font.semi, color: '#fff' }}>Edit Profile</Text>
-                  </TouchableOpacity>
+                  </GlassButton>
                 </View>
               </View>
               <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(140,176,208,0.05)' }}>

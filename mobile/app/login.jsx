@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform
 import { router } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/auth'
-import { colors, font, radius, input, label, btnPrimary, btnPrimaryText } from '../theme'
+import { colors, font, radius, input, label, btnPrimaryText } from '../theme'
+import { GlassButton } from '../components/glass'
 
 export default function Login() {
   const { session } = useSession()
@@ -85,9 +86,9 @@ export default function Login() {
               </View>
             ) : null}
 
-            <TouchableOpacity onPress={handleLogin} disabled={loading} style={{ ...btnPrimary, marginTop: 4, opacity: loading ? 0.6 : 1 }}>
+            <GlassButton onPress={handleLogin} disabled={loading} tint={colors.gold} pad={{ paddingVertical: 12, paddingHorizontal: 18 }} style={{ marginTop: 4 }}>
               <Text style={btnPrimaryText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
-            </TouchableOpacity>
+            </GlassButton>
 
             {resetSent ? (
               <Text style={{ fontSize: 12, color: colors.oceanBright, textAlign: 'center', fontFamily: font.body }}>

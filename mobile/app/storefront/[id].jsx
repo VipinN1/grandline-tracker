@@ -8,6 +8,7 @@ import { useSession } from '../../lib/auth'
 import { colors, font, radius, card } from '../../theme'
 import { fieldInput } from '../../components/forms'
 import { ConditionBadge, ChatModal, cardArtUrl } from '../../components/market/shared'
+import { GlassButton } from '../../components/glass'
 
 export default function StorefrontPage() {
   const { id } = useLocalSearchParams()
@@ -94,9 +95,9 @@ export default function StorefrontPage() {
                 </View>
               </View>
               {!isOwner && session ? (
-                <TouchableOpacity onPress={() => setShowChat(true)} style={{ marginTop: 14, paddingVertical: 10, borderRadius: radius.sm, backgroundColor: colors.ocean, alignItems: 'center' }}>
+                <GlassButton onPress={() => setShowChat(true)} tint={colors.ocean} pad={{ paddingVertical: 10, paddingHorizontal: 16 }} style={{ marginTop: 14 }}>
                   <Text style={{ fontSize: 13, fontFamily: font.bold, color: '#fff' }}>Message Store</Text>
-                </TouchableOpacity>
+                </GlassButton>
               ) : null}
               {isOwner ? (
                 <Text style={{ marginTop: 12, fontSize: 11, color: colors.faint, fontFamily: font.body }}>

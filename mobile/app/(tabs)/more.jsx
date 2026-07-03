@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { colors, font, radius, card } from '../../theme'
+import { GlassButton } from '../../components/glass'
 
 const FEATURES = [
   { icon: 'person-circle-outline', label: 'Profile', href: '/profile' },
@@ -13,10 +14,7 @@ const FEATURES = [
   { icon: 'skull-outline', label: 'Bounty Board', href: '/bounty' },
   { icon: 'storefront-outline', label: 'Marketplace', href: '/marketplace' },
   { icon: 'construct-outline', label: 'Deck Builder', href: '/deck-builder' },
-]
-
-const UPCOMING = [
-  { icon: 'trophy-outline', label: 'Online Tournaments' },
+  { icon: 'trophy-outline', label: 'Online Tournaments', href: '/tournaments' },
 ]
 
 export default function More() {
@@ -55,30 +53,9 @@ export default function More() {
         ))}
       </View>
 
-      <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.faint, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>
-        Coming soon
-      </Text>
-      <View style={{ ...card, marginBottom: 16 }}>
-        {UPCOMING.map((item, i) => (
-          <View
-            key={item.label}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
-              borderBottomWidth: i < UPCOMING.length - 1 ? 1 : 0, borderBottomColor: colors.line, opacity: 0.55,
-            }}
-          >
-            <Ionicons name={item.icon} size={18} color={colors.muted} />
-            <Text style={{ fontSize: 14, color: colors.textSoft, fontFamily: font.body }}>{item.label}</Text>
-          </View>
-        ))}
-      </View>
-
-      <TouchableOpacity
-        onPress={handleSignOut}
-        style={{ borderWidth: 1, borderColor: 'rgba(210,74,58,0.34)', borderRadius: radius.sm, padding: 13, alignItems: 'center' }}
-      >
+      <GlassButton onPress={handleSignOut} pad={{ paddingVertical: 13, paddingHorizontal: 16 }}>
         <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.crimson }}>Sign Out</Text>
-      </TouchableOpacity>
+      </GlassButton>
     </ScrollView>
   )
 }

@@ -10,6 +10,7 @@ import { getCardImageUrl } from '../lib/optcgapi'
 import { pickAndUploadImage } from '../lib/upload'
 import { colors, font, radius } from '../theme'
 import { fieldInput, FieldLabel, LEADER_COLORS } from '../components/forms'
+import { GlassButton } from '../components/glass'
 import { CONDITIONS, ConditionBadge, ItemImage, ChatModal, CardPicker, cardArtUrl } from '../components/market/shared'
 import ProfileCard, { Avatar } from '../components/ProfileCard'
 
@@ -79,15 +80,15 @@ function ListingDetailModal({ listing, session, onClose, onMarkSold, onMessage }
             </TouchableOpacity>
 
             {isOwner ? (
-              <TouchableOpacity onPress={handleMarkSold} disabled={listing.status === 'sold'} style={{ paddingVertical: 11, borderRadius: radius.sm, backgroundColor: listing.status === 'sold' ? 'rgba(140,176,208,0.05)' : colors.emerald, alignItems: 'center' }}>
+              <GlassButton onPress={handleMarkSold} disabled={listing.status === 'sold'} tint={listing.status === 'sold' ? undefined : colors.emerald} pad={{ paddingVertical: 11, paddingHorizontal: 16 }}>
                 <Text style={{ fontSize: 13, fontFamily: font.bold, color: listing.status === 'sold' ? colors.muted : '#0f1117' }}>
                   {listing.status === 'sold' ? 'Sold ✓' : 'Mark as Sold'}
                 </Text>
-              </TouchableOpacity>
+              </GlassButton>
             ) : (
-              <TouchableOpacity onPress={() => { onClose(); onMessage(listing) }} style={{ paddingVertical: 11, borderRadius: radius.sm, backgroundColor: colors.ocean, alignItems: 'center' }}>
+              <GlassButton onPress={() => { onClose(); onMessage(listing) }} tint={colors.ocean} pad={{ paddingVertical: 11, paddingHorizontal: 16 }}>
                 <Text style={{ fontSize: 13, fontFamily: font.bold, color: '#fff' }}>Message Seller</Text>
-              </TouchableOpacity>
+              </GlassButton>
             )}
           </ScrollView>
         </View>
@@ -682,9 +683,9 @@ export default function Marketplace() {
               <View style={{ paddingHorizontal: 16, gap: 8, marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <TextInput placeholder="Search wanted cards..." placeholderTextColor={colors.faint} value={wantSearch} onChangeText={setWantSearch} style={{ ...fieldInput, flex: 1, width: undefined }} />
-                  <TouchableOpacity onPress={() => setShowCreateWant(true)} style={{ paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.gold, justifyContent: 'center' }}>
+                  <GlassButton onPress={() => setShowCreateWant(true)} tint={colors.gold} pad={{ paddingVertical: 10, paddingHorizontal: 14 }}>
                     <Text style={{ fontSize: 12, fontFamily: font.bold, color: '#0f1117' }}>+ Want</Text>
-                  </TouchableOpacity>
+                  </GlassButton>
                 </View>
                 <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body }}>
                   {wantsLoading ? 'Loading...' : `${filteredWants.length} want${filteredWants.length !== 1 ? 's' : ''} posted`}
@@ -723,9 +724,9 @@ export default function Marketplace() {
                         <Text style={{ fontSize: 10, fontFamily: font.bold, color: colors.gold }}>YOUR WANT</Text>
                       </View>
                     ) : (
-                      <TouchableOpacity onPress={() => setContactWant(want)} style={{ marginTop: 4, paddingVertical: 6, borderRadius: 7, backgroundColor: colors.gold, alignItems: 'center' }}>
+                      <GlassButton onPress={() => setContactWant(want)} tint={colors.gold} pad={{ paddingVertical: 6, paddingHorizontal: 10 }} style={{ marginTop: 4 }}>
                         <Text style={{ fontSize: 11, fontFamily: font.bold, color: '#0f1117' }}>I Have This!</Text>
-                      </TouchableOpacity>
+                      </GlassButton>
                     )}
                   </View>
                 </View>
@@ -772,9 +773,9 @@ export default function Marketplace() {
                         </Text>
                       </View>
                       {myStorefront.status === 'approved' && (
-                        <TouchableOpacity onPress={() => router.push(`/storefront/${myStorefront.id}`)} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: radius.sm, backgroundColor: colors.ocean }}>
+                        <GlassButton onPress={() => router.push(`/storefront/${myStorefront.id}`)} tint={colors.ocean} pad={{ paddingVertical: 7, paddingHorizontal: 12 }}>
                           <Text style={{ fontSize: 12, fontFamily: font.semi, color: '#fff' }}>View</Text>
-                        </TouchableOpacity>
+                        </GlassButton>
                       )}
                     </View>
                   ) : (
@@ -783,9 +784,9 @@ export default function Marketplace() {
                         <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>Become a Storefront</Text>
                         <Text style={{ fontSize: 12, color: colors.muted, marginTop: 3, fontFamily: font.body }}>List your store's inventory and reach buyers</Text>
                       </View>
-                      <TouchableOpacity onPress={() => setShowApply(true)} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.ocean }}>
+                      <GlassButton onPress={() => setShowApply(true)} tint={colors.ocean} pad={{ paddingVertical: 8, paddingHorizontal: 14 }}>
                         <Text style={{ fontSize: 12, fontFamily: font.bold, color: '#fff' }}>Apply</Text>
-                      </TouchableOpacity>
+                      </GlassButton>
                     </View>
                   )}
                 </View>
@@ -801,9 +802,9 @@ export default function Marketplace() {
               <>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <Text style={{ fontSize: 14, fontFamily: font.bold, color: colors.text }}>My Listings ({myListings.length})</Text>
-                  <TouchableOpacity onPress={() => setShowCreateListing(true)} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.ocean }}>
+                  <GlassButton onPress={() => setShowCreateListing(true)} tint={colors.ocean} pad={{ paddingVertical: 7, paddingHorizontal: 14 }}>
                     <Text style={{ fontSize: 12, fontFamily: font.bold, color: '#fff' }}>+ New Listing</Text>
-                  </TouchableOpacity>
+                  </GlassButton>
                 </View>
 
                 {myListings.length === 0 ? (

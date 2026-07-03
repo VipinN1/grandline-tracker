@@ -9,6 +9,7 @@ import { useSession } from '../../lib/auth'
 import { colors, font, radius, card } from '../../theme'
 import { LEADER_COLORS } from '../../components/forms'
 import DeckModal from '../../components/DeckModal'
+import { GlassButton } from '../../components/glass'
 
 export default function Decklists() {
   const { session } = useSession()
@@ -76,12 +77,9 @@ export default function Decklists() {
                 onChangeText={setSearch}
                 style={{ flex: 1, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: 'rgba(140,176,208,0.07)', borderRadius: radius.sm, paddingVertical: 8, paddingHorizontal: 12, color: colors.text, fontSize: 13, fontFamily: font.body }}
               />
-              <TouchableOpacity
-                onPress={() => router.push('/deck-builder')}
-                style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.sm, backgroundColor: colors.ocean, justifyContent: 'center' }}
-              >
+              <GlassButton onPress={() => router.push('/deck-builder')} tint={colors.ocean} pad={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                 <Text style={{ fontSize: 12, fontFamily: font.semi, color: '#fff' }}>+ New</Text>
-              </TouchableOpacity>
+              </GlassButton>
             </View>
           </View>
         }

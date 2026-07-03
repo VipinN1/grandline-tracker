@@ -5,6 +5,7 @@ import { Modal, View, Text, TouchableOpacity, Image } from 'react-native'
 import { router } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { colors, font, radius } from '../theme'
+import { GlassButton } from './glass'
 
 export function Avatar({ profile, size = 44, rounded = false }) {
   const initials = profile?.username?.slice(0, 2).toUpperCase() ?? '??'
@@ -88,14 +89,14 @@ export default function ProfileCard({ profile, session, onClose, onFriendAction 
       </View>
     )
     if (friendStatus === 'pending_received') return (
-      <TouchableOpacity onPress={acceptRequest} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.emerald }}>
+      <GlassButton onPress={acceptRequest} tint={colors.emerald} pad={{ paddingVertical: 9, paddingHorizontal: 14 }}>
         <Text style={{ fontSize: 12, fontFamily: font.bold, color: '#0f1117' }}>Accept</Text>
-      </TouchableOpacity>
+      </GlassButton>
     )
     return (
-      <TouchableOpacity onPress={sendFriendRequest} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.ocean }}>
+      <GlassButton onPress={sendFriendRequest} tint={colors.ocean} pad={{ paddingVertical: 9, paddingHorizontal: 14 }}>
         <Text style={{ fontSize: 12, fontFamily: font.semi, color: '#fff' }}>+ Add Friend</Text>
-      </TouchableOpacity>
+      </GlassButton>
     )
   }
 

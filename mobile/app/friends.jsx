@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/auth'
 import { colors, font, radius, card } from '../theme'
 import ProfileCard, { Avatar } from '../components/ProfileCard'
+import { GlassButton } from '../components/glass'
 
 export default function Friends() {
   const { session } = useSession()
@@ -91,9 +92,9 @@ export default function Friends() {
                     onSubmitEditing={handleAddFriend}
                     style={{ flex: 1, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: 'rgba(140,176,208,0.07)', borderRadius: radius.sm, paddingVertical: 8, paddingHorizontal: 12, color: colors.text, fontSize: 13, fontFamily: font.body }}
                   />
-                  <TouchableOpacity onPress={handleAddFriend} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.sm, backgroundColor: colors.ocean, justifyContent: 'center' }}>
+                  <GlassButton onPress={handleAddFriend} tint={colors.ocean} pad={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                     <Text style={{ fontSize: 12, fontFamily: font.semi, color: '#fff' }}>Send</Text>
-                  </TouchableOpacity>
+                  </GlassButton>
                 </View>
                 {addError ? <Text style={{ fontSize: 12, color: colors.crimson, fontFamily: font.body }}>{addError}</Text> : null}
                 {addSuccess ? <Text style={{ fontSize: 12, color: colors.emerald, fontFamily: font.body }}>{addSuccess}</Text> : null}

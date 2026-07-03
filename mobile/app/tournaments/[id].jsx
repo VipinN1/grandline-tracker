@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { getCardImageUrl } from '../../lib/optcgapi'
 import { colors, font, radius } from '../../theme'
 import { fieldInput, FieldLabel, LeaderSearchInput, LEADER_COLORS } from '../../components/forms'
+import { GlassButton, GlassPills } from '../../components/glass'
 import MatchChat from '../../components/MatchChat'
 import ProfileCard, { Avatar } from '../../components/ProfileCard'
 import { useSession } from '../../lib/auth'
@@ -462,19 +463,19 @@ export default function SimTournamentDetail() {
 
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             {isParticipant && tournament.status !== 'completed' && (
-              <TouchableOpacity
+              <GlassButton
                 onPress={() => { setDecklistModal(true); if (myEntry?.decklist?.raw) setDecklistText(myEntry.decklist.raw) }}
-                style={{ ...ghostBtn, borderColor: colors.goldLine, backgroundColor: myEntry?.decklist_submitted ? 'rgba(59,178,126,0.08)' : 'rgba(140,176,208,0.07)' }}
+                pad={{ paddingVertical: 7, paddingHorizontal: 14 }}
               >
                 <Text style={{ fontSize: 12, fontFamily: font.semi, color: myEntry?.decklist_submitted ? colors.emerald : colors.oceanBright }}>
                   {myEntry?.decklist_submitted ? 'Decklist ✓' : 'Submit Decklist'}
                 </Text>
-              </TouchableOpacity>
+              </GlassButton>
             )}
             {session && regOpen && !isParticipant && (
-              <TouchableOpacity onPress={join} disabled={joining} style={{ paddingVertical: 7, paddingHorizontal: 18, borderRadius: radius.sm, backgroundColor: colors.ocean }}>
+              <GlassButton onPress={join} disabled={joining} tint={colors.ocean} pad={{ paddingVertical: 7, paddingHorizontal: 18 }}>
                 <Text style={{ fontSize: 12, fontFamily: font.bold, color: '#fff' }}>{joining ? 'Joining...' : 'Join Tournament'}</Text>
-              </TouchableOpacity>
+              </GlassButton>
             )}
             {session && isParticipant && !hasDropped && tournament.status !== 'completed' && (
               <View style={{ ...ghostBtn, borderColor: 'rgba(59,178,126,0.25)', backgroundColor: 'rgba(59,178,126,0.08)' }}>
@@ -482,9 +483,9 @@ export default function SimTournamentDetail() {
               </View>
             )}
             {session && isParticipant && !hasDropped && tournament.status === 'active' && (
-              <TouchableOpacity onPress={() => confirmDrop(session.user.id)} style={{ ...ghostBtn, borderColor: 'rgba(210,74,58,0.3)', backgroundColor: 'rgba(210,74,58,0.08)' }}>
+              <GlassButton onPress={() => confirmDrop(session.user.id)} pad={{ paddingVertical: 7, paddingHorizontal: 14 }}>
                 <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.crimson }}>Drop</Text>
-              </TouchableOpacity>
+              </GlassButton>
             )}
             {session && isParticipant && hasDropped && (
               <View style={{ ...ghostBtn, borderColor: 'rgba(148,163,184,0.2)' }}>
@@ -503,31 +504,31 @@ export default function SimTournamentDetail() {
                 const activePlayers = players.filter(p => !p.dropped)
                 const notEnough = activePlayers.length < 2
                 return (
-                  <TouchableOpacity onPress={startRound} disabled={startingRound || notEnough} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.sm, backgroundColor: notEnough ? 'rgba(140,176,208,0.06)' : colors.ocean }}>
+                  <GlassButton onPress={startRound} disabled={startingRound || notEnough} tint={notEnough ? undefined : colors.ocean} pad={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                     <Text style={{ fontSize: 12, fontFamily: font.semi, color: notEnough ? colors.faint : '#fff' }}>
                       {startingRound ? 'Starting...' : tournament.status === 'registration' ? `Start Round 1 (${activePlayers.length} players)` : `Start Round ${(currentRound?.round_number ?? 0) + 1}`}
                     </Text>
-                  </TouchableOpacity>
+                  </GlassButton>
                 )
               })()}
               {tournament.status === 'active' && allMatchesDone && undefeated.length === 1 && (
-                <TouchableOpacity onPress={() => declareWinner(undefeated[0].user_id)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.sm, backgroundColor: colors.gold }}>
+                <GlassButton onPress={() => declareWinner(undefeated[0].user_id)} tint={colors.gold} pad={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                   <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.onAccent }}>🏆 Declare Winner: {undefeated[0].profiles?.username}</Text>
-                </TouchableOpacity>
+                </GlassButton>
               )}
               {tournament.status === 'active' && allMatchesDone && undefeated.length !== 1 && (
-                <TouchableOpacity onPress={() => setShowForceEndModal(true)} style={{ ...ghostBtn, borderColor: colors.goldLine, backgroundColor: 'rgba(200,162,74,0.08)' }}>
+                <GlassButton onPress={() => setShowForceEndModal(true)} pad={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                   <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.gold }}>🏆 End Tournament</Text>
-                </TouchableOpacity>
+                </GlassButton>
               )}
               {tournament.status === 'active' && !allMatchesDone && (
                 <Text style={{ fontSize: 12, color: colors.muted, fontFamily: font.body }}>
                   {pendingCount} match{pendingCount !== 1 ? 'es' : ''} pending{disputedMatches.length > 0 ? ` · ${disputedMatches.length} disputed` : ''}
                 </Text>
               )}
-              <TouchableOpacity onPress={confirmDelete} style={{ ...ghostBtn, borderColor: 'rgba(210,74,58,0.3)', backgroundColor: 'rgba(210,74,58,0.08)', marginLeft: 'auto' }}>
+              <GlassButton onPress={confirmDelete} pad={{ paddingVertical: 7, paddingHorizontal: 14 }} style={{ marginLeft: 'auto' }}>
                 <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.crimson }}>Delete</Text>
-              </TouchableOpacity>
+              </GlassButton>
             </View>
             {roundError ? <Text style={{ fontSize: 12, color: colors.crimson, marginTop: 8, fontFamily: font.body }}>{roundError}</Text> : null}
             {disputedMatches.length > 0 && (
@@ -543,12 +544,12 @@ export default function SimTournamentDetail() {
                         {p1?.username}: {m.player1_reported ?? '—'} · {p2?.username}: {m.player2_reported ?? '—'}
                       </Text>
                       <View style={{ flexDirection: 'row', gap: 6 }}>
-                        <TouchableOpacity onPress={() => resolveDispute(m.id, 'player1_win')} style={{ flex: 1, paddingVertical: 6, borderRadius: 6, backgroundColor: 'rgba(59,178,126,0.15)', alignItems: 'center' }}>
+                        <GlassButton onPress={() => resolveDispute(m.id, 'player1_win')} pad={{ paddingVertical: 6, paddingHorizontal: 10 }} style={{ flex: 1 }}>
                           <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.emerald }}>{p1?.username} wins</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => resolveDispute(m.id, 'player2_win')} style={{ flex: 1, paddingVertical: 6, borderRadius: 6, backgroundColor: 'rgba(59,178,126,0.15)', alignItems: 'center' }}>
+                        </GlassButton>
+                        <GlassButton onPress={() => resolveDispute(m.id, 'player2_win')} pad={{ paddingVertical: 6, paddingHorizontal: 10 }} style={{ flex: 1 }}>
                           <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.emerald }}>{p2?.username} wins</Text>
-                        </TouchableOpacity>
+                        </GlassButton>
                       </View>
                     </View>
                   )
@@ -559,18 +560,17 @@ export default function SimTournamentDetail() {
         )}
 
         {/* Tabs */}
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 16 }}>
-          {tabs.map(t => {
-            const active = activeTab === t
-            return (
-              <TouchableOpacity key={t} onPress={() => setActiveTab(t)} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: radius.sm, borderWidth: 1, borderColor: active ? colors.goldLine : colors.lineStrong, backgroundColor: active ? colors.goldSoft : 'transparent' }}>
-                <Text style={{ fontSize: 12, fontFamily: font.semi, color: active ? colors.gold : colors.muted, textTransform: 'capitalize' }}>
-                  {t === 'pairings' ? `Round ${currentRound?.round_number ?? tournament.current_round ?? '—'}` : t}
-                </Text>
-              </TouchableOpacity>
-            )
-          })}
-        </View>
+        <GlassPills
+          style={{ marginBottom: 16 }}
+          items={tabs.map(tb => ({
+            key: tb,
+            label: tb === 'pairings'
+              ? `Round ${currentRound?.round_number ?? tournament.current_round ?? '—'}`
+              : tb.charAt(0).toUpperCase() + tb.slice(1),
+          }))}
+          activeKey={activeTab}
+          onSelect={setActiveTab}
+        />
 
         {/* ── Pairings ── */}
         {activeTab === 'pairings' && (
@@ -649,12 +649,12 @@ export default function SimTournamentDetail() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                       {inMatch && m.status === 'pending' && !myReport && (
                         <>
-                          <TouchableOpacity onPress={() => submitResult(m, 'win')} disabled={submittingMatches.has(m.id)} style={{ flex: 1, paddingVertical: 8, borderRadius: radius.sm, backgroundColor: colors.emerald, alignItems: 'center', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>
+                          <GlassButton onPress={() => submitResult(m, 'win')} disabled={submittingMatches.has(m.id)} tint={colors.emerald} pad={{ paddingVertical: 8, paddingHorizontal: 12 }} style={{ flex: 1 }}>
                             <Text style={{ fontSize: 12, fontFamily: font.bold, color: '#0f1117' }}>I Won</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity onPress={() => submitResult(m, 'loss')} disabled={submittingMatches.has(m.id)} style={{ flex: 1, paddingVertical: 8, borderRadius: radius.sm, borderWidth: 1, borderColor: 'rgba(210,74,58,0.3)', backgroundColor: 'rgba(210,74,58,0.08)', alignItems: 'center', opacity: submittingMatches.has(m.id) ? 0.5 : 1 }}>
+                          </GlassButton>
+                          <GlassButton onPress={() => submitResult(m, 'loss')} disabled={submittingMatches.has(m.id)} pad={{ paddingVertical: 8, paddingHorizontal: 12 }} style={{ flex: 1 }}>
                             <Text style={{ fontSize: 12, fontFamily: font.bold, color: colors.crimson }}>I Lost</Text>
-                          </TouchableOpacity>
+                          </GlassButton>
                         </>
                       )}
                       {inMatch && m.status === 'pending' && myReport ? (
@@ -668,12 +668,12 @@ export default function SimTournamentDetail() {
                       ) : null}
                       {isAdmin && m.status !== 'completed' && m.result !== 'bye' && (
                         <View style={{ flexDirection: 'row', gap: 5, marginLeft: 'auto' }}>
-                          <TouchableOpacity onPress={() => resolveDispute(m.id, 'player1_win')} style={{ paddingVertical: 4, paddingHorizontal: 9, borderRadius: 6, backgroundColor: 'rgba(47,125,163,0.18)' }}>
+                          <GlassButton onPress={() => resolveDispute(m.id, 'player1_win')} pad={{ paddingVertical: 4, paddingHorizontal: 9 }}>
                             <Text style={{ fontSize: 11, fontFamily: font.bold, color: colors.oceanBright }}>▲ {p1?.username ?? 'P1'}</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity onPress={() => resolveDispute(m.id, 'player2_win')} style={{ paddingVertical: 4, paddingHorizontal: 9, borderRadius: 6, backgroundColor: 'rgba(47,125,163,0.18)' }}>
+                          </GlassButton>
+                          <GlassButton onPress={() => resolveDispute(m.id, 'player2_win')} pad={{ paddingVertical: 4, paddingHorizontal: 9 }}>
                             <Text style={{ fontSize: 11, fontFamily: font.bold, color: colors.oceanBright }}>▲ {p2?.username ?? 'P2'}</Text>
-                          </TouchableOpacity>
+                          </GlassButton>
                         </View>
                       )}
                     </View>
@@ -827,9 +827,9 @@ export default function SimTournamentDetail() {
             <Text style={{ fontSize: 24, fontFamily: font.bold, color: colors.gold }}>{winnerEntry?.profiles?.username ?? 'Champion'}</Text>
             {winnerEntry?.profiles?.location ? <Text style={{ fontSize: 13, color: colors.muted, fontFamily: font.body }}>{winnerEntry.profiles.location}</Text> : null}
           </View>
-          <TouchableOpacity onPress={() => { setShowWinner(false); setActiveTab('standings') }} style={{ paddingVertical: 10, paddingHorizontal: 28, borderRadius: 10, borderWidth: 1, borderColor: colors.goldLine, backgroundColor: 'rgba(200,162,74,0.1)' }}>
+          <GlassButton onPress={() => { setShowWinner(false); setActiveTab('standings') }} pad={{ paddingVertical: 10, paddingHorizontal: 28 }}>
             <Text style={{ color: colors.gold, fontSize: 13, fontFamily: font.semi }}>View Standings</Text>
-          </TouchableOpacity>
+          </GlassButton>
         </View>
       </Modal>
 
@@ -852,9 +852,9 @@ export default function SimTournamentDetail() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <TouchableOpacity onPress={() => setShowForceEndModal(false)} style={{ marginTop: 12, paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center' }}>
+            <GlassButton onPress={() => setShowForceEndModal(false)} pad={{ paddingVertical: 10, paddingHorizontal: 16 }} style={{ marginTop: 12 }}>
               <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.muted }}>Cancel</Text>
-            </TouchableOpacity>
+            </GlassButton>
           </View>
         </View>
       </Modal>
@@ -881,12 +881,12 @@ export default function SimTournamentDetail() {
                 />
               </View>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <TouchableOpacity onPress={() => setDecklistModal(false)} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center' }}>
+                <GlassButton onPress={() => setDecklistModal(false)} pad={{ paddingVertical: 11, paddingHorizontal: 16 }} style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.muted }}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={saveDecklist} disabled={savingDecklist || !decklistLeader} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.sm, backgroundColor: colors.ocean, alignItems: 'center', opacity: savingDecklist || !decklistLeader ? 0.5 : 1 }}>
+                </GlassButton>
+                <GlassButton onPress={saveDecklist} disabled={savingDecklist || !decklistLeader} tint={colors.ocean} pad={{ paddingVertical: 11, paddingHorizontal: 16 }} style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontFamily: font.bold, color: '#fff' }}>{savingDecklist ? 'Saving...' : 'Submit Decklist'}</Text>
-                </TouchableOpacity>
+                </GlassButton>
               </View>
             </ScrollView>
           </View>

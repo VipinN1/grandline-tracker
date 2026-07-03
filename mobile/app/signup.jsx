@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { supabase } from '../lib/supabase'
-import { colors, font, radius, input, label, btnPrimary, btnPrimaryText } from '../theme'
+import { colors, font, radius, input, label, btnPrimaryText } from '../theme'
+import { GlassButton } from '../components/glass'
 
 export default function Signup() {
   const [email, setEmail] = useState('')
@@ -123,9 +124,9 @@ export default function Signup() {
               </View>
             ) : null}
 
-            <TouchableOpacity onPress={handleSignup} disabled={loading} style={{ ...btnPrimary, marginTop: 4, opacity: loading ? 0.6 : 1 }}>
+            <GlassButton onPress={handleSignup} disabled={loading} tint={colors.gold} pad={{ paddingVertical: 12, paddingHorizontal: 18 }} style={{ marginTop: 4 }}>
               <Text style={btnPrimaryText}>{loading ? 'Creating account...' : 'Create Account'}</Text>
-            </TouchableOpacity>
+            </GlassButton>
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, gap: 5 }}>

@@ -11,6 +11,7 @@ import { fieldInput, FieldLabel, LEADER_COLORS } from '../components/forms'
 import SelectDecklistModal from '../components/SelectDecklistModal'
 import ProfileCard, { Avatar } from '../components/ProfileCard'
 import DirectMessages from '../components/DirectMessages'
+import { GlassButton } from '../components/glass'
 
 function CardLightbox({ url, onClose }) {
   return (
@@ -136,9 +137,9 @@ function CommentBox({ comment, session, depth = 0, onProfileClick }) {
                 autoFocus
                 style={{ flex: 1, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.line, borderRadius: 7, paddingVertical: 6, paddingHorizontal: 10, color: colors.text, fontSize: 12, fontFamily: font.body }}
               />
-              <TouchableOpacity onPress={submitReply} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 7, backgroundColor: colors.ocean, justifyContent: 'center' }}>
+              <GlassButton onPress={submitReply} tint={colors.ocean} pad={{ paddingVertical: 6, paddingHorizontal: 12 }}>
                 <Text style={{ color: '#fff', fontSize: 12, fontFamily: font.semi }}>Post</Text>
-              </TouchableOpacity>
+              </GlassButton>
             </View>
           )}
           {replies.length > 0 && (
@@ -261,9 +262,9 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
             onSubmitEditing={submitComment}
             style={{ flex: 1, backgroundColor: 'rgba(26,50,81,0.92)', borderWidth: 1, borderColor: 'rgba(200,162,74,0.35)', borderRadius: radius.sm, paddingVertical: 7, paddingHorizontal: 12, color: colors.text, fontSize: 13, fontFamily: font.body }}
           />
-          <TouchableOpacity onPress={submitComment} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.ocean, justifyContent: 'center' }}>
+          <GlassButton onPress={submitComment} tint={colors.ocean} pad={{ paddingVertical: 7, paddingHorizontal: 14 }}>
             <Text style={{ color: '#fff', fontSize: 12, fontFamily: font.semi }}>Post</Text>
-          </TouchableOpacity>
+          </GlassButton>
         </View>
       ) : null}
 
@@ -413,9 +414,9 @@ export default function Community() {
                     </TouchableOpacity>
                   ))}
                 </View>
-                <TouchableOpacity onPress={() => setShowCreate(true)} style={{ marginLeft: 'auto', paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.sm, backgroundColor: colors.ocean }}>
+                <GlassButton onPress={() => setShowCreate(true)} tint={colors.ocean} pad={{ paddingVertical: 8, paddingHorizontal: 16 }} style={{ marginLeft: 'auto' }}>
                   <Text style={{ fontSize: 12, fontFamily: font.semi, color: '#fff' }}>+ Create Post</Text>
-                </TouchableOpacity>
+                </GlassButton>
               </View>
             }
             ListEmptyComponent={

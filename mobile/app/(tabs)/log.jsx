@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Switch, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, Pressable, ScrollView, Image, Switch, KeyboardAvoidingView, Platform } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { GlassView, GlassContainer } from 'expo-glass-effect'
+import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { getCardImageUrl, enrichCards } from '../../lib/optcgapi'
@@ -12,6 +14,7 @@ import {
 } from '../../components/forms'
 import SelectDecklistModal from '../../components/SelectDecklistModal'
 import LiveTournament from '../../components/LiveTournament'
+import { Glass, GlassButton, GlassPills, GlassInput, hasGlass } from '../../components/glass'
 
 function todayStr() {
   const d = new Date()
@@ -28,22 +31,47 @@ function parseDecklistText(raw) {
   return cards
 }
 
-const panel = {
-  backgroundColor: 'rgba(140,176,208,0.05)',
-  borderWidth: 1,
-  borderColor: 'rgba(140,176,208,0.07)',
-  borderRadius: 14,
-  padding: 16,
+// Selected leader rendered as a hero strip — art cropped toward the head,
+// with a clear-glass Change chip refracting the art beneath it.
+function LeaderBanner({ leader, onChange }) {
+  const [width, setWidth] = useState(0)
+  const imgH = width * 1.4
+  const color = LEADER_COLORS[leader.card_color] ?? colors.lineStrong
+  return (
+    <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 140, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: color + '66', backgroundColor: colors.surface }}>
+      {width > 0 && (
+        <Image
+          source={{ uri: leader.card_image ?? getCardImageUrl(leader.card_set_id) }}
+          style={{ position: 'absolute', top: -imgH * 0.14, width, height: imgH }}
+          resizeMode="cover"
+        />
+      )}
+      <LinearGradient
+        colors={['rgba(6,16,27,0)', 'rgba(6,16,27,0.5)', 'rgba(6,16,27,0.9)']}
+        locations={[0, 0.55, 1]}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+      />
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', padding: 14 }}>
+        <View style={{ flex: 1, marginRight: 10 }}>
+          <Text numberOfLines={1} style={{ fontSize: 16, fontFamily: font.bold, color: colors.text }}>{leader.card_name}</Text>
+          <Text style={{ fontSize: 11, color, marginTop: 2, fontFamily: font.semi }}>{leader.card_color} · {baseCardId(leader.card_set_id)}</Text>
+        </View>
+        <GlassButton onPress={onChange} effect="clear" pad={{ paddingVertical: 9, paddingHorizontal: 18 }}>
+          <Text style={{ fontSize: 13, color: colors.text, fontFamily: font.semi }}>Change</Text>
+        </GlassButton>
+      </View>
+    </View>
+  )
 }
 
 function RoundRow({ round, index, onChange, onRemove }) {
   return (
-    <View style={{ backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: colors.line }}>
+    <View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.oceanBright }}>Round {index + 1}</Text>
-        <TouchableOpacity onPress={() => onRemove(index)} hitSlop={8}>
-          <Text style={{ color: colors.faint, fontSize: 16 }}>✕</Text>
-        </TouchableOpacity>
+        <GlassButton onPress={() => onRemove(index)} pad={{ paddingVertical: 5, paddingHorizontal: 12 }}>
+          <Text style={{ color: colors.textSoft, fontSize: 14 }}>✕</Text>
+        </GlassButton>
       </View>
 
       <View style={{ gap: 12 }}>
@@ -87,13 +115,12 @@ function RoundRow({ round, index, onChange, onRemove }) {
 
         <View>
           <FieldLabel>Notes (optional)</FieldLabel>
-          <TextInput
+          <GlassInput
             placeholder="Round notes..."
-            placeholderTextColor={colors.faint}
             value={round.notes ?? ''}
             onChangeText={val => onChange(index, 'notes', val)}
             multiline
-            style={{ ...fieldInput, minHeight: 56, textAlignVertical: 'top' }}
+            inputStyle={{ minHeight: 56, textAlignVertical: 'top' }}
           />
         </View>
       </View>
@@ -263,73 +290,52 @@ function PastTournamentForm() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90, gap: 12 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 160, gap: 12 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
 
         {/* Your Leader */}
-        <View style={{ ...panel, backgroundColor: 'rgba(140,176,208,0.07)', borderColor: colors.lineStrong }}>
-          <SectionTitle>Your Leader Card</SectionTitle>
-          {leaderResult ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Image
-                source={{ uri: leaderResult.card_image ?? getCardImageUrl(leaderResult.card_set_id) }}
-                style={{ width: 52, height: 72, borderRadius: 6, borderWidth: 1, borderColor: LEADER_COLORS[leaderResult.card_color] ?? colors.line }}
-                resizeMode="cover"
-              />
-              <View style={{ flex: 1 }}>
-                <Text numberOfLines={1} style={{ fontSize: 14, fontFamily: font.bold, color: colors.text }}>{leaderResult.card_name}</Text>
-                <Text style={{ fontSize: 11, color: LEADER_COLORS[leaderResult.card_color] ?? colors.muted, marginTop: 2, fontFamily: font.body }}>
-                  {leaderResult.card_color} · {baseCardId(leaderResult.card_set_id)}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setLeaderResult(null)}
-                style={{ borderWidth: 1, borderColor: colors.line, borderRadius: 6, paddingVertical: 4, paddingHorizontal: 10 }}
-              >
-                <Text style={{ fontSize: 11, color: colors.muted, fontFamily: font.body }}>Change</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+        {leaderResult ? (
+          <LeaderBanner leader={leaderResult} onChange={() => setLeaderResult(null)} />
+        ) : (
+          <Glass style={{ padding: 16 }}>
+            <SectionTitle>Your Leader Card</SectionTitle>
             <LeaderSearchInput placeholder="Search your leader..." onSelect={setLeaderResult} selected={null} onClear={() => setLeaderResult(null)} />
-          )}
-        </View>
+          </Glass>
+        )}
 
         {/* Tournament Info */}
-        <View style={panel}>
+        <Glass style={{ padding: 16 }}>
           <SectionTitle>Tournament Info</SectionTitle>
           <View style={{ gap: 12 }}>
             <SearchableSelect label="Store / Venue" placeholder="Search or create a store..." items={storesForDisplay} selected={selectedStore} onSelect={setSelectedStore} onCreateNew={createStore} createLabel="Create store" sublabel="sublabel" />
             <SearchableSelect label="Tournament Series" placeholder="Search or create a series..." items={series} selected={selectedSeries} onSelect={setSelectedSeries} onCreateNew={createSeries} createLabel="Create series" />
             <View>
               <FieldLabel>Tournament Name (if no series)</FieldLabel>
-              <TextInput
+              <GlassInput
                 placeholder="e.g. One-off event"
-                placeholderTextColor={colors.faint}
                 value={selectedSeries ? selectedSeries.name : tournamentName}
                 onChangeText={setTournamentName}
                 editable={!selectedSeries}
-                style={{ ...fieldInput, opacity: selectedSeries ? 0.5 : 1 }}
+                style={{ opacity: selectedSeries ? 0.5 : 1 }}
               />
             </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <FieldLabel>Date</FieldLabel>
-                <TextInput
+                <GlassInput
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.faint}
                   value={date}
                   onChangeText={setDate}
                   keyboardType="numbers-and-punctuation"
-                  style={fieldInput}
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <FieldLabel>Players</FieldLabel>
-                <TextInput placeholder="e.g. 32" placeholderTextColor={colors.faint} value={playerCount} onChangeText={setPlayerCount} keyboardType="number-pad" style={fieldInput} />
+                <GlassInput placeholder="e.g. 32" value={playerCount} onChangeText={setPlayerCount} keyboardType="number-pad" />
               </View>
             </View>
             <View>
               <FieldLabel>Final Placement</FieldLabel>
-              <TextInput placeholder="e.g. 1" placeholderTextColor={colors.faint} value={placement} onChangeText={setPlacement} keyboardType="number-pad" style={fieldInput} />
+              <GlassInput placeholder="e.g. 1" value={placement} onChangeText={setPlacement} keyboardType="number-pad" />
             </View>
             <View>
               <FieldLabel>Match Type</FieldLabel>
@@ -347,12 +353,12 @@ function PastTournamentForm() {
               </Text>
             </View>
           </View>
-        </View>
+        </Glass>
 
-        {/* Rounds */}
-        <View style={panel}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <Text style={{ fontSize: 12, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.faint }}>Rounds</Text>
+        {/* Rounds — each round floats as its own glass card */}
+        <View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, paddingHorizontal: 4 }}>
+            <Text style={{ fontSize: 12, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.gold }}>Rounds</Text>
             <Text style={{ fontSize: 13, fontFamily: font.mono }}>
               <Text style={{ color: colors.emerald }}>{wins}W</Text>
               <Text style={{ color: colors.muted }}> · </Text>
@@ -362,20 +368,19 @@ function PastTournamentForm() {
 
           <View style={{ gap: 10 }}>
             {rounds.map((round, i) => (
-              <RoundRow key={i} round={round} index={i} onChange={updateRound} onRemove={removeRound} />
+              <Glass key={i} style={{ padding: 14 }}>
+                <RoundRow round={round} index={i} onChange={updateRound} onRemove={removeRound} />
+              </Glass>
             ))}
           </View>
 
-          <TouchableOpacity
-            onPress={addRound}
-            style={{ marginTop: 10, paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line, alignItems: 'center' }}
-          >
-            <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.muted }}>+ Add Round</Text>
-          </TouchableOpacity>
+          <GlassButton onPress={addRound} pad={{ paddingVertical: 15, paddingHorizontal: 16 }} style={{ marginTop: 10 }}>
+            <Text style={{ fontSize: 15, fontFamily: font.semi, color: colors.textSoft }}>+ Add Round</Text>
+          </GlassButton>
         </View>
 
         {/* Decklist */}
-        <View style={panel}>
+        <Glass style={{ padding: 16 }}>
           <SectionTitle>Decklist</SectionTitle>
 
           {attachedDecklist ? (
@@ -390,18 +395,15 @@ function PastTournamentForm() {
                   {attachedDecklist.cards?.reduce((s, c) => s + c.count, 0) ?? 0} cards
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setAttachedDecklist(null)} hitSlop={8}>
-                <Text style={{ color: colors.muted, fontSize: 16 }}>✕</Text>
-              </TouchableOpacity>
+              <GlassButton onPress={() => setAttachedDecklist(null)} pad={{ paddingVertical: 5, paddingHorizontal: 12 }}>
+                <Text style={{ color: colors.textSoft, fontSize: 14 }}>✕</Text>
+              </GlassButton>
             </View>
           ) : (
             <View>
-              <TouchableOpacity
-                onPress={() => setSelectingDecklist(true)}
-                style={{ paddingVertical: 9, paddingHorizontal: 12, borderRadius: radius.sm, borderWidth: 1, borderColor: 'rgba(200,162,74,0.3)', backgroundColor: 'rgba(140,176,208,0.08)', alignItems: 'center', marginBottom: 14 }}
-              >
-                <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>Attach Decklist From Account</Text>
-              </TouchableOpacity>
+              <GlassButton onPress={() => setSelectingDecklist(true)} pad={{ paddingVertical: 14, paddingHorizontal: 16 }} style={{ marginBottom: 14 }}>
+                <Text style={{ fontSize: 14, fontFamily: font.semi, color: colors.oceanBright }}>Attach Decklist From Account</Text>
+              </GlassButton>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(140,176,208,0.05)' }} />
@@ -411,28 +413,28 @@ function PastTournamentForm() {
 
               <View style={{ marginBottom: 12 }}>
                 <FieldLabel>Deck Name</FieldLabel>
-                <TextInput placeholder="e.g. Red Luffy Aggro v3" placeholderTextColor={colors.faint} value={deckName} onChangeText={setDeckName} style={fieldInput} />
+                <GlassInput placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChangeText={setDeckName} />
               </View>
               <FieldLabel>Paste your decklist</FieldLabel>
-              <TextInput
+              <GlassInput
                 value={decklistRaw}
                 onChangeText={val => { setDecklistRaw(val); setDeckParsed(false); setParsedCards([]) }}
                 placeholder={'1xOP15-002\n4xOP15-053\n...'}
-                placeholderTextColor={colors.faint}
                 multiline
                 autoCapitalize="characters"
                 autoCorrect={false}
-                style={{ ...fieldInput, minHeight: 140, textAlignVertical: 'top', fontFamily: font.mono, fontSize: 12 }}
+                inputStyle={{ minHeight: 140, textAlignVertical: 'top', fontFamily: font.mono, fontSize: 12 }}
               />
-              <TouchableOpacity
+              <GlassButton
                 onPress={handleParseDeck}
                 disabled={!decklistRaw.trim() || enriching}
-                style={{ marginTop: 10, paddingVertical: 8, paddingHorizontal: 18, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: decklistRaw.trim() ? 'rgba(140,176,208,0.05)' : 'transparent', alignSelf: 'flex-start' }}
+                pad={{ paddingVertical: 12, paddingHorizontal: 22 }}
+                style={{ marginTop: 10, alignSelf: 'flex-start' }}
               >
-                <Text style={{ fontSize: 13, fontFamily: font.semi, color: decklistRaw.trim() ? colors.text : colors.faint }}>
+                <Text style={{ fontSize: 14, fontFamily: font.semi, color: decklistRaw.trim() ? colors.text : colors.faint }}>
                   {enriching ? 'Fetching card data...' : 'Preview Decklist'}
                 </Text>
-              </TouchableOpacity>
+              </GlassButton>
 
               {deckParsed && parsedCards.length > 0 && (
                 <View style={{ marginTop: 16 }}>
@@ -462,20 +464,19 @@ function PastTournamentForm() {
               )}
             </View>
           )}
-        </View>
+        </Glass>
 
         {/* Notes */}
-        <View style={panel}>
+        <Glass style={{ padding: 16 }}>
           <SectionTitle>Notes</SectionTitle>
-          <TextInput
+          <GlassInput
             placeholder="Tournament notes, meta observations..."
-            placeholderTextColor={colors.faint}
             value={notes}
             onChangeText={setNotes}
             multiline
-            style={{ ...fieldInput, minHeight: 80, textAlignVertical: 'top' }}
+            inputStyle={{ minHeight: 80, textAlignVertical: 'top' }}
           />
-        </View>
+        </Glass>
 
         {error ? (
           <View style={{ backgroundColor: 'rgba(210,74,58,0.08)', borderWidth: 1, borderColor: 'rgba(210,74,58,0.2)', borderRadius: radius.sm, paddingVertical: 10, paddingHorizontal: 14 }}>
@@ -483,14 +484,41 @@ function PastTournamentForm() {
           </View>
         ) : null}
 
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={saving}
-          style={{ paddingVertical: 14, borderRadius: 10, backgroundColor: saving ? '#3a526a' : colors.ocean, alignItems: 'center' }}
-        >
-          <Text style={{ fontSize: 14, fontFamily: font.bold, color: '#fff' }}>{saving ? 'Saving...' : 'Save Result'}</Text>
-        </TouchableOpacity>
       </ScrollView>
+
+      {/* Floating glass dock — W–L tally + Save hovering over the scrolling
+          form in one GlassContainer, so the pieces merge like the system bar. */}
+      <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 70, flexDirection: 'row', justifyContent: 'center' }}>
+        {hasGlass ? (
+          <GlassContainer spacing={24} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <GlassView glassEffectStyle="clear" style={{ borderRadius: 999, overflow: 'hidden', paddingVertical: 17, paddingHorizontal: 22 }}>
+              <Text style={{ fontSize: 15, fontFamily: font.mono }}>
+                <Text style={{ color: colors.emerald }}>{wins}W</Text>
+                <Text style={{ color: colors.textSoft }}> · </Text>
+                <Text style={{ color: colors.crimson }}>{losses}L</Text>
+              </Text>
+            </GlassView>
+            <GlassView isInteractive glassEffectStyle="clear" tintColor={colors.gold} style={{ borderRadius: 999, overflow: 'hidden', opacity: saving ? 0.6 : 1 }}>
+              <Pressable onPress={handleSubmit} disabled={saving} style={{ paddingVertical: 17, paddingHorizontal: 40 }}>
+                <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.onAccent }}>{saving ? 'Saving...' : 'Save Result'}</Text>
+              </Pressable>
+            </GlassView>
+          </GlassContainer>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ borderRadius: 999, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.surface2, paddingVertical: 17, paddingHorizontal: 22 }}>
+              <Text style={{ fontSize: 15, fontFamily: font.mono }}>
+                <Text style={{ color: colors.emerald }}>{wins}W</Text>
+                <Text style={{ color: colors.textSoft }}> · </Text>
+                <Text style={{ color: colors.crimson }}>{losses}L</Text>
+              </Text>
+            </View>
+            <GlassButton onPress={handleSubmit} disabled={saving} tint={colors.gold} pad={{ paddingVertical: 17, paddingHorizontal: 40 }}>
+              <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.onAccent }}>{saving ? 'Saving...' : 'Save Result'}</Text>
+            </GlassButton>
+          </View>
+        )}
+      </View>
 
       <SelectDecklistModal
         session={session}
@@ -502,11 +530,6 @@ function PastTournamentForm() {
   )
 }
 
-const MODES = [
-  { value: 'live', label: '🟢 Live', color: colors.emerald },
-  { value: 'past', label: '📋 Past', color: colors.oceanBright },
-]
-
 export default function LogResult() {
   const { session } = useSession()
   const insets = useSafeAreaInsets()
@@ -517,24 +540,17 @@ export default function LogResult() {
       <View style={{ paddingHorizontal: 16, paddingTop: insets.top + 12 }}>
         <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Logbook</Text>
         <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 12 }}>Log Result</Text>
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-          {MODES.map(m => {
-            const active = mode === m.value
-            return (
-              <TouchableOpacity
-                key={m.value}
-                onPress={() => setMode(m.value)}
-                style={{
-                  flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center',
-                  borderWidth: 1, borderColor: active ? m.color + '66' : 'rgba(140,176,208,0.08)',
-                  backgroundColor: active ? m.color + '1a' : 'rgba(140,176,208,0.03)',
-                }}
-              >
-                <Text style={{ fontSize: 13, fontFamily: font.bold, color: active ? colors.text : colors.muted }}>{m.label} Tournament</Text>
-              </TouchableOpacity>
-            )
-          })}
-        </View>
+        <GlassPills
+          style={{ marginBottom: 14, justifyContent: 'center', gap: 10 }}
+          pad={{ paddingVertical: 15, paddingHorizontal: 24 }}
+          textSize={15}
+          items={[
+            { key: 'live', label: '🟢 Live Tournament' },
+            { key: 'past', label: '📋 Past Tournament' },
+          ]}
+          activeKey={mode}
+          onSelect={setMode}
+        />
       </View>
 
       {mode === 'live' ? (
