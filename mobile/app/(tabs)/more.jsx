@@ -11,12 +11,12 @@ const FEATURES = [
   { icon: 'people-outline', label: 'Friends', href: '/friends' },
   { icon: 'chatbubbles-outline', label: 'Community', href: '/community' },
   { icon: 'skull-outline', label: 'Bounty Board', href: '/bounty' },
+  { icon: 'storefront-outline', label: 'Marketplace', href: '/marketplace' },
   { icon: 'construct-outline', label: 'Deck Builder', href: '/deck-builder' },
 ]
 
 const UPCOMING = [
-  { icon: 'trophy-outline', label: 'Tournaments' },
-  { icon: 'storefront-outline', label: 'Marketplace' },
+  { icon: 'trophy-outline', label: 'Online Tournaments' },
 ]
 
 export default function More() {
