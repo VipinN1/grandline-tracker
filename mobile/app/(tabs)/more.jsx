@@ -1,17 +1,20 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { colors, font, radius, card } from '../../theme'
 
+const FEATURES = [
+  { icon: 'construct-outline', label: 'Deck Builder', href: '/deck-builder' },
+]
+
 const UPCOMING = [
-  { icon: 'radio-outline', label: 'Live Tournament' },
   { icon: 'people-outline', label: 'Friends' },
   { icon: 'chatbubbles-outline', label: 'Community' },
   { icon: 'trophy-outline', label: 'Tournaments' },
   { icon: 'storefront-outline', label: 'Marketplace' },
-  { icon: 'construct-outline', label: 'Deck Builder' },
   { icon: 'skull-outline', label: 'Bounty Board' },
   { icon: 'person-circle-outline', label: 'Profile' },
 ]
@@ -33,6 +36,23 @@ export default function More() {
       <View style={{ ...card, padding: 16, marginBottom: 16 }}>
         <Text style={{ fontFamily: font.display, fontSize: 18, color: colors.text }}>{username}</Text>
         <Text style={{ fontSize: 12, color: colors.muted, fontFamily: font.body, marginTop: 2 }}>{session?.user?.email}</Text>
+      </View>
+
+      <View style={{ ...card, marginBottom: 16 }}>
+        {FEATURES.map((item, i) => (
+          <TouchableOpacity
+            key={item.label}
+            onPress={() => router.push(item.href)}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
+              borderBottomWidth: i < FEATURES.length - 1 ? 1 : 0, borderBottomColor: colors.line,
+            }}
+          >
+            <Ionicons name={item.icon} size={18} color={colors.gold} />
+            <Text style={{ flex: 1, fontSize: 14, color: colors.text, fontFamily: font.semi }}>{item.label}</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.faint} />
+          </TouchableOpacity>
+        ))}
       </View>
 
       <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.faint, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>

@@ -11,6 +11,7 @@ import {
   fieldInput, LEADER_COLORS, baseCardId, getLeaderStorageId,
 } from '../../components/forms'
 import SelectDecklistModal from '../../components/SelectDecklistModal'
+import LiveTournament from '../../components/LiveTournament'
 
 function todayStr() {
   const d = new Date()
@@ -100,7 +101,7 @@ function RoundRow({ round, index, onChange, onRemove }) {
   )
 }
 
-export default function LogResult() {
+function PastTournamentForm() {
   const { session } = useSession()
   const insets = useSafeAreaInsets()
 
@@ -262,12 +263,7 @@ export default function LogResult() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90, gap: 12 }} keyboardShouldPersistTaps="handled">
-
-        <View>
-          <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Logbook</Text>
-          <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text }}>Log Result</Text>
-        </View>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90, gap: 12 }} keyboardShouldPersistTaps="handled">
 
         {/* Your Leader */}
         <View style={{ ...panel, backgroundColor: 'rgba(140,176,208,0.07)', borderColor: colors.lineStrong }}>
@@ -503,5 +499,53 @@ export default function LogResult() {
         onSelect={deck => { setAttachedDecklist(deck); setDecklistRaw(''); setParsedCards([]) }}
       />
     </KeyboardAvoidingView>
+  )
+}
+
+const MODES = [
+  { value: 'live', label: '🟢 Live', color: colors.emerald },
+  { value: 'past', label: '📋 Past', color: colors.oceanBright },
+]
+
+export default function LogResult() {
+  const { session } = useSession()
+  const insets = useSafeAreaInsets()
+  const [mode, setMode] = useState('past')
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.abyss }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: insets.top + 12 }}>
+        <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Logbook</Text>
+        <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 12 }}>Log Result</Text>
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+          {MODES.map(m => {
+            const active = mode === m.value
+            return (
+              <TouchableOpacity
+                key={m.value}
+                onPress={() => setMode(m.value)}
+                style={{
+                  flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center',
+                  borderWidth: 1, borderColor: active ? m.color + '66' : 'rgba(140,176,208,0.08)',
+                  backgroundColor: active ? m.color + '1a' : 'rgba(140,176,208,0.03)',
+                }}
+              >
+                <Text style={{ fontSize: 13, fontFamily: font.bold, color: active ? colors.text : colors.muted }}>{m.label} Tournament</Text>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+      </View>
+
+      {mode === 'live' ? (
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90 }} keyboardShouldPersistTaps="handled">
+            <LiveTournament session={session} />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      ) : (
+        <PastTournamentForm />
+      )}
+    </View>
   )
 }
