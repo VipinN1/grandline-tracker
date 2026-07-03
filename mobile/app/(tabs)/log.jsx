@@ -262,8 +262,8 @@ function PastTournamentForm() {
   const storesForDisplay = stores.map(s => ({ ...s, sublabel: [s.city, s.state].filter(Boolean).join(', ') }))
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90, gap: 12 }} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90, gap: 12 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
 
         {/* Your Leader */}
         <View style={{ ...panel, backgroundColor: 'rgba(140,176,208,0.07)', borderColor: colors.lineStrong }}>
@@ -538,8 +538,8 @@ export default function LogResult() {
       </View>
 
       {mode === 'live' ? (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90 }} keyboardShouldPersistTaps="handled">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
             <LiveTournament session={session} />
           </ScrollView>
         </KeyboardAvoidingView>

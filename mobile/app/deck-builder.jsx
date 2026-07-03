@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native'
 import { router, Stack } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { searchCards, searchLeaders, getCard, getCardImageUrl, enrichCards } from '../lib/optcgapi'
@@ -41,8 +41,14 @@ function Pill({ active, accent, label, onPress }) {
 
 export default function DeckBuilder() {
   const { session } = useSession()
+  const { width: screenW } = useWindowDimensions()
+
+  // Search grid: 4 per row. Visual deck view: 3 per row (bigger cards).
+  const searchThumbW = Math.floor((screenW - 32 - 3 * 6) / 4)
+  const visualThumbW = Math.floor((screenW - 32 - 2 * 8) / 3)
 
   const [deckName, setDeckName] = useState('')
+  const [deckView, setDeckView] = useState('list')
   const [leader, setLeader] = useState(null)
   const [deckCards, setDeckCards] = useState({})
 
@@ -220,7 +226,7 @@ export default function DeckBuilder() {
         headerTitleStyle: { fontFamily: font.display, fontSize: 17, color: colors.parchment },
         headerTintColor: colors.parchment,
       }} />
-      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
 
         {/* Search / Deck tab toggle */}
         <View style={{ flexDirection: 'row', gap: 6, margin: 16, marginBottom: 8, backgroundColor: 'rgba(140,176,208,0.03)', borderRadius: 10, padding: 4 }}>
@@ -318,7 +324,7 @@ export default function DeckBuilder() {
                   >
                     <Image
                       source={{ uri: getCardImageUrl(card) }}
-                      style={{ width: 74, height: 103, borderRadius: 7, borderWidth: inDeck ? 2 : 1, borderColor: inDeck ? colors.ocean : colors.line }}
+                      style={{ width: searchThumbW, height: Math.floor(searchThumbW * 1.4), borderRadius: 7, borderWidth: inDeck ? 2 : 1, borderColor: inDeck ? colors.ocean : colors.line }}
                       resizeMode="cover"
                     />
                     {inDeck && (
@@ -407,11 +413,47 @@ export default function DeckBuilder() {
               )}
             </View>
 
-            {/* Card list */}
+            {/* View toggle */}
+            <View style={{ flexDirection: 'row', gap: 4, marginBottom: 10 }}>
+              <Pill active={deckView === 'list'} label="List" onPress={() => setDeckView('list')} />
+              <Pill active={deckView === 'visual'} label="Visual" onPress={() => setDeckView('visual')} />
+            </View>
+
+            {/* Card display */}
             {deckEntries.length === 0 ? (
               <Text style={{ paddingVertical: 32, textAlign: 'center', color: colors.faint, fontSize: 12, fontFamily: font.body }}>
                 Tap cards in the search tab to add them here
               </Text>
+            ) : deckView === 'visual' ? (
+              <View>
+                {grouped.map(([type, entries]) => entries.length === 0 ? null : (
+                  <View key={type} style={{ marginBottom: 14 }}>
+                    <Text style={{ fontSize: 9, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1.2, color: colors.faint, marginBottom: 7 }}>
+                      {type} ({entries.reduce((s, [, e]) => s + e.count, 0)})
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {entries.map(([key, { card, count }]) => (
+                        <TouchableOpacity
+                          key={key}
+                          onPress={() => adjustCount(key, 1)}
+                          onLongPress={() => adjustCount(key, -1)}
+                          delayLongPress={250}
+                        >
+                          <Image
+                            source={{ uri: getCardImageUrl(card) }}
+                            style={{ width: visualThumbW, height: Math.floor(visualThumbW * 1.4), borderRadius: 8, borderWidth: 1, borderColor: (LEADER_COLORS[card.card_color] ?? 'rgba(140,176,208,0.3)') + '88' }}
+                            resizeMode="cover"
+                          />
+                          <View style={{ position: 'absolute', bottom: 5, right: 5, backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: 5, paddingVertical: 2, paddingHorizontal: 6 }}>
+                            <Text style={{ color: colors.oceanBright, fontSize: 13, fontFamily: font.bold }}>{count}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ))}
+                <Text style={{ fontSize: 10, color: colors.faint, marginTop: 4, fontFamily: font.body }}>Tap +1 · Long-press −1</Text>
+              </View>
             ) : grouped.map(([type, entries]) => entries.length === 0 ? null : (
               <View key={type} style={{ marginBottom: 10 }}>
                 <Text style={{ paddingVertical: 5, fontSize: 9, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1.2, color: colors.faint }}>

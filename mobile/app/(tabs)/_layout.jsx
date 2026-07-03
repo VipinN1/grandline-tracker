@@ -12,7 +12,7 @@ export default function TabsLayout() {
   if (!session) return <Redirect href="/login" />
 
   return (
-    <NativeTabs tintColor={colors.gold} minimizeBehavior="onScrollDown">
+    <NativeTabs tintColor={colors.gold}>
       <NativeTabs.Trigger name="dashboard">
         <Icon sf="house.fill" />
         <Label>Dashboard</Label>
