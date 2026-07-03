@@ -29,7 +29,7 @@ export default function More() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.abyss }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}>
       <View style={{ ...card, padding: 16, marginBottom: 16 }}>
         <Text style={{ fontFamily: font.display, fontSize: 18, color: colors.text }}>{username}</Text>
         <Text style={{ fontSize: 12, color: colors.muted, fontFamily: font.body, marginTop: 2 }}>{session?.user?.email}</Text>

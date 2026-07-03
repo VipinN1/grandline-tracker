@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { ThemeProvider, DarkTheme } from '@react-navigation/native'
 import * as SplashScreen from 'expo-splash-screen'
 import { useFonts } from 'expo-font'
 import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces'
@@ -10,6 +11,20 @@ import { AuthProvider } from '../lib/auth'
 import { colors } from '../theme'
 
 SplashScreen.preventAutoHideAsync()
+
+// Native tab scenes take their background from the navigation theme —
+// without this they default to system white.
+const navTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.abyss,
+    card: '#08101b',
+    text: colors.text,
+    primary: colors.gold,
+    border: 'rgba(200,162,74,0.16)',
+  },
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -27,14 +42,16 @@ export default function RootLayout() {
   if (!fontsLoaded) return null
 
   return (
-    <AuthProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.abyss },
-        }}
-      />
-    </AuthProvider>
+    <ThemeProvider value={navTheme}>
+      <AuthProvider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.abyss },
+          }}
+        />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

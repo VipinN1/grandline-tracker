@@ -65,7 +65,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: colors.abyss, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color={colors.gold} />
       </View>
     )
@@ -73,6 +73,7 @@ export default function Dashboard() {
 
   return (
     <FlatList
+      style={{ flex: 1, backgroundColor: colors.abyss }}
       data={tournaments}
       keyExtractor={t => t.id}
       contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90, gap: 10 }}

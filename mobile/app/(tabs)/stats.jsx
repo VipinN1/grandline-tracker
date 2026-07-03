@@ -167,7 +167,7 @@ export default function Stats() {
   }, [oppLeaders, colSearch])
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.abyss }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}>
       <View style={{ marginBottom: 16 }}>
         <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Navigator's Charts</Text>
         <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 6 }}>Stats</Text>
