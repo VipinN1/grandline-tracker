@@ -7,16 +7,16 @@ import { useSession } from '../../lib/auth'
 import { colors, font, radius, card } from '../../theme'
 
 const FEATURES = [
+  { icon: 'person-circle-outline', label: 'Profile', href: '/profile' },
+  { icon: 'people-outline', label: 'Friends', href: '/friends' },
+  { icon: 'chatbubbles-outline', label: 'Community', href: '/community' },
+  { icon: 'skull-outline', label: 'Bounty Board', href: '/bounty' },
   { icon: 'construct-outline', label: 'Deck Builder', href: '/deck-builder' },
 ]
 
 const UPCOMING = [
-  { icon: 'people-outline', label: 'Friends' },
-  { icon: 'chatbubbles-outline', label: 'Community' },
   { icon: 'trophy-outline', label: 'Tournaments' },
   { icon: 'storefront-outline', label: 'Marketplace' },
-  { icon: 'skull-outline', label: 'Bounty Board' },
-  { icon: 'person-circle-outline', label: 'Profile' },
 ]
 
 export default function More() {
