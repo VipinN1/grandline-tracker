@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native'
+import { useState, useCallback, useEffect } from 'react'
+import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Modal, Switch } from 'react-native'
 import { Stack } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../lib/supabase'
@@ -7,6 +7,83 @@ import { useSession } from '../lib/auth'
 import { colors, font, radius, card } from '../theme'
 import ProfileCard, { Avatar } from '../components/ProfileCard'
 import { GlassButton } from '../components/glass'
+
+// Admin-only: grant/revoke a friend per-tournament admin access on your own
+// sim tournaments (rows in sim_tournament_admins) — mirrors the web 🛡 modal.
+function TournamentAdminModal({ session, friendProfile, onClose }) {
+  const [tournaments, setTournaments] = useState([])
+  const [grantedIds, setGrantedIds] = useState(new Set())
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const [{ data: mine }, { data: grants }] = await Promise.all([
+        supabase.from('sim_tournaments').select('id, name, status').eq('created_by', session.user.id).order('created_at', { ascending: false }),
+        supabase.from('sim_tournament_admins').select('tournament_id').eq('user_id', friendProfile.id),
+      ])
+      setTournaments(mine ?? [])
+      setGrantedIds(new Set((grants ?? []).map(g => g.tournament_id)))
+      setLoading(false)
+    }
+    load()
+  }, [friendProfile.id])
+
+  async function toggle(tournamentId, on) {
+    setGrantedIds(prev => {
+      const next = new Set(prev)
+      if (on) next.add(tournamentId); else next.delete(tournamentId)
+      return next
+    })
+    if (on) {
+      await supabase.from('sim_tournament_admins').insert({ tournament_id: tournamentId, user_id: friendProfile.id })
+    } else {
+      await supabase.from('sim_tournament_admins').delete().eq('tournament_id', tournamentId).eq('user_id', friendProfile.id)
+    }
+  }
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 18, borderTopRightRadius: 18, borderWidth: 1, borderColor: colors.goldLine, padding: 20, paddingBottom: 36, maxHeight: '80%' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <Text style={{ fontSize: 15, fontFamily: font.bold, color: colors.text }}>🛡 Tournament Admin</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={8}><Text style={{ color: colors.muted, fontSize: 16 }}>✕</Text></TouchableOpacity>
+          </View>
+          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 14, fontFamily: font.body }}>
+            Give {friendProfile.username} admin access on your tournaments (start rounds, resolve disputes).
+          </Text>
+          {loading ? (
+            <ActivityIndicator color={colors.gold} style={{ padding: 20 }} />
+          ) : tournaments.length === 0 ? (
+            <Text style={{ fontSize: 12, color: colors.faint, textAlign: 'center', padding: 20, fontFamily: font.body }}>
+              You haven't created any tournaments yet.
+            </Text>
+          ) : (
+            <FlatList
+              data={tournaments}
+              keyExtractor={t => t.id}
+              contentContainerStyle={{ gap: 8 }}
+              renderItem={({ item: t }) => (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm }}>
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.semi, color: colors.text }}>{t.name}</Text>
+                    <Text style={{ fontSize: 10, color: colors.faint, marginTop: 2, textTransform: 'capitalize', fontFamily: font.body }}>{t.status}</Text>
+                  </View>
+                  <Switch
+                    value={grantedIds.has(t.id)}
+                    onValueChange={on => toggle(t.id, on)}
+                    trackColor={{ false: 'rgba(140,176,208,0.2)', true: colors.ocean }}
+                    thumbColor="#fff"
+                  />
+                </View>
+              )}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
+  )
+}
 
 export default function Friends() {
   const { session } = useSession()
@@ -19,15 +96,19 @@ export default function Friends() {
   const [addError, setAddError] = useState('')
   const [addSuccess, setAddSuccess] = useState('')
   const [activeTab, setActiveTab] = useState('friends')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminTarget, setAdminTarget] = useState(null)
 
   const loadAll = useCallback(async () => {
     if (!session) return
-    const [{ data: friendsData }, { data: requestsData }] = await Promise.all([
+    const [{ data: friendsData }, { data: requestsData }, { data: myProfile }] = await Promise.all([
       supabase.from('friends').select('*, profiles!friends_friend_id_fkey(*)').eq('user_id', session.user.id).eq('status', 'accepted'),
       supabase.from('friends').select('*, profiles!friends_user_id_fkey(*)').eq('friend_id', session.user.id).eq('status', 'pending'),
+      supabase.from('profiles').select('username').eq('id', session.user.id).maybeSingle(),
     ])
     setFriends(friendsData ?? [])
     setPendingRequests(requestsData ?? [])
+    setIsAdmin(myProfile?.username === 'Cipin')
     setLoading(false)
   }, [session])
 
@@ -143,6 +224,15 @@ export default function Friends() {
                   <Text style={{ fontSize: 14, fontFamily: font.bold, color: colors.text }}>{item.profiles?.username}</Text>
                   {item.profiles?.location ? <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>{item.profiles.location}</Text> : null}
                 </View>
+                {isAdmin && item.profiles ? (
+                  <TouchableOpacity
+                    onPress={() => setAdminTarget(item.profiles)}
+                    hitSlop={6}
+                    style={{ width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: colors.goldLine, backgroundColor: 'rgba(200,162,74,0.08)', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Text style={{ fontSize: 14 }}>🛡</Text>
+                  </TouchableOpacity>
+                ) : null}
               </TouchableOpacity>
             ) : (
               <View style={{ ...card, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -163,6 +253,9 @@ export default function Friends() {
         )}
         {selectedProfile && (
           <ProfileCard profile={selectedProfile} session={session} onClose={() => setSelectedProfile(null)} onFriendAction={loadAll} />
+        )}
+        {adminTarget && (
+          <TournamentAdminModal session={session} friendProfile={adminTarget} onClose={() => setAdminTarget(null)} />
         )}
       </View>
     </>

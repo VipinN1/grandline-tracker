@@ -1,6 +1,6 @@
-// RN port of src/pages/Marketplace.jsx — Browse / Looking For / Stores / Mine.
-// Store inventory management (CSV import etc.) stays web-only; the mobile
-// Stores tab is buyer-facing plus the storefront application flow.
+// RN port of src/pages/Marketplace.jsx — Browse / Looking For / Stores / Mine,
+// plus the admin storefront-approval panel. Store inventory management lives
+// on the storefront page itself (app/storefront/[id].jsx).
 import { useState, useEffect, useCallback } from 'react'
 import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView, Image, Modal, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native'
 import { Stack, router } from 'expo-router'
@@ -102,6 +102,8 @@ function ListingDetailModal({ listing, session, onClose, onMarkSold, onMessage }
 function ListingFormModal({ session, profile, listing, onClose, onSuccess }) {
   const isEdit = !!listing
   const [selectedCard, setSelectedCard] = useState(null)
+  const [manualMode, setManualMode] = useState(false)
+  const [manual, setManual] = useState({ name: '', id: '', color: '', type: '', setName: '' })
   const [price, setPrice] = useState(isEdit ? String(listing.price) : '')
   const [quantity, setQuantity] = useState(isEdit ? String(listing.quantity ?? 1) : '1')
   const [condition, setCondition] = useState(isEdit ? listing.condition : '')
@@ -123,7 +125,17 @@ function ListingFormModal({ session, profile, listing, onClose, onSuccess }) {
   }
 
   async function handleSubmit() {
-    if (!isEdit && !selectedCard) { setError('Please select a card.'); return }
+    // Manual entry gets a synthetic id if none is provided (same as web).
+    const card = manualMode
+      ? (manual.name.trim() ? {
+          card_set_id: manual.id.trim().toUpperCase() || `CUSTOM-${Date.now()}`,
+          card_name: manual.name.trim(),
+          card_color: manual.color || null,
+          card_type: manual.type || null,
+          set_name: manual.setName.trim() || null,
+        } : null)
+      : selectedCard
+    if (!isEdit && !card) { setError(manualMode ? 'Card name is required.' : 'Please select a card.'); return }
     if (!price || !condition) { setError('Price and condition are required.'); return }
     if (parseFloat(price) <= 0) { setError('Price must be greater than 0.'); return }
     setSaving(true); setError('')
@@ -138,11 +150,11 @@ function ListingFormModal({ session, profile, listing, onClose, onSuccess }) {
     } else {
       ;({ error: err } = await supabase.from('marketplace_listings').insert({
         user_id: session.user.id,
-        card_id: selectedCard.card_image_id ?? selectedCard.card_set_id,
-        card_name: selectedCard.card_name,
-        card_color: selectedCard.card_color ?? null,
-        card_type: selectedCard.card_type ?? null,
-        set_name: selectedCard.set_name ?? null,
+        card_id: card.card_image_id ?? card.card_set_id,
+        card_name: card.card_name,
+        card_color: card.card_color ?? null,
+        card_type: card.card_type ?? null,
+        set_name: card.set_name ?? null,
         price: parseFloat(price),
         quantity: parseInt(quantity) || 1,
         condition,
@@ -178,7 +190,45 @@ function ListingFormModal({ session, profile, listing, onClose, onSuccess }) {
             ) : (
               <View>
                 <FieldLabel>Card *</FieldLabel>
-                <CardPicker selected={selectedCard} onSelect={setSelectedCard} onClear={() => setSelectedCard(null)} />
+                {manualMode ? (
+                  <View style={{ gap: 10 }}>
+                    <TextInput placeholder="Card name *" placeholderTextColor={colors.faint} value={manual.name} onChangeText={v => setManual(p => ({ ...p, name: v }))} style={fieldInput} />
+                    <TextInput placeholder="Card ID (optional, e.g. OP01-001)" placeholderTextColor={colors.faint} autoCapitalize="characters" autoCorrect={false} value={manual.id} onChangeText={v => setManual(p => ({ ...p, id: v }))} style={fieldInput} />
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {CARD_COLORS.map(c => {
+                        const active = manual.color === c
+                        return (
+                          <TouchableOpacity key={c} onPress={() => setManual(p => ({ ...p, color: active ? '' : c }))} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 20, borderWidth: 1, borderColor: active ? (LEADER_COLORS[c] + '66') : colors.lineStrong, backgroundColor: active ? (LEADER_COLORS[c] + '26') : 'transparent' }}>
+                            <Text style={{ fontSize: 11, fontFamily: font.semi, color: active ? LEADER_COLORS[c] : colors.muted }}>{c}</Text>
+                          </TouchableOpacity>
+                        )
+                      })}
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {['Leader', 'Character', 'Event', 'Stage'].map(tp => {
+                        const active = manual.type === tp
+                        return (
+                          <TouchableOpacity key={tp} onPress={() => setManual(p => ({ ...p, type: active ? '' : tp }))} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 20, borderWidth: 1, borderColor: active ? colors.goldLine : colors.lineStrong, backgroundColor: active ? colors.goldSoft : 'transparent' }}>
+                            <Text style={{ fontSize: 11, fontFamily: font.semi, color: active ? colors.gold : colors.muted }}>{tp}</Text>
+                          </TouchableOpacity>
+                        )
+                      })}
+                    </View>
+                    <TextInput placeholder="Set name (optional)" placeholderTextColor={colors.faint} value={manual.setName} onChangeText={v => setManual(p => ({ ...p, setName: v }))} style={fieldInput} />
+                    <TouchableOpacity onPress={() => setManualMode(false)}>
+                      <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>← Back to card search</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={{ gap: 8 }}>
+                    <CardPicker selected={selectedCard} onSelect={setSelectedCard} onClear={() => setSelectedCard(null)} />
+                    {!selectedCard && (
+                      <TouchableOpacity onPress={() => setManualMode(true)}>
+                        <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>Can't find it? Enter manually →</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
               </View>
             )}
 
@@ -249,11 +299,24 @@ function ListingFormModal({ session, profile, listing, onClose, onSuccess }) {
 // ─── Create want ──────────────────────────────────────────────────────────────
 function CreateWantModal({ session, onClose, onSuccess }) {
   const [selectedCard, setSelectedCard] = useState(null)
+  const [customTitle, setCustomTitle] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [maxPrice, setMaxPrice] = useState('')
   const [notes, setNotes] = useState('')
+  const [photoUrl, setPhotoUrl] = useState(null)
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  async function handlePhoto() {
+    try {
+      setUploading(true)
+      const url = await pickAndUploadImage({ bucket: 'card-photos', path: `${session.user.id}/${Date.now()}` })
+      if (url) setPhotoUrl(url)
+    } catch (e) {
+      Alert.alert('Upload failed', e.message ?? 'Could not upload the photo.')
+    } finally { setUploading(false) }
+  }
 
   async function handleSubmit() {
     if (!selectedCard) { setError('Please select a card.'); return }
@@ -265,9 +328,11 @@ function CreateWantModal({ session, onClose, onSuccess }) {
       card_color: selectedCard.card_color ?? null,
       card_type: selectedCard.card_type ?? null,
       set_name: selectedCard.set_name ?? null,
+      custom_title: customTitle.trim() || null,
       quantity: parseInt(quantity) || 1,
       max_price: maxPrice ? parseFloat(maxPrice) : null,
       notes: notes.trim() || null,
+      photo_url: photoUrl,
       status: 'active',
     })
     setSaving(false)
@@ -289,6 +354,10 @@ function CreateWantModal({ session, onClose, onSuccess }) {
               <FieldLabel>Card *</FieldLabel>
               <CardPicker selected={selectedCard} onSelect={setSelectedCard} onClear={() => setSelectedCard(null)} />
             </View>
+            <View>
+              <FieldLabel>Custom Title (optional)</FieldLabel>
+              <TextInput placeholder="e.g. Looking for Manga Shanks!" placeholderTextColor={colors.faint} value={customTitle} onChangeText={v => setCustomTitle(v.slice(0, 80))} style={fieldInput} />
+            </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <FieldLabel>Quantity *</FieldLabel>
@@ -302,6 +371,21 @@ function CreateWantModal({ session, onClose, onSuccess }) {
             <View>
               <FieldLabel>Notes (optional)</FieldLabel>
               <TextInput placeholder="Condition preferences, specific art, etc." placeholderTextColor={colors.faint} value={notes} onChangeText={v => setNotes(v.slice(0, 300))} multiline style={{ ...fieldInput, minHeight: 70, textAlignVertical: 'top' }} />
+            </View>
+            <View>
+              <FieldLabel>Photo (optional)</FieldLabel>
+              {photoUrl ? (
+                <View style={{ gap: 6 }}>
+                  <Image source={{ uri: photoUrl }} style={{ width: 120, height: 160, borderRadius: 8 }} resizeMode="cover" />
+                  <TouchableOpacity onPress={() => setPhotoUrl(null)}>
+                    <Text style={{ fontSize: 11, color: colors.crimson, fontFamily: font.semi }}>Remove photo</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={handlePhoto} disabled={uploading} style={{ alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: 'rgba(140,176,208,0.05)' }}>
+                  <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>{uploading ? 'Uploading...' : '📷 Add Photo'}</Text>
+                </TouchableOpacity>
+              )}
             </View>
             {error ? <Text style={{ fontSize: 12, color: colors.crimson, fontFamily: font.body }}>{error}</Text> : null}
           </ScrollView>
@@ -494,6 +578,9 @@ export default function Marketplace() {
   const [search, setSearch] = useState('')
   const [colorFilter, setColorFilter] = useState('')
   const [conditionFilter, setConditionFilter] = useState('')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [cityFilter, setCityFilter] = useState('')
   const [detailListing, setDetailListing] = useState(null)
   const [messageListing, setMessageListing] = useState(null)
 
@@ -506,6 +593,7 @@ export default function Marketplace() {
 
   // Stores
   const [storefronts, setStorefronts] = useState([])
+  const [pendingStorefronts, setPendingStorefronts] = useState([])
   const [storesLoading, setStoresLoading] = useState(true)
   const [myStorefront, setMyStorefront] = useState(null)
   const [showApply, setShowApply] = useState(false)
@@ -513,9 +601,12 @@ export default function Marketplace() {
   // Mine
   const [myListings, setMyListings] = useState([])
   const [myWants, setMyWants] = useState([])
+  const [unreadByListing, setUnreadByListing] = useState({})
   const [mineLoading, setMineLoading] = useState(true)
   const [showCreateListing, setShowCreateListing] = useState(false)
   const [editListing, setEditListing] = useState(false)
+
+  const isAdmin = profile?.username === 'Cipin'
 
   useEffect(() => {
     async function init() {
@@ -552,23 +643,34 @@ export default function Marketplace() {
 
   async function loadStores() {
     setStoresLoading(true)
-    const [{ data: approved }, mineRes] = await Promise.all([
+    const [{ data: approved }, { data: pending }, mineRes] = await Promise.all([
       supabase.from('storefronts').select('*').eq('status', 'approved').order('created_at', { ascending: false }),
+      supabase.from('storefronts').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
       session ? supabase.from('storefronts').select('*').eq('user_id', session.user.id).maybeSingle() : Promise.resolve({ data: null }),
     ])
     setStorefronts(approved ?? [])
+    setPendingStorefronts(pending ?? [])
     setMyStorefront(mineRes?.data ?? null)
     setStoresLoading(false)
   }
 
+  async function reviewStorefront(store, status) {
+    await supabase.from('storefronts').update({ status }).eq('id', store.id)
+    loadStores()
+  }
+
   async function loadMine() {
     setMineLoading(true)
-    const [{ data: listings }, { data: wants }] = await Promise.all([
+    const [{ data: listings }, { data: wants }, { data: unread }] = await Promise.all([
       supabase.from('marketplace_listings').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }),
       supabase.from('marketplace_wants').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }),
+      supabase.from('marketplace_messages').select('listing_id').eq('receiver_id', session.user.id).eq('read', false),
     ])
     setMyListings(listings ?? [])
     setMyWants(wants ?? [])
+    const counts = {}
+    ;(unread ?? []).forEach(m => { counts[m.listing_id] = (counts[m.listing_id] ?? 0) + 1 })
+    setUnreadByListing(counts)
     setMineLoading(false)
   }
 
@@ -580,6 +682,9 @@ export default function Marketplace() {
     if (search && !l.card_name.toLowerCase().includes(search.toLowerCase())) return false
     if (colorFilter && l.card_color !== colorFilter) return false
     if (conditionFilter && l.condition !== conditionFilter) return false
+    if (minPrice && Number(l.price) < parseFloat(minPrice)) return false
+    if (maxPrice && Number(l.price) > parseFloat(maxPrice)) return false
+    if (cityFilter && !(l.city ?? '').toLowerCase().includes(cityFilter.toLowerCase())) return false
     return true
   })
   const filteredWants = allWants.filter(w => !wantSearch || w.card_name.toLowerCase().includes(wantSearch.toLowerCase()))
@@ -641,6 +746,11 @@ export default function Marketplace() {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TextInput placeholder="Min $" placeholderTextColor={colors.faint} value={minPrice} onChangeText={setMinPrice} keyboardType="decimal-pad" style={{ ...fieldInput, flex: 1, width: undefined }} />
+                  <TextInput placeholder="Max $" placeholderTextColor={colors.faint} value={maxPrice} onChangeText={setMaxPrice} keyboardType="decimal-pad" style={{ ...fieldInput, flex: 1, width: undefined }} />
+                  <TextInput placeholder="City" placeholderTextColor={colors.faint} value={cityFilter} onChangeText={setCityFilter} style={{ ...fieldInput, flex: 1.4, width: undefined }} />
+                </View>
                 <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body }}>
                   {loading ? 'Loading...' : `${filteredListings.length} listing${filteredListings.length !== 1 ? 's' : ''} found`}
                 </Text>
@@ -740,6 +850,37 @@ export default function Marketplace() {
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}>
             {storesLoading ? <ActivityIndicator color={colors.gold} style={{ padding: 60 }} /> : (
               <>
+                {/* Admin: pending storefront applications */}
+                {isAdmin && pendingStorefronts.length > 0 && (
+                  <View style={{ backgroundColor: 'rgba(200,162,74,0.05)', borderWidth: 1, borderColor: 'rgba(200,162,74,0.2)', borderRadius: 12, padding: 14, gap: 10 }}>
+                    <Text style={{ fontSize: 11, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.gold }}>
+                      Pending Applications ({pendingStorefronts.length})
+                    </Text>
+                    {pendingStorefronts.map(store => (
+                      <View key={store.id} style={{ backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.line, borderRadius: 10, padding: 12, gap: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: 'rgba(140,176,208,0.1)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                            {store.logo_url ? <Image source={{ uri: store.logo_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" /> : <Text style={{ fontSize: 18 }}>🏪</Text>}
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{store.store_name}</Text>
+                            {store.address ? <Text numberOfLines={1} style={{ fontSize: 11, color: colors.muted, fontFamily: font.body }}>{store.address}</Text> : null}
+                            {store.contact_info ? <Text numberOfLines={1} style={{ fontSize: 11, color: colors.muted, fontFamily: font.body }}>{store.contact_info}</Text> : null}
+                          </View>
+                        </View>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          <GlassButton onPress={() => reviewStorefront(store, 'approved')} tint={colors.emerald} pad={{ paddingVertical: 8, paddingHorizontal: 14 }} style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 12, fontFamily: font.bold, color: '#0f1117' }}>Approve</Text>
+                          </GlassButton>
+                          <GlassButton onPress={() => reviewStorefront(store, 'rejected')} pad={{ paddingVertical: 8, paddingHorizontal: 14 }} style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.crimson }}>Reject</Text>
+                          </GlassButton>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
                 {storefronts.length === 0 ? (
                   <View style={{ alignItems: 'center', paddingVertical: 50 }}>
                     <Text style={{ fontSize: 40, marginBottom: 14 }}>🏪</Text>
@@ -812,12 +953,19 @@ export default function Marketplace() {
                 ) : (
                   <View style={{ gap: 8 }}>
                     {myListings.map(listing => (
-                      <View key={listing.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 10, padding: 10 }}>
+                      <View key={listing.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: unreadByListing[listing.id] ? colors.goldLine : colors.lineStrong, borderRadius: 10, padding: 10 }}>
                         <ItemImage item={listing} style={{ width: 40, height: 56, borderRadius: 6 }} />
                         <View style={{ flex: 1 }}>
-                          <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>
-                            {listing.card_name}{(listing.quantity ?? 1) > 1 ? ` x${listing.quantity}` : ''}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text, flexShrink: 1 }}>
+                              {listing.card_name}{(listing.quantity ?? 1) > 1 ? ` x${listing.quantity}` : ''}
+                            </Text>
+                            {unreadByListing[listing.id] ? (
+                              <View style={{ minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.crimson, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+                                <Text style={{ color: '#fff', fontSize: 9, fontFamily: font.bold }}>{unreadByListing[listing.id] > 9 ? '9+' : unreadByListing[listing.id]}</Text>
+                              </View>
+                            ) : null}
+                          </View>
                           <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>
                             <Text style={{ fontFamily: font.mono, color: colors.text }}>${Number(listing.price).toFixed(2)}</Text>
                             {'  ·  '}

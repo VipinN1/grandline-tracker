@@ -145,6 +145,13 @@ export default function ProfileCard({ profile, session, onClose, onFriendAction 
               </TouchableOpacity>
             ) : null}
           </View>
+
+          <TouchableOpacity
+            onPress={() => { onClose(); router.push(isSelf ? '/profile' : `/user/${profile.id}`) }}
+            style={{ paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center' }}
+          >
+            <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.textSoft }}>View Full Profile →</Text>
+          </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>

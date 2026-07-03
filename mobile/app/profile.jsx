@@ -8,7 +8,12 @@ import { getCardImageUrl } from '../lib/optcgapi'
 import { pickAndUploadImage } from '../lib/upload'
 import { colors, font, radius, card } from '../theme'
 import { fieldInput, FieldLabel, LEADER_COLORS } from '../components/forms'
-import { GlassButton } from '../components/glass'
+import { GlassButton, GlassPills } from '../components/glass'
+
+function cleanLeaderName(name) {
+  if (!name) return ''
+  return name.replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '').replace(/\s*\([^)]*\)$/, '').trim()
+}
 
 function placementLabel(n) {
   if (n === 1) return '1st'
@@ -91,6 +96,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [tab, setTab] = useState('history')
 
   const load = useCallback(async () => {
     if (!session) return
@@ -138,12 +144,15 @@ export default function Profile() {
   const username = profile?.username ?? session?.user?.user_metadata?.username ?? 'Player'
   const initials = username.slice(0, 2).toUpperCase()
 
-  const leaderCounts = ranked.reduce((acc, t) => {
-    if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, color: t.leader_color, count: 0 }
-    acc[t.leader_id].count++
+  // Leaders played (ranked only) with their tournaments grouped underneath —
+  // powers both the Fav. Leader tile and the Leaders Played tab.
+  const leaderGroups = Object.values(ranked.reduce((acc, t) => {
+    if (!t.leader_id) return acc
+    if (!acc[t.leader_id]) acc[t.leader_id] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, tournaments: [] }
+    acc[t.leader_id].tournaments.push(t)
     return acc
-  }, {})
-  const favLeaderId = Object.entries(leaderCounts).sort((a, b) => b[1].count - a[1].count)[0]?.[0] ?? null
+  }, {})).sort((a, b) => b.tournaments.length - a.tournaments.length)
+  const favLeaderId = leaderGroups[0]?.id ?? null
 
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -160,8 +169,8 @@ export default function Profile() {
       }} />
       <FlatList
         style={{ flex: 1, backgroundColor: colors.abyss }}
-        data={tournaments}
-        keyExtractor={t => t.id}
+        data={tab === 'history' ? tournaments : leaderGroups}
+        keyExtractor={item => item.id}
         contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 8 }}
         ListHeaderComponent={
           <View style={{ gap: 12, marginBottom: 8 }}>
@@ -184,6 +193,11 @@ export default function Profile() {
                     {profile?.location ? `${profile.location} · ` : ''}{memberSince ? `Since ${memberSince}` : ''}
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                    {bestFinish === 1 ? (
+                      <View style={{ paddingVertical: 3, paddingHorizontal: 10, borderRadius: 6, backgroundColor: 'rgba(200,162,74,0.14)', borderWidth: 1, borderColor: 'rgba(200,162,74,0.34)' }}>
+                        <Text style={{ fontSize: 11, fontFamily: font.bold, color: colors.gold }}>🏆 1st Place</Text>
+                      </View>
+                    ) : null}
                     <View style={{ paddingVertical: 3, paddingHorizontal: 10, borderRadius: 6, backgroundColor: 'rgba(140,176,208,0.1)', borderWidth: 1, borderColor: colors.lineStrong }}>
                       <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.oceanBright }}>{ranked.length} Events</Text>
                     </View>
@@ -229,7 +243,15 @@ export default function Profile() {
               ) : null}
             </View>
 
-            <Text style={{ fontFamily: font.display, fontSize: 18, color: colors.text, marginTop: 6 }}>Tournament History</Text>
+            <GlassPills
+              style={{ marginTop: 6 }}
+              items={[
+                { key: 'history', label: `History (${tournaments.length})` },
+                { key: 'leaders', label: `Leaders Played (${leaderGroups.length})` },
+              ]}
+              activeKey={tab}
+              onSelect={setTab}
+            />
           </View>
         }
         ListEmptyComponent={
@@ -239,7 +261,31 @@ export default function Profile() {
             <Text style={{ fontSize: 13, color: colors.faint, fontFamily: font.body }}>Head to Log Result to record your first event</Text>
           </View>
         }
-        renderItem={({ item: t }) => {
+        renderItem={({ item }) => {
+          if (tab === 'leaders') {
+            return (
+              <View style={{ ...card, padding: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Image source={{ uri: getCardImageUrl(item.id) }} style={{ width: 44, height: 62, borderRadius: 5, borderWidth: 1.5, borderColor: (LEADER_COLORS[item.color] ?? '#94a3b8') + '66' }} resizeMode="cover" />
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{cleanLeaderName(item.name)}</Text>
+                    <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>
+                      {item.tournaments.length} event{item.tournaments.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                </View>
+                <View style={{ marginTop: 8, gap: 4 }}>
+                  {item.tournaments.map(t => (
+                    <TouchableOpacity key={t.id} onPress={() => router.push(`/tournament/${t.id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4, paddingHorizontal: 6 }}>
+                      <Text numberOfLines={1} style={{ flex: 1, fontSize: 11, color: colors.muted, fontFamily: font.body }}>{t.name} · {t.date}</Text>
+                      <Text style={{ fontSize: 11, fontFamily: font.mono, color: colors.faint }}>#{t.placement} · {t.wins}-{t.losses}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )
+          }
+          const t = item
           const pc = placementColors(t.placement)
           return (
             <TouchableOpacity onPress={() => router.push(`/tournament/${t.id}`)} style={{ ...card, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>

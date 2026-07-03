@@ -1,7 +1,7 @@
 // RN port of src/pages/BountyBoard.jsx — same bounty formula and rankings.
 import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, FlatList, Image, ActivityIndicator, ScrollView } from 'react-native'
-import { Stack } from 'expo-router'
+import { Stack, router } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/auth'
 import { getCardImageUrl } from '../lib/optcgapi'
@@ -82,6 +82,25 @@ export default function BountyBoard() {
   })
   const topWeekly = Object.values(playMap).sort((a, b) => b.count - a.count).slice(0, 5)
   const maxWeeklyCount = topWeekly[0]?.count ?? 1
+
+  // Top leaders by win rate — minimum 3 tournament appearances to qualify,
+  // so tiny samples don't distort the list (same rule as web).
+  const leaderAgg = {}
+  tournaments.forEach(t => {
+    if (!t.leader_id) return
+    if (!leaderAgg[t.leader_id]) leaderAgg[t.leader_id] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, appearances: 0, wins: 0, losses: 0 }
+    const l = leaderAgg[t.leader_id]
+    l.appearances++
+    l.wins += t.wins
+    l.losses += t.losses
+  })
+  const topByWinRate = Object.values(leaderAgg)
+    .filter(l => l.appearances >= 3 && l.wins + l.losses > 0)
+    .map(l => ({ ...l, wr: Math.round((l.wins / (l.wins + l.losses)) * 100) }))
+    .sort((a, b) => b.wr - a.wr)
+    .slice(0, 5)
+
+  const recentResults = tournaments.slice(0, 8)
 
   // Leaderboard
   const playerMap = {}
@@ -168,6 +187,56 @@ export default function BountyBoard() {
                   </View>
                   <Text style={{ fontSize: 12, fontFamily: font.bold, color: LEADER_COLORS[l.color] ?? colors.ocean, minWidth: 20, textAlign: 'right' }}>{l.count}</Text>
                 </View>
+              ))}
+            </View>
+
+            {/* Top leaders by win rate */}
+            <View style={{ ...card, padding: 16 }}>
+              <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1.2, color: colors.muted, marginBottom: 14 }}>
+                Top Leaders by Win Rate
+              </Text>
+              {topByWinRate.length === 0 ? (
+                <Text style={{ fontSize: 12, color: colors.faint, textAlign: 'center', paddingVertical: 16, fontFamily: font.body }}>
+                  Not enough data yet (min 3 events per leader)
+                </Text>
+              ) : topByWinRate.map(l => (
+                <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <Image source={{ uri: getCardImageUrl(l.id) }} style={{ width: 28, height: 38, borderRadius: 4 }} resizeMode="cover" />
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 11, fontFamily: font.semi, color: colors.text }}>{cleanName(l.name)}</Text>
+                    <Text style={{ fontSize: 10, color: colors.faint, marginTop: 2, fontFamily: font.body }}>
+                      {l.appearances} events · {l.wins}W-{l.losses}L
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 13, fontFamily: font.mono, color: colors.emerald }}>{l.wr}%</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Recent results */}
+            <View style={{ ...card, padding: 16 }}>
+              <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1.2, color: colors.muted, marginBottom: 14 }}>
+                Recent Results
+              </Text>
+              {recentResults.length === 0 ? (
+                <Text style={{ fontSize: 12, color: colors.faint, textAlign: 'center', paddingVertical: 16, fontFamily: font.body }}>No results yet</Text>
+              ) : recentResults.map(t => (
+                <TouchableOpacity key={t.id} onPress={() => t.user_id && router.push(`/user/${t.user_id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <Image source={{ uri: getCardImageUrl(t.leader_id) }} style={{ width: 28, height: 38, borderRadius: 4 }} resizeMode="cover" />
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 11, fontFamily: font.semi, color: colors.text }}>
+                      {t.profiles?.username ?? 'Unknown'} · #{t.placement}
+                    </Text>
+                    <Text numberOfLines={1} style={{ fontSize: 10, color: colors.faint, marginTop: 2, fontFamily: font.body }}>
+                      {t.name} · {new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 11, fontFamily: font.mono }}>
+                    <Text style={{ color: colors.emerald }}>{t.wins}W</Text>
+                    <Text style={{ color: colors.faint }}>·</Text>
+                    <Text style={{ color: colors.crimson }}>{t.losses}L</Text>
+                  </Text>
+                </TouchableOpacity>
               ))}
             </View>
 

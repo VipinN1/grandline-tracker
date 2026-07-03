@@ -2,7 +2,7 @@
 // zoomed leader-art hero, round table with dice/order/result columns,
 // and a Going 1st / Going 2nd / Dice Won stats strip. Liquid Glass cards.
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native'
 import { useLocalSearchParams, router, Stack } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../../lib/supabase'
@@ -11,6 +11,7 @@ import { getCardImageUrl } from '../../lib/optcgapi'
 import { colors, font, radius } from '../../theme'
 import { Glass, GlassButton } from '../../components/glass'
 import { LEADER_COLORS, baseCardId } from '../../components/forms'
+import DeckModal from '../../components/DeckModal'
 
 // Drop descriptive parentheticals like "(Alternate Art)" but keep card
 // numbers like "(041)".
@@ -79,6 +80,8 @@ export default function TournamentDetail() {
   const { id } = useLocalSearchParams()
   const { session } = useSession()
   const [t, setT] = useState(null)
+  const [decklist, setDecklist] = useState(null)
+  const [showDeck, setShowDeck] = useState(false)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
 
@@ -91,9 +94,27 @@ export default function TournamentDetail() {
         .single()
       setT(data)
       setLoading(false)
+      if (data?.decklist_id) {
+        const { data: dl } = await supabase.from('decklists').select('*').eq('id', data.decklist_id).maybeSingle()
+        setDecklist(dl ?? null)
+      }
     }
     load()
   }, [id])
+
+  async function handleShare() {
+    const rounds = (t.tournament_rounds ?? []).slice().sort((a, b) => a.round_number - b.round_number)
+    const lines = [
+      `⚓ ${t.name} — ${t.date}`,
+      `${cleanName(t.leader_name)} · #${t.placement}${t.player_count ? ` of ${t.player_count}` : ''}`,
+      `Record: ${t.wins}W-${t.losses}L${t.wins + t.losses > 0 ? ` (${Math.round(t.wins / (t.wins + t.losses) * 100)}%)` : ''}`,
+      '',
+      ...rounds.map(r => `R${r.round_number}: ${r.result === 'win' ? 'W' : 'L'} vs ${cleanName(r.opponent_leader_name) || '?'}${r.went_first !== null ? ` (${r.went_first ? '1st' : '2nd'})` : ''}`),
+      '',
+      'Tracked with PirateTracker 🏴‍☠️',
+    ]
+    try { await Share.share({ message: lines.join('\n') }) } catch {}
+  }
 
   function confirmDelete() {
     Alert.alert('Delete tournament', `Delete "${t.name}" and all its rounds? This cannot be undone.`, [
@@ -257,6 +278,23 @@ export default function TournamentDetail() {
           </Glass>
         )}
 
+        {/* Attached decklist */}
+        {decklist ? (
+          <Glass style={{ padding: 14 }}>
+            <Text style={{ fontSize: 11, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.gold, marginBottom: 10 }}>Decklist</Text>
+            <TouchableOpacity onPress={() => setShowDeck(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Image source={{ uri: getCardImageUrl(decklist.leader_id) }} style={{ width: 40, height: 56, borderRadius: 5 }} resizeMode="cover" />
+              <View style={{ flex: 1 }}>
+                <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{decklist.name}</Text>
+                <Text numberOfLines={1} style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>
+                  {decklist.leader_name} · {(decklist.cards ?? []).reduce((s, c) => s + c.count, 0)} cards
+                </Text>
+              </View>
+              <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>View ›</Text>
+            </TouchableOpacity>
+          </Glass>
+        ) : null}
+
         {/* Notes */}
         {t.notes ? (
           <Glass style={{ padding: 16 }}>
@@ -265,12 +303,26 @@ export default function TournamentDetail() {
           </Glass>
         ) : null}
 
+        <GlassButton onPress={handleShare} pad={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+          <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>📤 Share Result</Text>
+        </GlassButton>
+
         {isMine ? (
-          <GlassButton onPress={confirmDelete} disabled={deleting} pad={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-            <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.crimson }}>{deleting ? 'Deleting...' : 'Delete Tournament'}</Text>
-          </GlassButton>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <GlassButton
+              onPress={() => router.push({ pathname: '/(tabs)/log', params: { edit: t.id } })}
+              pad={{ paddingVertical: 12, paddingHorizontal: 16 }}
+              style={{ flex: 1 }}
+            >
+              <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.gold }}>✏️ Edit</Text>
+            </GlassButton>
+            <GlassButton onPress={confirmDelete} disabled={deleting} pad={{ paddingVertical: 12, paddingHorizontal: 16 }} style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.crimson }}>{deleting ? 'Deleting...' : 'Delete'}</Text>
+            </GlassButton>
+          </View>
         ) : null}
       </ScrollView>
+      {showDeck && <DeckModal deck={decklist} onClose={() => setShowDeck(false)} />}
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { View, Text, TextInput, TouchableOpacity, Pressable, ScrollView, Image, Switch, KeyboardAvoidingView, Platform } from 'react-native'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GlassView, GlassContainer } from 'expo-glass-effect'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -128,7 +128,20 @@ function RoundRow({ round, index, onChange, onRemove }) {
   )
 }
 
-function PastTournamentForm() {
+// Rebuilds a pseudo card object from stored leader columns so the leader
+// banner / search input can display an already-saved leader.
+function leaderFromColumns(id, name, color) {
+  if (!id && !name) return null
+  return {
+    card_name: name ?? id,
+    card_color: color ?? null,
+    card_set_id: baseCardId(id),
+    card_image_id: id,
+    card_image: id ? getCardImageUrl(id) : null,
+  }
+}
+
+function PastTournamentForm({ editId, onDoneEditing }) {
   const { session } = useSession()
   const insets = useSafeAreaInsets()
 
@@ -161,6 +174,43 @@ function PastTournamentForm() {
   const [selectingDecklist, setSelectingDecklist] = useState(false)
 
   useEffect(() => { loadStoresAndSeries() }, [])
+
+  // Edit mode: prefill from an existing tournament. Rounds are wholesale
+  // replaced on save (delete + reinsert), matching the web app.
+  useEffect(() => {
+    if (!editId) return
+    let cancelled = false
+    async function loadForEdit() {
+      const { data: t } = await supabase
+        .from('tournaments')
+        .select('*, tournament_rounds(*)')
+        .eq('id', editId)
+        .single()
+      if (!t || cancelled) return
+      setTournamentName(t.name ?? '')
+      setDate(t.date ?? todayStr())
+      setPlayerCount(t.player_count ? String(t.player_count) : '')
+      setPlacement(t.placement ? String(t.placement) : '')
+      setNotes(t.notes ?? '')
+      setDeckName(t.deck_name ?? '')
+      setIsPractice(!!t.is_practice)
+      setLeaderResult(leaderFromColumns(t.leader_id, t.leader_name, t.leader_color))
+      const sorted = (t.tournament_rounds ?? []).slice().sort((a, b) => a.round_number - b.round_number)
+      setRounds(sorted.length > 0 ? sorted.map(r => ({
+        oppLeader: leaderFromColumns(r.opponent_leader_id, r.opponent_leader_name, r.opponent_leader_color),
+        wonDice: r.won_dice_roll,
+        wentFirst: r.went_first,
+        result: r.result,
+        notes: r.notes ?? '',
+      })) : [{ oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
+      if (t.decklist_id) {
+        const { data: dl } = await supabase.from('decklists').select('*').eq('id', t.decklist_id).maybeSingle()
+        if (dl && !cancelled) setAttachedDecklist(dl)
+      }
+    }
+    loadForEdit()
+    return () => { cancelled = true }
+  }, [editId])
 
   async function loadStoresAndSeries() {
     const [{ data: storeData }, { data: seriesData }] = await Promise.all([
@@ -242,10 +292,8 @@ function PastTournamentForm() {
     const storeLocation = selectedStore ? [selectedStore.name, selectedStore.city, selectedStore.state].filter(Boolean).join(', ') : ''
 
     const payload = {
-      user_id: session.user.id,
       name: finalName,
       date,
-      location: storeLocation,
       player_count: playerCount ? parseInt(playerCount) : null,
       placement: parseInt(placement),
       wins,
@@ -256,18 +304,31 @@ function PastTournamentForm() {
       deck_name: deckName || `${leaderResult.card_name} Deck`,
       notes: notes.trim(),
       decklist_id: decklistId,
-      store_id: selectedStore?.id ?? null,
-      series_id: selectedSeries?.id ?? null,
       is_practice: isPractice,
     }
+    // Only overwrite the flattened location snapshot if a store was picked.
+    if (!editId || selectedStore) payload.location = storeLocation
+    if (!editId || selectedStore) payload.store_id = selectedStore?.id ?? null
+    if (!editId || selectedSeries) payload.series_id = selectedSeries?.id ?? null
 
-    const { data: tournament, error: tError } = await supabase.from('tournaments').insert(payload).select().single()
-    if (tError) { setError('Failed to save: ' + tError.message); setSaving(false); return }
+    let tournamentId = editId
+    if (editId) {
+      const { error: tError } = await supabase.from('tournaments').update(payload).eq('id', editId)
+      if (tError) { setError('Failed to save: ' + tError.message); setSaving(false); return }
+      // Rounds are always wholesale-replaced on edit (same as web).
+      const { error: dError } = await supabase.from('tournament_rounds').delete().eq('tournament_id', editId)
+      if (dError) { setError('Failed to update rounds: ' + dError.message); setSaving(false); return }
+    } else {
+      const { data: tournament, error: tError } = await supabase.from('tournaments')
+        .insert({ ...payload, user_id: session.user.id }).select().single()
+      if (tError) { setError('Failed to save: ' + tError.message); setSaving(false); return }
+      tournamentId = tournament.id
+    }
 
     if (rounds.length > 0) {
       const { error: rError } = await supabase.from('tournament_rounds').insert(
         rounds.map((r, i) => ({
-          tournament_id: tournament.id,
+          tournament_id: tournamentId,
           round_number: i + 1,
           opponent_leader_id: r.oppLeader?.card_image_id ?? r.oppLeader?.card_set_id ?? null,
           opponent_leader_name: r.oppLeader?.card_name ?? null,
@@ -283,7 +344,12 @@ function PastTournamentForm() {
 
     setSaving(false)
     resetForm()
-    router.replace('/(tabs)/dashboard')
+    if (editId) {
+      onDoneEditing?.()
+      router.push('/profile')
+    } else {
+      router.replace('/(tabs)/dashboard')
+    }
   }
 
   const storesForDisplay = stores.map(s => ({ ...s, sublabel: [s.city, s.state].filter(Boolean).join(', ') }))
@@ -291,6 +357,15 @@ function PastTournamentForm() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 160, gap: 12 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
+
+        {editId ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(200,162,74,0.08)', borderWidth: 1, borderColor: colors.goldLine, borderRadius: radius.sm, paddingVertical: 10, paddingHorizontal: 14 }}>
+            <Text style={{ flex: 1, fontSize: 12, fontFamily: font.semi, color: colors.gold }}>✏️ Editing "{tournamentName || 'tournament'}"</Text>
+            <TouchableOpacity onPress={() => { resetForm(); onDoneEditing?.() }} hitSlop={6}>
+              <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.muted }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {/* Your Leader */}
         {leaderResult ? (
@@ -500,7 +575,7 @@ function PastTournamentForm() {
             </GlassView>
             <GlassView isInteractive glassEffectStyle="clear" tintColor={colors.gold} style={{ borderRadius: 999, overflow: 'hidden', opacity: saving ? 0.6 : 1 }}>
               <Pressable onPress={handleSubmit} disabled={saving} style={{ paddingVertical: 17, paddingHorizontal: 40 }}>
-                <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.onAccent }}>{saving ? 'Saving...' : 'Save Result'}</Text>
+                <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.onAccent }}>{saving ? 'Saving...' : editId ? 'Save Changes' : 'Save Result'}</Text>
               </Pressable>
             </GlassView>
           </GlassContainer>
@@ -514,7 +589,7 @@ function PastTournamentForm() {
               </Text>
             </View>
             <GlassButton onPress={handleSubmit} disabled={saving} tint={colors.gold} pad={{ paddingVertical: 17, paddingHorizontal: 40 }}>
-              <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.onAccent }}>{saving ? 'Saving...' : 'Save Result'}</Text>
+              <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.onAccent }}>{saving ? 'Saving...' : editId ? 'Save Changes' : 'Save Result'}</Text>
             </GlassButton>
           </View>
         )}
@@ -534,26 +609,32 @@ export default function LogResult() {
   const { session } = useSession()
   const insets = useSafeAreaInsets()
   const [mode, setMode] = useState('past')
+  const { edit } = useLocalSearchParams()
+  const editId = typeof edit === 'string' && edit.length > 0 ? edit : null
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.abyss }}>
       <View style={{ paddingHorizontal: 16, paddingTop: insets.top + 12 }}>
         <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Logbook</Text>
-        <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 12 }}>Log Result</Text>
-        <GlassPills
-          style={{ marginBottom: 14, justifyContent: 'center', gap: 10 }}
-          pad={{ paddingVertical: 15, paddingHorizontal: 24 }}
-          textSize={15}
-          items={[
-            { key: 'live', label: '🟢 Live Tournament' },
-            { key: 'past', label: '📋 Past Tournament' },
-          ]}
-          activeKey={mode}
-          onSelect={setMode}
-        />
+        <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 12 }}>{editId ? 'Edit Result' : 'Log Result'}</Text>
+        {!editId && (
+          <GlassPills
+            style={{ marginBottom: 14, justifyContent: 'center', gap: 10 }}
+            pad={{ paddingVertical: 15, paddingHorizontal: 24 }}
+            textSize={15}
+            items={[
+              { key: 'live', label: '🟢 Live Tournament' },
+              { key: 'past', label: '📋 Past Tournament' },
+            ]}
+            activeKey={mode}
+            onSelect={setMode}
+          />
+        )}
       </View>
 
-      {mode === 'live' ? (
+      {editId ? (
+        <PastTournamentForm key={editId} editId={editId} onDoneEditing={() => router.setParams({ edit: '' })} />
+      ) : mode === 'live' ? (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: insets.bottom + 90 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
             <LiveTournament session={session} />
