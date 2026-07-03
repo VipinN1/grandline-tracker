@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, Keyboard, Pressable } from 'react-native'
 import { router, Stack } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { searchCards, searchLeaders, getCard, getCardImageUrl, enrichCards } from '../lib/optcgapi'
@@ -513,9 +513,19 @@ export default function DeckBuilder() {
 
         {/* Import modal */}
         <Modal visible={showImport} transparent animationType="fade" onRequestClose={() => setShowImport(false)}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <View style={{ backgroundColor: colors.abyss, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 16, width: '100%', maxWidth: 460, padding: 24, gap: 14 }}>
-              <Text style={{ fontSize: 15, fontFamily: font.bold, color: colors.text }}>Import Decklist</Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          >
+            {/* Tap outside the sheet to drop the keyboard */}
+            <Pressable onPress={Keyboard.dismiss} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+            <View style={{ backgroundColor: colors.abyss, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 16, width: '100%', maxWidth: 460, padding: 20, gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 15, fontFamily: font.bold, color: colors.text }}>Import Decklist</Text>
+                <TouchableOpacity onPress={Keyboard.dismiss} hitSlop={8}>
+                  <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>Done</Text>
+                </TouchableOpacity>
+              </View>
               <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 19, fontFamily: font.body }}>
                 One card per line: <Text style={{ fontFamily: font.mono, color: colors.oceanBright }}>4xOP01-001</Text>. Leader line: <Text style={{ fontFamily: font.mono, color: colors.oceanBright }}>Leader: OP01-001</Text>
               </Text>
@@ -527,21 +537,21 @@ export default function DeckBuilder() {
                 multiline
                 autoCapitalize="characters"
                 autoCorrect={false}
-                style={{ ...fieldInput, minHeight: 180, textAlignVertical: 'top', fontFamily: font.mono, fontSize: 12 }}
+                style={{ ...fieldInput, height: 150, textAlignVertical: 'top', fontFamily: font.mono, fontSize: 12 }}
               />
               {error ? <Text style={{ fontSize: 11, color: colors.crimson, fontFamily: font.body }}>{error}</Text> : null}
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity onPress={() => { setShowImport(false); setImportText(''); setError('') }} style={{ flex: 1, paddingVertical: 9, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => { setShowImport(false); setImportText(''); setError('') }} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, alignItems: 'center' }}>
                   <Text style={{ color: colors.muted, fontSize: 13, fontFamily: font.semi }}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleImport} disabled={!importText.trim() || importing} style={{ flex: 2, paddingVertical: 9, borderRadius: radius.sm, backgroundColor: importText.trim() && !importing ? colors.ocean : 'rgba(140,176,208,0.05)', alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => { Keyboard.dismiss(); handleImport() }} disabled={!importText.trim() || importing} style={{ flex: 2, paddingVertical: 11, borderRadius: radius.sm, backgroundColor: importText.trim() && !importing ? colors.ocean : 'rgba(140,176,208,0.05)', alignItems: 'center' }}>
                   <Text style={{ color: importText.trim() && !importing ? '#fff' : colors.muted, fontSize: 13, fontFamily: font.bold }}>
                     {importing ? 'Importing...' : 'Import'}
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       </KeyboardAvoidingView>
     </>
