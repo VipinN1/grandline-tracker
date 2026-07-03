@@ -47,12 +47,20 @@
       "Bash(curl -s \"https://optcgapi.com/api/sets/filtered/?card_name=luffy&card_type=Leader\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('count', len\\(d\\) if isinstance\\(d,list\\) else d\\)\")",
       "Bash(python -c *)",
+<<<<<<< Updated upstream
       "PowerShell($r = Invoke-WebRequest -Uri \"https://cvfsgutgbiukdxfmaijq.supabase.co/rest/v1/tournaments?select=id&limit=1\" -Headers @{ apikey = \"sb_publishable_wrIc5uCUDKgmxOxGzsRChA_c4JJZecR\" } -UseBasicParsing; \"Status: $\\($r.StatusCode\\)\"; $r.Content)",
       "WebFetch(domain:api.expo.dev)",
       "PowerShell(git restore *)",
       "PowerShell(npm ci *)",
       "WebFetch(domain:docs.expo.dev)",
       "PowerShell(npx expo install expo-glass-effect)"
+=======
+      "PowerShell(git checkout *)",
+      "PowerShell(npx create-expo-app@latest mobile --template blank --yes)",
+      "WebFetch(domain:docs.expo.dev)",
+      "PowerShell(npm install *)",
+      "PowerShell(npx expo export --platform ios --output-dir dist-check)"
+>>>>>>> Stashed changes
     ]
   }
 }
