@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { supabase } from '../../lib/supabase'
-import { useSession } from '../../lib/auth'
-import { getCardImageUrl } from '../../lib/optcgapi'
-import { colors, font, radius } from '../../theme'
+import { Stack } from 'expo-router'
+import { supabase } from '../lib/supabase'
+import { useSession } from '../lib/auth'
+import { getCardImageUrl } from '../lib/optcgapi'
+import { colors, font, radius } from '../theme'
 
 const LEADER_COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
@@ -127,7 +127,6 @@ const CELL_H = 52
 
 export default function Stats() {
   const { session } = useSession()
-  const insets = useSafeAreaInsets()
   const [scope, setScope] = useState('mine')
   const [metric, setMetric] = useState('overall')
   const [rowSearch, setRowSearch] = useState('')
@@ -167,10 +166,16 @@ export default function Stats() {
   }, [oppLeaders, colSearch])
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.abyss }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}>
+    <>
+      <Stack.Screen options={{
+        headerShown: true,
+        title: 'Stats',
+        headerStyle: { backgroundColor: '#08101b' },
+        headerTitleStyle: { fontFamily: font.display, fontSize: 17, color: colors.parchment },
+        headerTintColor: colors.parchment,
+      }} />
+    <ScrollView style={{ flex: 1, backgroundColor: colors.abyss }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
       <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Navigator's Charts</Text>
-        <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 6 }}>Stats</Text>
         <Text style={{ fontSize: 13, color: colors.muted, fontFamily: font.body }}>
           Your leaders (rows) vs leaders you've faced (columns). Cell = your win rate in that matchup.
         </Text>
@@ -308,5 +313,6 @@ export default function Stats() {
         </View>
       )}
     </ScrollView>
+    </>
   )
 }

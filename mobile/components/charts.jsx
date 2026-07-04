@@ -1,6 +1,7 @@
 // Native SVG charts for the dashboard — RN ports of the recharts views in
 // src/pages/Dashboard.jsx (placement trend line, leader usage donut,
-// win-rate gradient bars). No touch tooltips: values are direct-labeled.
+// win-rate gradient bars). The trend chart supports touch-drag scrubbing
+// with a dot-by-dot tooltip, mirroring the web hover tooltip.
 import { useState } from 'react'
 import { View, Text } from 'react-native'
 import Svg, { Polyline, Circle, Line as SvgLine, Path, Text as SvgText, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg'
@@ -21,10 +22,23 @@ function dotColor(placement) {
   return colors.faint
 }
 
+function placementLabel(n) {
+  if (n === 1) return '1st'
+  if (n === 2) return '2nd'
+  if (n === 3) return '3rd'
+  return `${n}th`
+}
+
 // ─── Placement trend ─────────────────────────────────────────────────────────
-// data: [{ date, placement }] oldest → newest. Y axis reversed (1st on top).
+// data: [{ date, placement, name?, players?, location? }] oldest → newest.
+// Y axis reversed (1st on top). Touch and drag across the chart to scrub
+// dot-by-dot; a tooltip follows the active dot (web parity: date,
+// "Nth of N players", tournament name — plus location on mobile).
+const TOOLTIP_W = 200
+
 export function PlacementTrendChart({ data, height = 190 }) {
   const [width, setWidth] = useState(0)
+  const [active, setActive] = useState(null)
 
   const PAD_L = 40
   const PAD_R = 14
@@ -43,34 +57,71 @@ export function PlacementTrendChart({ data, height = 190 }) {
   const labelStep = Math.max(1, Math.ceil(data.length / 6))
   const labeled = data.map((_, i) => i % labelStep === 0 || i === data.length - 1)
 
+  // Snap a touch x-position to the nearest dot.
+  function scrubTo(x) {
+    if (plotW <= 0 || data.length === 0) return
+    const t = (x - PAD_L) / plotW
+    const i = Math.min(data.length - 1, Math.max(0, Math.round(t * (data.length - 1))))
+    setActive(i)
+  }
+
+  const d = active !== null ? data[active] : null
+  // Keep the tooltip inside the chart, centered on the dot when possible.
+  const tooltipLeft = d ? Math.min(Math.max(xAt(active) - TOOLTIP_W / 2, 0), Math.max(width - TOOLTIP_W, 0)) : 0
+
   return (
     <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ width: '100%' }}>
       {width > 0 && (
-        <Svg width={width} height={height}>
-          {yTicks.map(v => (
-            <SvgLine key={v} x1={PAD_L} y1={yAt(v)} x2={width - PAD_R} y2={yAt(v)} stroke="rgba(140,176,208,0.09)" strokeWidth={1} strokeDasharray="3 3" />
-          ))}
-          {data.map((_, i) => labeled[i] ? (
-            <SvgLine key={i} x1={xAt(i)} y1={PAD_T} x2={xAt(i)} y2={height - PAD_B} stroke="rgba(140,176,208,0.06)" strokeWidth={1} strokeDasharray="3 3" />
-          ) : null)}
-          {yTicks.map(v => (
-            <SvgText key={v} x={PAD_L - 8} y={yAt(v) + 4} fill={colors.muted} fontSize={11} textAnchor="end">{`#${v}`}</SvgText>
-          ))}
-          {data.map((d, i) => labeled[i] ? (
-            <SvgText key={i} x={xAt(i)} y={height - 8} fill={colors.muted} fontSize={10} textAnchor="middle">{d.date}</SvgText>
-          ) : null)}
-          <Polyline
-            points={data.map((d, i) => `${xAt(i)},${yAt(d.placement)}`).join(' ')}
-            fill="none"
-            stroke={colors.oceanBright}
-            strokeWidth={2}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-          {data.map((d, i) => (
-            <Circle key={i} cx={xAt(i)} cy={yAt(d.placement)} r={5} fill={dotColor(d.placement)} />
-          ))}
-        </Svg>
+        <View
+          onStartShouldSetResponder={() => true}
+          onMoveShouldSetResponder={() => true}
+          onResponderGrant={e => scrubTo(e.nativeEvent.locationX)}
+          onResponderMove={e => scrubTo(e.nativeEvent.locationX)}
+          onResponderRelease={() => setActive(null)}
+          onResponderTerminate={() => setActive(null)}
+          onResponderTerminationRequest={() => false}
+        >
+          <Svg width={width} height={height}>
+            {yTicks.map(v => (
+              <SvgLine key={v} x1={PAD_L} y1={yAt(v)} x2={width - PAD_R} y2={yAt(v)} stroke="rgba(140,176,208,0.09)" strokeWidth={1} strokeDasharray="3 3" />
+            ))}
+            {data.map((_, i) => labeled[i] ? (
+              <SvgLine key={i} x1={xAt(i)} y1={PAD_T} x2={xAt(i)} y2={height - PAD_B} stroke="rgba(140,176,208,0.06)" strokeWidth={1} strokeDasharray="3 3" />
+            ) : null)}
+            {yTicks.map(v => (
+              <SvgText key={v} x={PAD_L - 8} y={yAt(v) + 4} fill={colors.muted} fontSize={11} textAnchor="end">{`#${v}`}</SvgText>
+            ))}
+            {data.map((d2, i) => labeled[i] ? (
+              <SvgText key={i} x={xAt(i)} y={height - 8} fill={colors.muted} fontSize={10} textAnchor="middle">{d2.date}</SvgText>
+            ) : null)}
+            {active !== null && (
+              <SvgLine x1={xAt(active)} y1={PAD_T} x2={xAt(active)} y2={height - PAD_B} stroke="rgba(220,179,94,0.45)" strokeWidth={1.5} />
+            )}
+            <Polyline
+              points={data.map((d2, i) => `${xAt(i)},${yAt(d2.placement)}`).join(' ')}
+              fill="none"
+              stroke={colors.oceanBright}
+              strokeWidth={2}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {data.map((d2, i) => (
+              <Circle key={i} cx={xAt(i)} cy={yAt(d2.placement)} r={i === active ? 7 : 5} fill={dotColor(d2.placement)}
+                stroke={i === active ? '#fff' : 'none'} strokeWidth={i === active ? 1.5 : 0} />
+            ))}
+          </Svg>
+          {/* Tooltip floats over the chart while scrubbing — no reserved space. */}
+          {d ? (
+            <View pointerEvents="none" style={{ position: 'absolute', top: 2, left: tooltipLeft, width: TOOLTIP_W, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 }}>
+              <Text style={{ fontSize: 11, color: colors.muted, fontFamily: font.body }}>{d.date}</Text>
+              <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.text, marginTop: 2 }}>
+                {placementLabel(d.placement)}{d.players ? ` of ${d.players} players` : ''}
+              </Text>
+              {d.name ? <Text numberOfLines={1} style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>{d.name}</Text> : null}
+              {d.location ? <Text numberOfLines={1} style={{ fontSize: 11, color: colors.faint, marginTop: 2, fontFamily: font.body }}>📍 {d.location}</Text> : null}
+            </View>
+          ) : null}
+        </View>
       )}
     </View>
   )

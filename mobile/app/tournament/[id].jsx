@@ -33,7 +33,7 @@ function LeaderHero({ t, leaderColor }) {
   const [width, setWidth] = useState(0)
   const HEIGHT = 210
   const imgH = width * 1.4          // card aspect ratio 2.5 : 3.5
-  const offsetY = imgH * 0.16       // crop starts ~16% down the card
+  const offsetY = imgH * 0.10       // crop starts ~10% down the card — head height
 
   return (
     <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: HEIGHT, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: leaderColor + '55', backgroundColor: colors.surface }}>
@@ -45,9 +45,9 @@ function LeaderHero({ t, leaderColor }) {
         />
       )}
       <LinearGradient
-        colors={['rgba(6,16,27,0.05)', 'rgba(6,16,27,0.55)', 'rgba(6,16,27,0.94)']}
+        colors={['rgba(6,16,27,0.05)', 'rgba(6,16,27,0.55)', 'rgba(6,16,27,1)']}
         locations={[0, 0.55, 1]}
-        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: -1 }}
       />
       <View style={{ flex: 1, justifyContent: 'flex-end', padding: 16 }}>
         <Text numberOfLines={1} style={{ fontFamily: font.display, fontSize: 24, color: colors.text }}>{t.name}</Text>

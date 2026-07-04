@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import { View, Text, ScrollView, Alert } from 'react-native'
 import { router } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -52,7 +52,7 @@ export default function More() {
   }
 
   const features = [
-    { icon: 'person-circle-outline', label: 'Profile', href: '/profile' },
+    { icon: 'stats-chart-outline', label: 'Stats', href: '/stats' },
     { icon: 'people-outline', label: 'Friends', href: '/friends' },
     { icon: 'chatbubbles-outline', label: 'Community', href: '/community', badge: unreadDMs },
     { icon: 'skull-outline', label: 'Bounty Board', href: '/bounty' },
@@ -70,30 +70,37 @@ export default function More() {
         <Text style={{ fontSize: 12, color: colors.muted, fontFamily: font.body, marginTop: 2 }}>{session?.user?.email}</Text>
       </View>
 
-      <View style={{ ...card, marginBottom: 16 }}>
-        {features.map((item, i) => (
-          <TouchableOpacity
+      <View style={{ gap: 10, marginBottom: 16 }}>
+        {features.map(item => (
+          <GlassButton
             key={item.label}
             onPress={() => router.push(item.href)}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
-              borderBottomWidth: i < features.length - 1 ? 1 : 0, borderBottomColor: colors.line,
-            }}
+            borderRadius={radius.lg}
+            pad={{ paddingVertical: 18, paddingHorizontal: 18 }}
           >
-            <Ionicons name={item.icon} size={18} color={colors.gold} />
-            <Text style={{ flex: 1, fontSize: 14, color: colors.text, fontFamily: font.semi }}>{item.label}</Text>
-            <UnreadPill count={item.badge} />
-            <Ionicons name="chevron-forward" size={16} color={colors.faint} />
-          </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%' }}>
+              <Ionicons name={item.icon} size={22} color={colors.gold} />
+              <Text style={{ flex: 1, fontSize: 16, color: colors.text, fontFamily: font.semi }}>{item.label}</Text>
+              <UnreadPill count={item.badge} />
+              <Ionicons name="chevron-forward" size={18} color={colors.faint} />
+            </View>
+          </GlassButton>
         ))}
       </View>
 
-      <GlassButton onPress={() => setShowBugReport(true)} pad={{ paddingVertical: 13, paddingHorizontal: 16 }} style={{ marginBottom: 10 }}>
-        <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>🐞 Report a Bug</Text>
+      <GlassButton onPress={() => setShowBugReport(true)} borderRadius={radius.lg} pad={{ paddingVertical: 18, paddingHorizontal: 18 }} style={{ marginBottom: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%' }}>
+          <Text style={{ fontSize: 18 }}>🐞</Text>
+          <Text style={{ flex: 1, fontSize: 16, fontFamily: font.semi, color: colors.oceanBright }}>Report a Bug</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.faint} />
+        </View>
       </GlassButton>
 
-      <GlassButton onPress={handleSignOut} pad={{ paddingVertical: 13, paddingHorizontal: 16 }}>
-        <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.crimson }}>Sign Out</Text>
+      <GlassButton onPress={handleSignOut} borderRadius={radius.lg} pad={{ paddingVertical: 18, paddingHorizontal: 18 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%' }}>
+          <Ionicons name="log-out-outline" size={22} color={colors.crimson} />
+          <Text style={{ flex: 1, fontSize: 16, fontFamily: font.semi, color: colors.crimson }}>Sign Out</Text>
+        </View>
       </GlassButton>
 
       {showBugReport && <BugReportModal page="more" onClose={() => setShowBugReport(false)} />}

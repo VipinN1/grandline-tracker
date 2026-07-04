@@ -59,7 +59,9 @@
       "PowerShell(npx expo export --platform ios --output-dir dist-check)",
       "PowerShell(try { Get-Content \".claude\\\\settings.local.json\" -Raw | ConvertFrom-Json | Out-Null; \"Valid JSON\" } catch { \"STILL INVALID: $\\($_.Exception.Message\\)\" })",
       "PowerShell(\\(Get-Content \"mobile\\\\app\\\\tournaments\\\\[id].jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"src\\\\pages\\\\TournamentDetailPage.jsx\" | Measure-Object -Line\\).Lines; \\(Get-Content \"mobile\\\\components\\\\MatchChat.jsx\" | Measure-Object -Line\\).Lines)",
-      "Skill(dataviz)"
+      "Skill(dataviz)",
+      "Bash(node -e ' *2)",
+      "Bash(eas --version)"
     ]
   }
 }

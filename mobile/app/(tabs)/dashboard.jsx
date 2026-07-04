@@ -8,7 +8,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
-import { colors, font, radius, eyebrow, pageHeader } from '../../theme'
+import { colors, font, radius, pageHeader } from '../../theme'
 import { Glass, GlassButton } from '../../components/glass'
 import { PlacementTrendChart, LeaderDonut, LeaderDot, WinRateBar, leaderColorList } from '../../components/charts'
 
@@ -78,7 +78,7 @@ export default function Dashboard() {
     if (!session) return
     const { data } = await supabase
       .from('tournaments')
-      .select('id, name, date, placement, player_count, wins, losses, leader_id, leader_name, leader_color, is_practice')
+      .select('id, name, date, placement, player_count, location, wins, losses, leader_id, leader_name, leader_color, is_practice')
       .eq('user_id', session.user.id)
       .eq('is_practice', false)
       .order('date', { ascending: false })
@@ -105,6 +105,9 @@ export default function Dashboard() {
   const placementOverTime = [...tournaments].reverse().map(t => ({
     date: new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     placement: t.placement,
+    name: t.name,
+    players: t.player_count,
+    location: t.location,
   }))
 
   const leaderUsage = Object.values(
@@ -137,13 +140,12 @@ export default function Dashboard() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.abyss }}
-      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 90 }}
+      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 4, paddingBottom: insets.bottom + 90 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
     >
       {/* Header */}
-      <View style={{ marginBottom: 18 }}>
-        <Text style={{ ...eyebrow, marginBottom: 4 }}>⚓ Captain's Log</Text>
-        <Text style={{ ...pageHeader, fontSize: 30, lineHeight: 34, marginBottom: 4 }}>Dashboard</Text>
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ ...pageHeader, fontSize: 30, lineHeight: 34, marginBottom: 2 }}>Dashboard</Text>
         <Text style={{ fontSize: 14, color: colors.muted, fontFamily: font.body }}>Your competitive performance at a glance</Text>
       </View>
 

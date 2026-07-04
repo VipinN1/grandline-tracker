@@ -1,15 +1,47 @@
 // Shared Liquid Glass primitives — official UIGlassEffect via expo-glass-effect
 // on iOS 26+, with flat nautical fallbacks everywhere else.
-import { View, Text, TextInput, Pressable, TouchableOpacity } from 'react-native'
+import { useSyncExternalStore } from 'react'
+import { View, Text, TextInput, Pressable, TouchableOpacity, AppState } from 'react-native'
 import { GlassView, GlassContainer, isLiquidGlassAvailable } from 'expo-glass-effect'
+import { useIsFocused } from '@react-navigation/native'
 import { colors, font, radius, card } from '../theme'
 
 export const hasGlass = isLiquidGlassAvailable()
 
+// UIGlassEffect layers fail to attach when the GlassView is created while its
+// scene is off-window — which happens on cold start because the native tab bar
+// pre-mounts every tab scene — and can also detach when the app is
+// backgrounded. Remount glass views whenever (a) their screen gains/loses
+// focus or (b) the app returns to the foreground, so the effect is always
+// recreated while actually visible.
+let glassEpoch = 0
+const epochListeners = new Set()
+AppState.addEventListener('change', state => {
+  if (state === 'active') {
+    glassEpoch++
+    epochListeners.forEach(l => l())
+  }
+})
+
+export function useGlassEpoch() {
+  return useSyncExternalStore(
+    cb => { epochListeners.add(cb); return () => epochListeners.delete(cb) },
+    () => glassEpoch,
+  )
+}
+
+// Key for glass views: changes on screen focus and foreground transitions.
+export function useGlassKey() {
+  const epoch = useGlassEpoch()
+  const focused = useIsFocused()
+  return `g${epoch}-${focused ? 1 : 0}`
+}
+
 export function Glass({ style, children }) {
+  const epoch = useGlassKey()
   if (hasGlass) {
     return (
-      <GlassView glassEffectStyle="regular" style={{ borderRadius: radius.lg, overflow: 'hidden', ...style }}>
+      <GlassView key={epoch} glassEffectStyle="regular" style={{ borderRadius: radius.lg, overflow: 'hidden', ...style }}>
         {children}
       </GlassView>
     )
@@ -26,10 +58,12 @@ const BTN_PAD = { paddingVertical: 10, paddingHorizontal: 16 }
 
 export function GlassButton({ onPress, disabled, tint, effect = 'regular', borderRadius = 999, pad, style, children }) {
   const padding = pad ?? BTN_PAD
+  const epoch = useGlassKey()
   if (hasGlass) {
     return (
       <Pressable onPress={onPress} disabled={disabled} style={{ opacity: disabled ? 0.45 : 1, ...style }}>
         <GlassView
+          key={epoch}
           isInteractive
           glassEffectStyle={effect}
           tintColor={tint}
@@ -68,9 +102,10 @@ export function GlassButton({ onPress, disabled, tint, effect = 'regular', borde
 // neighboring glass merges/morphs as Apple intends; the active pill is
 // gold-tinted glass.
 export function GlassPills({ items, activeKey, onSelect, spacing = 18, pad = { paddingVertical: 8, paddingHorizontal: 14 }, textSize = 12, style }) {
+  const epoch = useGlassKey()
   if (hasGlass) {
     return (
-      <GlassContainer spacing={spacing} style={{ flexDirection: 'row', gap: 6, ...style }}>
+      <GlassContainer key={epoch} spacing={spacing} style={{ flexDirection: 'row', gap: 6, ...style }}>
         {items.map(it => {
           const active = it.key === activeKey
           return (
@@ -115,9 +150,10 @@ export function GlassPills({ items, activeKey, onSelect, spacing = 18, pad = { p
 // text itself (minHeight, mono font, etc.).
 export function GlassInput({ style, inputStyle, ...props }) {
   const textStyle = { paddingVertical: 12, paddingHorizontal: 14, color: colors.text, fontSize: 14, fontFamily: font.body, ...inputStyle }
+  const epoch = useGlassKey()
   if (hasGlass) {
     return (
-      <GlassView glassEffectStyle="regular" style={{ borderRadius: radius.md, overflow: 'hidden', ...style }}>
+      <GlassView key={epoch} glassEffectStyle="regular" style={{ borderRadius: radius.md, overflow: 'hidden', ...style }}>
         <TextInput placeholderTextColor={colors.faint} {...props} style={textStyle} />
       </GlassView>
     )

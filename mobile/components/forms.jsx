@@ -5,7 +5,7 @@ import { View, Text, TextInput, TouchableOpacity, Pressable, Image, ScrollView, 
 import { GlassView } from 'expo-glass-effect'
 import { getCardImageUrl, searchLeaders } from '../lib/optcgapi'
 import { colors, font, radius } from '../theme'
-import { hasGlass } from './glass'
+import { hasGlass, useGlassKey } from './glass'
 
 export const LEADER_COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
@@ -141,6 +141,7 @@ export function LeaderSearchInput({ label, placeholder, onSelect, selected, onCl
 
 // ── Pill toggle group (dice / going / result) ────────────────────────────────
 export function ToggleGroup({ label, value, onChange, options }) {
+  const epoch = useGlassKey()
   return (
     <View>
       <FieldLabel>{label}</FieldLabel>
@@ -150,9 +151,10 @@ export function ToggleGroup({ label, value, onChange, options }) {
           const toggle = () => onChange(active ? null : opt.value)
           if (hasGlass) {
             return (
-              // Key includes active so the tint remounts cleanly on toggle.
+              // Key includes active (clean tint remount on toggle) and the
+              // glass epoch (re-attach effects after backgrounding).
               <GlassView
-                key={`${String(opt.value)}-${active}`}
+                key={`${String(opt.value)}-${active}-${epoch}`}
                 isInteractive
                 glassEffectStyle="regular"
                 tintColor={active ? opt.color + '55' : undefined}

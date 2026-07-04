@@ -14,7 +14,7 @@ import {
 } from '../../components/forms'
 import SelectDecklistModal from '../../components/SelectDecklistModal'
 import LiveTournament from '../../components/LiveTournament'
-import { Glass, GlassButton, GlassPills, GlassInput, hasGlass } from '../../components/glass'
+import { Glass, GlassButton, GlassPills, GlassInput, hasGlass, useGlassKey } from '../../components/glass'
 
 function todayStr() {
   const d = new Date()
@@ -144,6 +144,7 @@ function leaderFromColumns(id, name, color) {
 function PastTournamentForm({ editId, onDoneEditing }) {
   const { session } = useSession()
   const insets = useSafeAreaInsets()
+  const glassEpoch = useGlassKey()
 
   const [tournamentName, setTournamentName] = useState('')
   const [date, setDate] = useState(todayStr())
@@ -565,7 +566,7 @@ function PastTournamentForm({ editId, onDoneEditing }) {
           form in one GlassContainer, so the pieces merge like the system bar. */}
       <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom + 70, flexDirection: 'row', justifyContent: 'center' }}>
         {hasGlass ? (
-          <GlassContainer spacing={24} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <GlassContainer key={glassEpoch} spacing={24} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <GlassView glassEffectStyle="clear" style={{ borderRadius: 999, overflow: 'hidden', paddingVertical: 17, paddingHorizontal: 22 }}>
               <Text style={{ fontSize: 15, fontFamily: font.mono }}>
                 <Text style={{ color: colors.emerald }}>{wins}W</Text>
@@ -614,8 +615,7 @@ export default function LogResult() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.abyss }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: insets.top + 12 }}>
-        <Text style={{ fontSize: 11, fontFamily: font.semi, letterSpacing: 1.6, textTransform: 'uppercase', color: colors.gold, marginBottom: 4 }}>⚓ Logbook</Text>
+      <View style={{ paddingHorizontal: 16, paddingTop: insets.top + 4 }}>
         <Text style={{ fontFamily: font.display, fontSize: 26, color: colors.text, marginBottom: 12 }}>{editId ? 'Edit Result' : 'Log Result'}</Text>
         {!editId && (
           <GlassPills

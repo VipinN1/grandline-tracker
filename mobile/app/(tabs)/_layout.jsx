@@ -17,9 +17,9 @@ export default function TabsLayout() {
         <Icon sf="house.fill" />
         <Label>Dashboard</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="stats">
-        <Icon sf="chart.bar.fill" />
-        <Label>Stats</Label>
+      <NativeTabs.Trigger name="profile">
+        <Icon sf="person.crop.circle.fill" />
+        <Label>Profile</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="log">
         <Icon sf="plus.circle.fill" />
