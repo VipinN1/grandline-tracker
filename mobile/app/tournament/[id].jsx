@@ -31,7 +31,7 @@ function Pill({ text, color }) {
 // card, where the character's head usually sits.
 function LeaderHero({ t, leaderColor }) {
   const [width, setWidth] = useState(0)
-  const HEIGHT = 210
+  const HEIGHT = 250
   const imgH = width * 1.4          // card aspect ratio 2.5 : 3.5
   const offsetY = imgH * 0.10       // crop starts ~10% down the card — head height
 
@@ -49,6 +49,11 @@ function LeaderHero({ t, leaderColor }) {
         locations={[0, 0.55, 1]}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: -1 }}
       />
+      {/* Brand chip — keeps PirateTracker visible in screenshots */}
+      <View style={{ position: 'absolute', top: 12, left: 12, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(6,16,27,0.62)', borderWidth: 1, borderColor: 'rgba(200,162,74,0.4)' }}>
+        <Text style={{ fontSize: 11 }}>🧭</Text>
+        <Text style={{ fontSize: 10.5, fontFamily: font.bold, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.gold }}>PirateTracker</Text>
+      </View>
       <View style={{ flex: 1, justifyContent: 'flex-end', padding: 16 }}>
         <Text numberOfLines={1} style={{ fontFamily: font.display, fontSize: 24, color: colors.text }}>{t.name}</Text>
         <Text style={{ fontSize: 12, color: colors.textSoft, fontFamily: font.body, marginTop: 2 }}>
@@ -62,19 +67,26 @@ function LeaderHero({ t, leaderColor }) {
   )
 }
 
-// Opponent card thumb cropped toward the top of the art.
+// Opponent thumb — square, zoomed into the upper art where the face sits.
+const THUMB = 54
+
 function OpponentThumb({ leaderId, color }) {
   if (!leaderId) {
-    return <View style={{ width: 40, height: 56, borderRadius: 5, backgroundColor: 'rgba(140,176,208,0.05)' }} />
+    return <View style={{ width: THUMB, height: THUMB, borderRadius: 10, backgroundColor: 'rgba(140,176,208,0.05)' }} />
   }
+  const imgH = THUMB * 1.4
   return (
-    <View style={{ width: 40, height: 56, borderRadius: 5, overflow: 'hidden', borderWidth: 1.5, borderColor: color + '66', backgroundColor: colors.surface }}>
-      <Image source={{ uri: getCardImageUrl(leaderId) }} style={{ width: 40, height: 70, marginTop: -3 }} resizeMode="cover" />
+    <View style={{ width: THUMB, height: THUMB, borderRadius: 10, overflow: 'hidden', borderWidth: 1.5, borderColor: color + '77', backgroundColor: colors.surface }}>
+      <Image
+        source={{ uri: getCardImageUrl(leaderId) }}
+        style={{ width: THUMB, height: imgH, marginTop: -imgH * 0.12 }}
+        resizeMode="cover"
+      />
     </View>
   )
 }
 
-const colHeader = { fontSize: 9, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 0.8, color: colors.faint }
+const colHeader = { fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 0.8, color: colors.faint }
 
 export default function TournamentDetail() {
   const { id } = useLocalSearchParams()
@@ -199,6 +211,11 @@ export default function TournamentDetail() {
           {t.is_practice ? <Pill text="Practice" color={colors.muted} /> : null}
         </View>
 
+        {/* Brand line above the rounds — can't be cropped out of a rounds screenshot */}
+        <Text style={{ textAlign: 'center', fontSize: 13.5, fontFamily: font.body, letterSpacing: 0.4, color: colors.muted, marginTop: 2, marginBottom: -4 }}>
+          piratetracker.vercel.app
+        </Text>
+
         {/* Rounds table */}
         <Glass style={{ padding: 14 }}>
           <Text style={{ fontSize: 11, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.gold, marginBottom: 10 }}>
@@ -210,53 +227,53 @@ export default function TournamentDetail() {
             <>
               {/* Column header */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: 'rgba(140,176,208,0.07)' }}>
-                <Text style={{ ...colHeader, width: 18 }}>Rd</Text>
+                <Text style={{ ...colHeader, width: 20 }}>Rd</Text>
                 <Text style={{ ...colHeader, flex: 1 }}>Opponent</Text>
-                <Text style={{ ...colHeader, width: 40, textAlign: 'center' }}>Dice</Text>
-                <Text style={{ ...colHeader, width: 30, textAlign: 'center' }}>Order</Text>
-                <Text style={{ ...colHeader, width: 26, textAlign: 'center' }}>Res</Text>
+                <Text style={{ ...colHeader, width: 52, textAlign: 'center' }}>Dice</Text>
+                <Text numberOfLines={1} style={{ ...colHeader, width: 36, textAlign: 'center' }}>Turn</Text>
+                <Text style={{ ...colHeader, width: 34, textAlign: 'center' }}>Res</Text>
               </View>
 
               {rounds.map(r => {
                 const isWin = r.result === 'win'
                 const oppColor = LEADER_COLORS[r.opponent_leader_color] ?? '#94a3b8'
                 return (
-                  <View key={r.id} style={{ marginTop: 6, borderRadius: 10, backgroundColor: isWin ? 'rgba(59,178,126,0.07)' : 'rgba(210,74,58,0.07)', paddingVertical: 8, paddingHorizontal: 8 }}>
+                  <View key={r.id} style={{ marginTop: 7, borderRadius: 12, backgroundColor: isWin ? 'rgba(59,178,126,0.07)' : 'rgba(210,74,58,0.07)', paddingVertical: 10, paddingHorizontal: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <Text style={{ width: 18, textAlign: 'center', fontSize: 13, fontFamily: font.mono, color: isWin ? colors.emerald : colors.crimson }}>{r.round_number}</Text>
-                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ width: 20, textAlign: 'center', fontSize: 14, fontFamily: font.mono, color: isWin ? colors.emerald : colors.crimson }}>{r.round_number}</Text>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <OpponentThumb leaderId={r.opponent_leader_id} color={oppColor} />
-                        <Text numberOfLines={2} style={{ flex: 1, fontSize: 12.5, fontFamily: font.semi, color: oppColor }}>
+                        <Text numberOfLines={2} style={{ flex: 1, fontSize: 13.5, fontFamily: font.semi, color: oppColor }}>
                           {cleanName(r.opponent_leader_name) || 'Unknown'}
                         </Text>
                       </View>
-                      <View style={{ width: 40, alignItems: 'center' }}>
+                      <View style={{ width: 52, alignItems: 'center' }}>
                         {r.won_dice_roll === null ? (
-                          <Text style={{ color: '#3a526a', fontSize: 13 }}>—</Text>
+                          <Text style={{ color: '#3a526a', fontSize: 15 }}>—</Text>
                         ) : (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 2, paddingHorizontal: 5, borderRadius: 5, backgroundColor: r.won_dice_roll ? 'rgba(59,178,126,0.16)' : 'rgba(210,74,58,0.16)' }}>
-                            <Text style={{ fontSize: 9 }}>🎲</Text>
-                            <Text style={{ fontSize: 10, fontFamily: font.mono, color: r.won_dice_roll ? colors.emerald : colors.crimson }}>{r.won_dice_roll ? 'W' : 'L'}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 8, backgroundColor: r.won_dice_roll ? 'rgba(59,178,126,0.18)' : 'rgba(210,74,58,0.18)' }}>
+                            <Text style={{ fontSize: 13 }}>🎲</Text>
+                            <Text style={{ fontSize: 14, fontFamily: font.bold, color: r.won_dice_roll ? colors.emerald : colors.crimson }}>{r.won_dice_roll ? 'W' : 'L'}</Text>
                           </View>
                         )}
                       </View>
-                      <View style={{ width: 30, alignItems: 'center' }}>
+                      <View style={{ width: 36, alignItems: 'center' }}>
                         {r.went_first === null ? (
-                          <Text style={{ color: '#3a526a', fontSize: 13 }}>—</Text>
+                          <Text style={{ color: '#3a526a', fontSize: 15 }}>—</Text>
                         ) : (
-                          <View style={{ width: 20, height: 20, borderRadius: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: r.went_first ? 'rgba(200,162,74,0.16)' : 'rgba(82,169,205,0.16)' }}>
-                            <Text style={{ fontSize: 10, fontFamily: font.mono, color: r.went_first ? colors.gold : colors.oceanBright }}>{r.went_first ? '1' : '2'}</Text>
+                          <View style={{ width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: r.went_first ? 'rgba(200,162,74,0.18)' : 'rgba(82,169,205,0.18)' }}>
+                            <Text style={{ fontSize: 14, fontFamily: font.bold, color: r.went_first ? colors.gold : colors.oceanBright }}>{r.went_first ? '1' : '2'}</Text>
                           </View>
                         )}
                       </View>
-                      <View style={{ width: 26, alignItems: 'center' }}>
-                        <View style={{ width: 22, height: 22, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: isWin ? 'rgba(59,178,126,0.18)' : 'rgba(210,74,58,0.18)' }}>
-                          <Text style={{ fontSize: 11, fontFamily: font.bold, color: isWin ? colors.emerald : colors.crimson }}>{isWin ? '✓' : '✕'}</Text>
+                      <View style={{ width: 34, alignItems: 'center' }}>
+                        <View style={{ width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: isWin ? 'rgba(59,178,126,0.2)' : 'rgba(210,74,58,0.2)' }}>
+                          <Text style={{ fontSize: 15, fontFamily: font.bold, color: isWin ? colors.emerald : colors.crimson }}>{isWin ? '✓' : '✕'}</Text>
                         </View>
                       </View>
                     </View>
                     {r.notes ? (
-                      <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body, marginTop: 6, marginLeft: 28 }}>{r.notes}</Text>
+                      <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body, marginTop: 7, marginLeft: 30 }}>{r.notes}</Text>
                     ) : null}
                   </View>
                 )
@@ -269,10 +286,10 @@ export default function TournamentDetail() {
         {hasDiceData && (
           <Glass style={{ flexDirection: 'row' }}>
             {diceStats.map((s, i) => (
-              <View key={s.label} style={{ flex: 1, paddingVertical: 14, alignItems: 'center', borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: 'rgba(140,176,208,0.08)' }}>
-                <Text style={{ fontSize: 9, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 0.7, color: colors.faint, marginBottom: 5 }}>{s.label}</Text>
-                <Text style={{ fontSize: 18, fontFamily: font.mono, color: colors.oceanBright }}>{s.value}</Text>
-                <Text style={{ fontSize: 10, color: colors.faint, fontFamily: font.body, marginTop: 3 }}>{s.sub}</Text>
+              <View key={s.label} style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: 'rgba(140,176,208,0.08)' }}>
+                <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 0.7, color: colors.faint, marginBottom: 6 }}>{s.label}</Text>
+                <Text style={{ fontSize: 22, fontFamily: font.mono, color: colors.oceanBright }}>{s.value}</Text>
+                <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body, marginTop: 3 }}>{s.sub}</Text>
               </View>
             ))}
           </Glass>
