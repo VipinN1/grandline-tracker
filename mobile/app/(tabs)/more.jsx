@@ -5,6 +5,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
+import { deleteAccount } from '../../lib/api'
 import { useSession } from '../../lib/auth'
 import { colors, font, radius, card } from '../../theme'
 import { GlassButton } from '../../components/glass'
@@ -27,6 +28,7 @@ export default function More() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [unreadDMs, setUnreadDMs] = useState(0)
   const [unreadMarket, setUnreadMarket] = useState(0)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     if (!session) return
@@ -51,6 +53,45 @@ export default function More() {
     ])
   }
 
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Delete account?',
+      'This permanently deletes your account and everything tied to it — profile, tournament history, decklists, posts, messages, listings, and photos. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          style: 'destructive',
+          onPress: () => {
+            Alert.prompt('Confirm deletion', 'Type DELETE to permanently delete your account.', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete Forever',
+                style: 'destructive',
+                onPress: async (text) => {
+                  if ((text ?? '').trim().toUpperCase() !== 'DELETE') {
+                    Alert.alert('Not deleted', 'You must type DELETE to confirm.')
+                    return
+                  }
+                  setDeleting(true)
+                  try {
+                    await deleteAccount(session.access_token)
+                    await supabase.auth.signOut()
+                    router.replace('/')
+                  } catch (err) {
+                    Alert.alert('Deletion failed', err.message ?? 'Something went wrong. Please try again.')
+                  } finally {
+                    setDeleting(false)
+                  }
+                },
+              },
+            ])
+          },
+        },
+      ]
+    )
+  }
+
   const features = [
     { icon: 'stats-chart-outline', label: 'Stats', href: '/stats' },
     { icon: 'people-outline', label: 'Friends', href: '/friends' },
@@ -60,7 +101,12 @@ export default function More() {
     { icon: 'construct-outline', label: 'Deck Builder', href: '/deck-builder' },
     { icon: 'trophy-outline', label: 'Online Tournaments', href: '/tournaments' },
     { icon: 'information-circle-outline', label: 'About', href: '/about' },
-    ...(isAdmin ? [{ icon: 'shield-outline', label: 'Bug Reports', href: '/bug-reports' }] : []),
+    { icon: 'document-text-outline', label: 'Terms of Service', href: '/terms' },
+    { icon: 'lock-closed-outline', label: 'Privacy Policy', href: '/privacy' },
+    ...(isAdmin ? [
+      { icon: 'shield-outline', label: 'Bug Reports', href: '/bug-reports' },
+      { icon: 'flag-outline', label: 'Content Reports', href: '/reports' },
+    ] : []),
   ]
 
   return (
@@ -96,10 +142,17 @@ export default function More() {
         </View>
       </GlassButton>
 
-      <GlassButton onPress={handleSignOut} borderRadius={radius.lg} pad={{ paddingVertical: 18, paddingHorizontal: 18 }}>
+      <GlassButton onPress={handleSignOut} borderRadius={radius.lg} pad={{ paddingVertical: 18, paddingHorizontal: 18 }} style={{ marginBottom: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%' }}>
           <Ionicons name="log-out-outline" size={22} color={colors.crimson} />
           <Text style={{ flex: 1, fontSize: 16, fontFamily: font.semi, color: colors.crimson }}>Sign Out</Text>
+        </View>
+      </GlassButton>
+
+      <GlassButton onPress={handleDeleteAccount} disabled={deleting} borderRadius={radius.lg} pad={{ paddingVertical: 18, paddingHorizontal: 18 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%' }}>
+          <Ionicons name="trash-outline" size={22} color={colors.crimson} />
+          <Text style={{ flex: 1, fontSize: 16, fontFamily: font.semi, color: colors.crimson }}>{deleting ? 'Deleting account…' : 'Delete Account'}</Text>
         </View>
       </GlassButton>
 

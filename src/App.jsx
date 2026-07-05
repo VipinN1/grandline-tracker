@@ -24,6 +24,8 @@ import BountyBoard from './pages/BountyBoard'
 import Stats from './pages/Stats'
 import BugReports from './pages/BugReports'
 import About from './pages/About'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 import ResetPassword from './pages/ResetPassword'
 
 function ProtectedRoute({ session, children }) {
@@ -105,6 +107,8 @@ export default function App() {
           <Route path="/bounty" element={<BountyBoard session={session} />} />
           <Route path="/bug-reports" element={<ProtectedRoute session={session}><BugReports session={session} /></ProtectedRoute>} />
           <Route path="/about" element={<About />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
         </Route>
       </Routes>
     </BrowserRouter>

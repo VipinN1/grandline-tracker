@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView, Image, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native'
 import { supabase } from '../lib/supabase'
+import { useBlocks } from '../lib/blocks'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { pickAndUploadImage } from '../lib/upload'
 import { colors, font, radius } from '../theme'
@@ -50,6 +51,7 @@ function DeckMessage({ deck, onEnlarge }) {
 
 export default function DirectMessages({ session, initialUserId }) {
   const me = session?.user?.id
+  const { blockedIds } = useBlocks()
   const [conversations, setConversations] = useState([])
   const [profiles, setProfiles] = useState({})
   const [activeId, setActiveId] = useState(initialUserId ?? null)
@@ -123,6 +125,7 @@ export default function DirectMessages({ session, initialUserId }) {
       .channel(`dm_inbox_${me}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${me}` }, async (payload) => {
         const msg = payload.new
+        if (blockedIds.has(msg.sender_id)) return
         if (activeIdRef.current && msg.sender_id === activeIdRef.current) {
           const { data } = await supabase.from('direct_messages').select('*, decklists(*)').eq('id', msg.id).single()
           setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, data ?? msg])
@@ -132,7 +135,7 @@ export default function DirectMessages({ session, initialUserId }) {
       })
       .subscribe()
     return () => { channel.unsubscribe() }
-  }, [me, loadConversations])
+  }, [me, loadConversations, blockedIds])
 
   useEffect(() => {
     if (messages.length) setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80)
@@ -152,7 +155,7 @@ export default function DirectMessages({ session, initialUserId }) {
 
   async function sendText() {
     const t = text.trim()
-    if (!t || !activeId || sending) return
+    if (!t || !activeId || sending || blockedIds.has(activeId)) return
     setSending(true)
     setText('')
     await insertMessage({ body: t })
@@ -180,18 +183,20 @@ export default function DirectMessages({ session, initialUserId }) {
   const otherProfile = activeId ? profiles[activeId] : null
 
   // ── Conversation list ────────────────────────────────────────────────────────
+  const visibleConversations = conversations.filter(c => !blockedIds.has(c.otherId))
+
   if (!activeId) {
     return (
       <View style={{ flex: 1 }}>
         {loadingConvos ? (
           <View style={{ padding: 30, alignItems: 'center' }}><ActivityIndicator color={colors.gold} /></View>
-        ) : conversations.length === 0 ? (
+        ) : visibleConversations.length === 0 ? (
           <Text style={{ padding: 24, fontSize: 13, color: colors.faint, textAlign: 'center', lineHeight: 20, fontFamily: font.body }}>
             No messages yet. Open someone's profile and tap Message to start a chat.
           </Text>
         ) : (
           <FlatList
-            data={conversations}
+            data={visibleConversations}
             keyExtractor={c => c.otherId}
             contentContainerStyle={{ paddingBottom: 24 }}
             renderItem={({ item: c }) => {

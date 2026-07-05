@@ -5,12 +5,14 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView, Image, M
 import { Stack, useLocalSearchParams } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/auth'
+import { useBlocks } from '../lib/blocks'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { colors, font, radius, card } from '../theme'
 import { fieldInput, FieldLabel, LEADER_COLORS } from '../components/forms'
 import SelectDecklistModal from '../components/SelectDecklistModal'
 import ProfileCard, { Avatar } from '../components/ProfileCard'
 import DirectMessages from '../components/DirectMessages'
+import ReportModal from '../components/ReportModal'
 import { GlassButton } from '../components/glass'
 
 function CardLightbox({ url, onClose }) {
@@ -67,6 +69,8 @@ function CommentBox({ comment, session, depth = 0, onProfileClick }) {
   const [liked, setLiked] = useState(false)
   const [likes, setLikes] = useState(comment.likes ?? 0)
   const [replies, setReplies] = useState([])
+  const [reporting, setReporting] = useState(false)
+  const { blockedIds } = useBlocks()
 
   useEffect(() => {
     async function init() {
@@ -124,6 +128,11 @@ function CommentBox({ comment, session, depth = 0, onProfileClick }) {
                 <Text style={{ fontSize: 11, fontFamily: font.semi, color: showReply ? colors.ocean : colors.muted }}>{showReply ? 'Cancel' : 'Reply'}</Text>
               </TouchableOpacity>
             ) : null}
+            {session && session.user.id !== comment.user_id ? (
+              <TouchableOpacity onPress={() => setReporting(true)}>
+                <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.faint }}>Report</Text>
+              </TouchableOpacity>
+            ) : null}
             <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body }}>{new Date(comment.created_at).toLocaleDateString()}</Text>
           </View>
           {showReply && (
@@ -144,11 +153,12 @@ function CommentBox({ comment, session, depth = 0, onProfileClick }) {
           )}
           {replies.length > 0 && (
             <View style={{ marginTop: 8, paddingLeft: 4, borderLeftWidth: 2, borderLeftColor: 'rgba(140,176,208,0.2)' }}>
-              {replies.map(r => <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} onProfileClick={onProfileClick} />)}
+              {replies.filter(r => !blockedIds.has(r.user_id)).map(r => <CommentBox key={r.id} comment={r} session={session} depth={depth + 1} onProfileClick={onProfileClick} />)}
             </View>
           )}
         </View>
       </View>
+      {reporting && <ReportModal contentType="comment" contentId={comment.id} contentOwnerId={comment.user_id} onClose={() => setReporting(false)} />}
     </View>
   )
 }
@@ -160,6 +170,9 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
   const [comments, setComments] = useState([])
   const [commentText, setCommentText] = useState('')
   const [showComments, setShowComments] = useState(false)
+  const [reporting, setReporting] = useState(false)
+  const { blockedIds } = useBlocks()
+  const visibleComments = comments.filter(c => !blockedIds.has(c.user_id))
 
   useEffect(() => {
     async function init() {
@@ -222,11 +235,15 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
             {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </Text>
         </View>
-        {session?.user?.id === post.user_id && (
+        {session?.user?.id === post.user_id ? (
           <TouchableOpacity onPress={confirmDelete} hitSlop={6} style={{ paddingVertical: 3, paddingHorizontal: 10, borderRadius: 6, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.lineStrong }}>
             <Text style={{ fontSize: 11, fontFamily: font.bold, color: '#94a3b8' }}>Delete</Text>
           </TouchableOpacity>
-        )}
+        ) : session ? (
+          <TouchableOpacity onPress={() => setReporting(true)} hitSlop={6} style={{ paddingVertical: 3, paddingHorizontal: 10, borderRadius: 6, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.lineStrong }}>
+            <Text style={{ fontSize: 11, fontFamily: font.bold, color: '#94a3b8' }}>🚩 Report</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.text, marginBottom: 8 }}>{post.title}</Text>
@@ -247,7 +264,7 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setShowComments(s => !s)}>
           <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.muted }}>
-            💬 {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+            💬 {visibleComments.length} {visibleComments.length === 1 ? 'comment' : 'comments'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -270,13 +287,14 @@ function PostCard({ post, session, onProfileClick, onDelete }) {
 
       {showComments && (
         <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(140,176,208,0.05)', gap: 12 }}>
-          {comments.length === 0 ? (
+          {visibleComments.length === 0 ? (
             <Text style={{ fontSize: 12, color: colors.faint, fontFamily: font.body }}>No comments yet. Be the first!</Text>
           ) : (
-            comments.map(c => <CommentBox key={c.id} comment={c} session={session} onProfileClick={onProfileClick} />)
+            visibleComments.map(c => <CommentBox key={c.id} comment={c} session={session} onProfileClick={onProfileClick} />)
           )}
         </View>
       )}
+      {reporting && <ReportModal contentType="post" contentId={post.id} contentOwnerId={post.user_id} onClose={() => setReporting(false)} />}
     </View>
   )
 }
@@ -356,6 +374,7 @@ function CreatePostModal({ session, onClose, onSubmit }) {
 export default function Community() {
   const { session } = useSession()
   const { dm } = useLocalSearchParams()
+  const { blockedIds } = useBlocks()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -402,7 +421,7 @@ export default function Community() {
           <DirectMessages session={session} initialUserId={dm ?? null} />
         ) : (
           <FlatList
-            data={posts}
+            data={posts.filter(p => !blockedIds.has(p.user_id))}
             keyExtractor={p => p.id}
             contentContainerStyle={{ paddingBottom: 48, gap: 12 }}
             ListHeaderComponent={
