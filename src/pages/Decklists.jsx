@@ -16,6 +16,7 @@ const COLORS = {
 
 function DeckModal({ deck, onClose, isMobile }) {
   const [selectedCard, setSelectedCard] = useState(null)
+  const navigate = useNavigate()
   if (!deck) return null
   const color = COLORS[deck.leader_color] ?? '#2f7da3'
   const cards = deck.cards ?? []
@@ -23,7 +24,7 @@ function DeckModal({ deck, onClose, isMobile }) {
   const events = cards.filter(c => c.type === 'Event')
   const stages = cards.filter(c => c.type === 'Stage')
   const others = cards.filter(c => !['Character', 'Event', 'Stage'].includes(c.type))
-  const navigate = useNavigate()
+
 
   const modalBox = {
     background: 'rgba(140,176,208,0.05)',
