@@ -1,6 +1,7 @@
 import { getCardImageUrl } from '../lib/optcgapi'
 
 export default function CardPreview({ card, onClose, onSearchCommunity, onSearchMarketplace }) {
+console.log('CardPreview rendering', { card, onSearchMarketplace })
   if (!card) return null
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
