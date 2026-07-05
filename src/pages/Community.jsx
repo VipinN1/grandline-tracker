@@ -8,7 +8,6 @@ import SelectDecklistModal from '../components/SelectDecklistModal'
 import ProfilePopover from '../components/ProfilePopover'
 import DirectMessages from '../components/DirectMessages'
 import CardPreview from '../components/CardPreview'
-import { useNavigate } from 'react-router-dom'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 

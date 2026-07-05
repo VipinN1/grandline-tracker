@@ -4,7 +4,6 @@ import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import CardPreview from '../components/CardPreview'
-import { useNavigate } from 'react-router-dom'
 
 const COLORS = {
   Red: '#d24a3a',
