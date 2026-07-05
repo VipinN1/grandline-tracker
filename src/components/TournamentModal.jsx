@@ -1,27 +1,12 @@
 import { useState, useRef, useLayoutEffect } from 'react'
 import { getCardImageUrl } from '../lib/optcgapi'
+import CardPreview from '../components/CardPreview'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
 function cleanName(name) {
   if (!name) return ''
   return name.replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '').replace(/\s*\([^)]*\)$/, '').trim()
-}
-
-function CardPreview({ card, onClose }) {
-  if (!card) return null
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(140,176,208,0.15)' }} />
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>{card.name}</div>
-          <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
-        </div>
-        <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.08)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 8, color: '#e9f1f8', fontSize: 13, fontWeight: 600, padding: '7px 24px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
-      </div>
-    </div>
-  )
 }
 
 function pLabel(n) { if (n===1) return '1st'; if (n===2) return '2nd'; if (n===3) return '3rd'; return `${n}th` }
