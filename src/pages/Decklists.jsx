@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
+import CardPreview from '../components/CardPreview'
+import { useNavigate } from 'react-router-dom'
 
 const COLORS = {
   Red: '#d24a3a',
@@ -11,22 +13,6 @@ const COLORS = {
   Purple: '#8d7ae6',
   Yellow: '#dcb35e',
   Black: '#94a3b8',
-}
-
-function CardPreview({ card, onClose }) {
-  if (!card) return null
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(140,176,208,0.15)' }} />
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>{card.name}</div>
-          <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
-        </div>
-        <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.08)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 8, color: '#e9f1f8', fontSize: 13, fontWeight: 600, padding: '7px 24px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
-      </div>
-    </div>
-  )
 }
 
 function DeckModal({ deck, onClose, isMobile }) {
@@ -38,6 +24,7 @@ function DeckModal({ deck, onClose, isMobile }) {
   const events = cards.filter(c => c.type === 'Event')
   const stages = cards.filter(c => c.type === 'Stage')
   const others = cards.filter(c => !['Character', 'Event', 'Stage'].includes(c.type))
+  const navigate = useNavigate()
 
   const modalBox = {
     background: 'rgba(140,176,208,0.05)',
@@ -107,7 +94,13 @@ function DeckModal({ deck, onClose, isMobile }) {
           </div>
         </div>
       </div>
-      {selectedCard && <CardPreview card={selectedCard} onClose={() => setSelectedCard(null)} />}
+      {selectedCard && (
+        <CardPreview
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onSearchMarketplace={() => { navigate('/marketplace', { state: { search: selectedCard.name } }); setSelectedCard(null) }}
+        />
+      )}
     </>
   )
 }

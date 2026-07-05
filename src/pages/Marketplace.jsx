@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { searchCards, getCardImageUrl } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
 import ProfilePopover from '../components/ProfilePopover'
+import { useLocation } from 'react-router-dom'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
@@ -39,6 +40,15 @@ const LABEL = {
   marginBottom: 5,
   display: 'block',
 }
+
+const location = useLocation()
+
+useEffect(() => {
+  if (location.state?.search) {
+    setSearch(location.state.search)
+    setActiveTab('browse')
+  }
+}, [])
 
 function Avatar({ profile, size = 28, radius = 7 }) {
   const initials = profile?.username?.slice(0, 2).toUpperCase() ?? '??'
