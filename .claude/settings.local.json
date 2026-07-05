@@ -59,7 +59,8 @@
       "Bash(env -u GIT_ASKPASS -u SSH_ASKPASS git push)",
       "Bash(gh auth *)",
       "Bash(env -u GIT_ASKPASS git -c credential.helper=osxkeychain push)",
-      "Bash(npx expo *)"
+      "Bash(npx expo *)",
+      "Bash(sort -u -t\"'\" -k2)"
     ]
   }
 }
