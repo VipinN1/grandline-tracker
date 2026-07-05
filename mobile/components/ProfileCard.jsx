@@ -1,9 +1,10 @@
 // RN port of src/components/ProfilePopover.jsx — profile summary sheet with
 // stats and friend actions. "Message" deep-links into the Community DM tab.
 import { useState, useEffect } from 'react'
-import { Modal, View, Text, TouchableOpacity, Image } from 'react-native'
+import { Modal, View, Text, TouchableOpacity, Image, Alert } from 'react-native'
 import { router } from 'expo-router'
 import { supabase } from '../lib/supabase'
+import { useBlocks } from '../lib/blocks'
 import { colors, font, radius } from '../theme'
 import { GlassButton } from './glass'
 
@@ -23,6 +24,8 @@ export function Avatar({ profile, size = 44, rounded = false }) {
 export default function ProfileCard({ profile, session, onClose, onFriendAction }) {
   const [stats, setStats] = useState(null)
   const [friendStatus, setFriendStatus] = useState(null)
+  const { blockedIds, block, unblock } = useBlocks()
+  const isBlocked = blockedIds.has(profile.id)
 
   useEffect(() => {
     async function load() {
@@ -75,6 +78,29 @@ export default function ProfileCard({ profile, session, onClose, onFriendAction 
   }
 
   const isSelf = session?.user?.id === profile.id
+
+  function handleBlock() {
+    if (isBlocked) {
+      unblock(profile.id)
+      return
+    }
+    Alert.alert(
+      `Block ${profile.username}?`,
+      'You will no longer see their posts, comments, or messages, and any friendship will be removed. You can unblock them later from their profile.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            await block(profile.id)
+            setFriendStatus(null)
+            onFriendAction?.()
+          },
+        },
+      ]
+    )
+  }
 
   function FriendButton() {
     if (!session || isSelf) return null
@@ -135,13 +161,21 @@ export default function ProfileCard({ profile, session, onClose, onFriendAction 
           )}
 
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <FriendButton />
-            {!isSelf && session ? (
+            {!isBlocked ? <FriendButton /> : null}
+            {!isSelf && session && !isBlocked ? (
               <TouchableOpacity
                 onPress={() => { onClose(); router.push({ pathname: '/community', params: { dm: profile.id } }) }}
                 style={{ flex: 1, paddingVertical: 9, borderRadius: radius.sm, borderWidth: 1, borderColor: 'rgba(200,162,74,0.3)', backgroundColor: 'rgba(140,176,208,0.08)', alignItems: 'center' }}
               >
                 <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>Message</Text>
+              </TouchableOpacity>
+            ) : null}
+            {!isSelf && session ? (
+              <TouchableOpacity
+                onPress={handleBlock}
+                style={{ flex: isBlocked ? 1 : 0, paddingVertical: 9, paddingHorizontal: 14, borderRadius: radius.sm, borderWidth: 1, borderColor: 'rgba(210,74,58,0.3)', backgroundColor: 'rgba(210,74,58,0.08)', alignItems: 'center' }}
+              >
+                <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.crimson }}>{isBlocked ? 'Unblock' : 'Block'}</Text>
               </TouchableOpacity>
             ) : null}
           </View>

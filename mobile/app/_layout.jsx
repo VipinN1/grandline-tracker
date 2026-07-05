@@ -8,6 +8,7 @@ import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces'
 import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter'
 import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono'
 import { AuthProvider } from '../lib/auth'
+import { BlocksProvider } from '../lib/blocks'
 import { colors } from '../theme'
 
 SplashScreen.preventAutoHideAsync()
@@ -44,13 +45,15 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navTheme}>
       <AuthProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.abyss },
-          }}
-        />
+        <BlocksProvider>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.abyss },
+            }}
+          />
+        </BlocksProvider>
       </AuthProvider>
     </ThemeProvider>
   )

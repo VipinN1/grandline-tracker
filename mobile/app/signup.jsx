@@ -127,6 +127,13 @@ export default function Signup() {
             <GlassButton onPress={handleSignup} disabled={loading} tint={colors.gold} pad={{ paddingVertical: 12, paddingHorizontal: 18 }} style={{ marginTop: 4 }}>
               <Text style={btnPrimaryText}>{loading ? 'Creating account...' : 'Create Account'}</Text>
             </GlassButton>
+
+            <Text style={{ fontSize: 11, color: colors.faint, textAlign: 'center', lineHeight: 17, fontFamily: font.body }}>
+              By creating an account you agree to the{' '}
+              <Text style={{ color: colors.ocean }} onPress={() => router.push('/terms')}>Terms of Service</Text>
+              {' '}and{' '}
+              <Text style={{ color: colors.ocean }} onPress={() => router.push('/privacy')}>Privacy Policy</Text>.
+            </Text>
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, gap: 5 }}>
