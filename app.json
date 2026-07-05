@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "2fdff47e-6479-42e6-b78f-5f4d843517e1"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.vnuguri.grandlinetracker",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
