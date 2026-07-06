@@ -86,11 +86,9 @@ function DeckModal({ deck, onClose, isMobile }) {
               ) : null
             )}
           </div>
-
-          <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(140,176,208,0.07)', flexShrink: 0 }}>
-            <button style={{ width: '100%', padding: 9, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.04)', color: '#e9f1f8', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Copy Decklist
-            </button>
+          <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(140,176,208,0.07)', flexShrink: 0, display: 'flex', gap: 8 }}>
+            <button onClick={() => { navigate('/deck-builder', { state: { deck } }); onClose() }} style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid rgba(59,178,126,0.3)', background: 'rgba(59,178,126,0.08)', color: '#3bb27e', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Edit Decklist</button>
+            <button style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.04)', color: '#e9f1f8', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Copy Decklist</button>
           </div>
         </div>
       </div>

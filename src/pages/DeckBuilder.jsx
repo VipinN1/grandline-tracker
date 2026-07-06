@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { searchCards, searchLeaders, getCard, getCardImageUrl, enrichCards } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
@@ -89,6 +89,29 @@ export default function DeckBuilder({ session }) {
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+const location = useLocation()
+
+  useEffect(() => {
+    if (location.state?.deck) {
+      const { deck } = location.state
+      setDeckName(deck.name ?? '')
+      if (deck.leader_id) {
+        // We only have the id/name/color, reconstruct a minimal leader object
+        setLeader({ card_set_id: deck.leader_id, card_name: deck.leader_name, card_color: deck.leader_color })
+      }
+      if (deck.cards?.length > 0) {
+        const built = {}
+        for (const c of deck.cards) {
+          built[c.id] = {
+            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image },
+            count: c.count,
+          }
+        }
+        setDeckCards(built)
+      }
+    }
   }, [])
 
   function handleCardQuery(val) {
