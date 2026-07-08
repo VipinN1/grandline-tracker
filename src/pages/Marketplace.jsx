@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { searchCards, getCardImageUrl } from '../lib/optcgapi'
 import { useWindowSize } from '../hooks/useWindowSize'
@@ -2067,6 +2067,14 @@ export default function Marketplace({ session }) {
   const [pendingStorefronts, setPendingStorefronts] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [approvingStore, setApprovingStore] = useState(null)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.state?.search) {
+      setSearch(location.state.search)
+      setActiveTab('browse')
+    }
+  }, [])
 
   useEffect(() => { loadListings(); loadProfile() }, [])
   useEffect(() => { if (activeTab === 'wants') loadWants() }, [activeTab])

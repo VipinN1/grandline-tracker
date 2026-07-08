@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { searchCards, searchLeaders, getCard, getCardImageUrl, enrichCards } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
@@ -53,6 +53,7 @@ export default function DeckBuilder({ session }) {
   const [deckName, setDeckName] = useState('')
   const [leader, setLeader] = useState(null)
   const [deckCards, setDeckCards] = useState({})
+  const [editingDeckId, setEditingDeckId] = useState(null)
 
   const [cardQuery, setCardQuery] = useState('')
   const [cardResults, setCardResults] = useState([])
@@ -82,6 +83,29 @@ export default function DeckBuilder({ session }) {
   const cardDebounce = useRef(null)
   const leaderDebounce = useRef(null)
   const leaderRef = useRef(null)
+
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.state?.deck) {
+      const { deck } = location.state
+      setEditingDeckId(deck.id ?? null)
+      setDeckName(deck.name ?? '')
+      if (deck.leader_id) {
+        setLeader({ card_set_id: deck.leader_id, card_name: deck.leader_name, card_color: deck.leader_color })
+      }
+      if (deck.cards?.length > 0) {
+        const built = {}
+        for (const c of deck.cards) {
+          built[c.id] = {
+            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image },
+            count: c.count,
+          }
+        }
+        setDeckCards(built)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     function handleClick(e) {
@@ -204,16 +228,31 @@ export default function DeckBuilder({ session }) {
       color: card.card_color ?? null,
       image: card.card_image ?? null,
     }))
-    const { error: err } = await supabase.from('decklists').insert({
-      user_id: session.user.id,
-      name: deckName.trim(),
-      leader_id: leader.card_set_id,
-      leader_name: leader.card_name,
-      leader_color: leader.card_color,
-      cards,
-    })
-    setSaving(false)
-    if (err) { setError('Failed to save. ' + err.message); return }
+
+    if (editingDeckId) {
+      const { error: err } = await supabase.from('decklists').update({
+        name: deckName.trim(),
+        leader_id: leader.card_set_id,
+        leader_name: leader.card_name,
+        leader_color: leader.card_color,
+        cards,
+        updated_at: new Date().toISOString(),
+      }).eq('id', editingDeckId)
+      setSaving(false)
+      if (err) { setError('Failed to save. ' + err.message); return }
+    } else {
+      const { error: err } = await supabase.from('decklists').insert({
+        user_id: session.user.id,
+        name: deckName.trim(),
+        leader_id: leader.card_set_id,
+        leader_name: leader.card_name,
+        leader_color: leader.card_color,
+        cards,
+      })
+      setSaving(false)
+      if (err) { setError('Failed to save. ' + err.message); return }
+    }
+
     navigate('/decklists')
   }
 
@@ -521,7 +560,7 @@ export default function DeckBuilder({ session }) {
           <button onClick={exportDeck} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.04)', color: '#e9f1f8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Export</button>
           <button onClick={() => setShowImport(true)} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.04)', color: '#e9f1f8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Import</button>
           <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '8px 6px', borderRadius: 8, border: 'none', background: saving ? 'rgba(140,176,208,0.05)' : 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: saving ? '#9db2c6' : '#fff', fontSize: 12, fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
-            {saving ? 'Saving...' : saveMsg || (session ? 'Save Deck' : 'Sign in to Save')}
+            {saving ? 'Saving...' : saveMsg || (editingDeckId ? 'Save Changes' : session ? 'Save Deck' : 'Sign in to Save')}
           </button>
         </div>
         {error && <div style={{ fontSize: 11, color: '#d24a3a' }}>{error}</div>}

@@ -7,29 +7,17 @@ import TournamentModal from '../components/TournamentModal'
 import SelectDecklistModal from '../components/SelectDecklistModal'
 import ProfilePopover from '../components/ProfilePopover'
 import DirectMessages from '../components/DirectMessages'
+import CardPreview from '../components/CardPreview'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
 
-function CardPreview({ card, onClose }) {
-  if (!card) return null
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: 300, maxWidth: '85vw', borderRadius: 14, border: '2px solid rgba(140,176,208,0.15)' }} />
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>{card.name}</div>
-          <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 3, fontFamily: 'monospace' }}>{card.id}</div>
-        </div>
-        <button onClick={onClose} style={{ background: 'rgba(140,176,208,0.08)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 8, color: '#e9f1f8', fontSize: 13, fontWeight: 600, padding: '7px 24px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
-      </div>
-    </div>
-  )
-}
+
 
 
 function DeckPanel({ decklist }) {
   const [expanded, setExpanded] = useState(false)
   const [selectedCard, setSelectedCard] = useState(null)
+  const navigate = useNavigate()
   if (!decklist) return null
   const cards = decklist.cards ?? []
 
@@ -70,7 +58,13 @@ function DeckPanel({ decklist }) {
           </div>
         )}
       </div>
-      {selectedCard && <CardPreview card={selectedCard} onClose={() => setSelectedCard(null)} />}
+      {selectedCard && (
+        <CardPreview
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onSearchMarketplace={() => { navigate('/marketplace', { state: { search: selectedCard.name } }); setSelectedCard(null) }}
+        />
+      )}
     </>
   )
 }
