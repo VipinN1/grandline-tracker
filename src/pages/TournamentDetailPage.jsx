@@ -250,6 +250,7 @@ export default function TournamentDetailPage({ session }) {
     currentMatches.every(m => m.status === 'completed')
   const disputedMatches = currentMatches.filter(m => m.status === 'disputed')
   const winnerEntry = tournament?.winner_id ? players.find(p => p.user_id === tournament.winner_id) : null
+  const showAdminCol = isAdmin && tournament?.status !== 'completed'
 
   // ── Load ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -831,8 +832,8 @@ export default function TournamentDetailPage({ session }) {
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#67809a', fontSize: 13 }}>No players yet</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${isAdmin && tournament.status === 'active' ? ' 60px' : ''}`, gap: 12, padding: '6px 14px', marginBottom: 4 }}>
-                {['#', 'Player', 'W', 'L', 'OWR', ...(isAdmin && tournament.status === 'active' ? [''] : [])].map(h => (
+              <div style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${showAdminCol ? ' 60px' : ''}`, gap: 12, padding: '6px 14px', marginBottom: 4 }}>
+                {['#', 'Player', 'W', 'L', 'OWR', ...(showAdminCol ? [''] : [])].map(h => (
                   <div key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#67809a' }}>{h}</div>
                 ))}
               </div>
@@ -844,7 +845,7 @@ export default function TournamentDetailPage({ session }) {
                   <div
                     key={s.user_id}
                     onClick={() => s.profiles && setSelectedProfile(s.profiles)}
-                    style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${isAdmin && tournament.status === 'active' ? ' 60px' : ''}`, gap: 12, alignItems: 'center', padding: '10px 14px', background: isDropped ? 'rgba(140,176,208,0.04)' : isWinner ? 'rgba(200,162,74,0.08)' : 'rgba(140,176,208,0.05)', border: `1px solid ${isDropped ? 'rgba(140,176,208,0.06)' : isWinner ? 'rgba(200,162,74,0.2)' : 'rgba(140,176,208,0.12)'}`, borderRadius: 10, cursor: 'pointer', opacity: isDropped ? 0.5 : 1, transition: 'all 0.1s' }}
+                    style={{ display: 'grid', gridTemplateColumns: `36px 1fr 60px 60px 80px${showAdminCol ? ' 60px' : ''}`, gap: 12, alignItems: 'center', padding: '10px 14px', background: isDropped ? 'rgba(140,176,208,0.04)' : isWinner ? 'rgba(200,162,74,0.08)' : 'rgba(140,176,208,0.05)', border: `1px solid ${isDropped ? 'rgba(140,176,208,0.06)' : isWinner ? 'rgba(200,162,74,0.2)' : 'rgba(140,176,208,0.12)'}`, borderRadius: 10, cursor: 'pointer', opacity: isDropped ? 0.5 : 1, transition: 'all 0.1s' }}
                     onMouseEnter={e => { if (!isDropped) e.currentTarget.style.borderColor = isWinner ? 'rgba(200,162,74,0.35)' : 'rgba(140,176,208,0.20)' }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = isDropped ? 'rgba(140,176,208,0.06)' : isWinner ? 'rgba(200,162,74,0.2)' : 'rgba(140,176,208,0.12)' }}
                   >
@@ -859,7 +860,7 @@ export default function TournamentDetailPage({ session }) {
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#3bb27e' }}>{s.wins}</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: s.losses > 0 ? '#d24a3a' : '#67809a' }}>{s.losses}</div>
                     <div style={{ fontSize: 12, color: '#9db2c6', fontFamily: 'monospace' }}>{s.wins + s.losses > 0 ? `${Math.round(s.owr * 100)}%` : '—'}</div>
-                    {isAdmin && tournament.status === 'active' && (
+                    {showAdminCol && (
                       <div onClick={e => e.stopPropagation()}>
                         {!isDropped && (
                           <button onClick={() => { setDroppingUserId(s.user_id); setShowDropConfirm(true) }} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>Drop</button>
@@ -901,6 +902,12 @@ export default function TournamentDetailPage({ session }) {
                       {winner && <span style={{ fontSize: 11, color: '#3bb27e', flexShrink: 0 }}>🏆 {winner.username}</span>}
                       {m.status === 'pending' && <span style={{ fontSize: 11, color: '#67809a', flexShrink: 0 }}>Pending</span>}
                       {m.status === 'disputed' && <span style={{ fontSize: 11, color: '#e08a3c', flexShrink: 0 }}>Disputed</span>}
+                      {showAdminCol && m.result !== 'bye' && m.player2_id && (
+                        <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+                          <button onClick={e => { e.stopPropagation(); resolveDispute(m.id, 'player1_win') }} disabled={m.result === 'player1_win'} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: m.result === 'player1_win' ? 'rgba(59,178,126,0.18)' : 'rgba(47,125,163,0.18)', color: m.result === 'player1_win' ? '#3bb27e' : '#52a9cd', cursor: m.result === 'player1_win' ? 'default' : 'pointer', fontFamily: 'inherit', opacity: m.result === 'player1_win' ? 0.7 : 1 }}>▲ {p1?.username ?? 'P1'}</button>
+                          <button onClick={e => { e.stopPropagation(); resolveDispute(m.id, 'player2_win') }} disabled={m.result === 'player2_win'} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: m.result === 'player2_win' ? 'rgba(59,178,126,0.18)' : 'rgba(47,125,163,0.18)', color: m.result === 'player2_win' ? '#3bb27e' : '#52a9cd', cursor: m.result === 'player2_win' ? 'default' : 'pointer', fontFamily: 'inherit', opacity: m.result === 'player2_win' ? 0.7 : 1 }}>▲ {p2?.username ?? 'P2'}</button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
