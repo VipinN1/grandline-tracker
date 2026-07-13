@@ -227,6 +227,7 @@ export default function TournamentDetailPage({ session }) {
   const [submittingMatches, setSubmittingMatches] = useState(new Set())
   const [reportErrors, setReportErrors] = useState({})
   const [showDropConfirm, setShowDropConfirm] = useState(false)
+  const [byeAssignMatch, setByeAssignMatch] = useState(null)
   const [droppingUserId, setDroppingUserId] = useState(null)
   const [droppingPlayer, setDroppingPlayer] = useState(false)
   const [dropError, setDropError] = useState(null)
@@ -399,6 +400,17 @@ export default function TournamentDetailPage({ session }) {
     setDroppingPlayer(false)
     setDroppingUserId(null)
     setShowDropConfirm(false)
+  }
+
+  // Convert a bye into a real match by assigning an opponent. The bye's
+  // auto-win goes away since the match returns to pending.
+  async function assignByeOpponent(match, userId) {
+    await supabase
+      .from('sim_matches')
+      .update({ player2_id: userId, result: null, status: 'pending' })
+      .eq('id', match.id)
+    setByeAssignMatch(null)
+    await loadMatches()
   }
 
   async function undropPlayer(userId) {
@@ -813,6 +825,9 @@ export default function TournamentDetailPage({ session }) {
                         <button onClick={() => resolveDispute(m.id, 'player2_win')} style={{ fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 6, border: 'none', background: 'rgba(47,125,163,0.18)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit' }}>▲ {p2?.username ?? 'P2'}</button>
                       </div>
                     )}
+                    {showAdminCol && m.result === 'bye' && (
+                      <button onClick={() => setByeAssignMatch(m)} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(47,125,163,0.34)', background: 'rgba(47,125,163,0.12)', color: '#52a9cd', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Assign Opponent</button>
+                    )}
                   </div>
                   {reportErrors[m.id] && (
                     <div style={{ fontSize: 11, color: '#d24a3a', marginTop: 8 }}>{reportErrors[m.id]}</div>
@@ -982,6 +997,40 @@ export default function TournamentDetailPage({ session }) {
           </div>
         </div>
       )}
+
+      {/* ── Assign bye opponent modal ────────────────────────────────────── */}
+      {byeAssignMatch && (() => {
+        const takenIds = new Set(currentMatches.filter(cm => cm.id !== byeAssignMatch.id).flatMap(cm => [cm.player1_id, cm.player2_id]).filter(Boolean))
+        const eligible = players.filter(p => !p.dropped && p.user_id !== byeAssignMatch.player1_id && !takenIds.has(p.user_id))
+        const byeProfile = playerProfile(byeAssignMatch.player1_id)
+        return (
+          <div onClick={() => setByeAssignMatch(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(47,125,163,0.34)', borderRadius: 16, width: 400, maxHeight: '80vh', overflow: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8', marginBottom: 4 }}>Assign Opponent</div>
+                <div style={{ fontSize: 12, color: '#9db2c6' }}>Pick an opponent for <strong style={{ color: '#e9f1f8' }}>{byeProfile?.username ?? 'the bye player'}</strong>. The bye (and its free win) is replaced with a normal match.</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {eligible.length === 0 && <div style={{ fontSize: 13, color: '#67809a', textAlign: 'center', padding: '20px 0' }}>No available players — everyone else is already paired this round.</div>}
+                {eligible.map(p => (
+                  <div
+                    key={p.user_id}
+                    onClick={() => assignByeOpponent(byeAssignMatch, p.user_id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.12)', borderRadius: 10, cursor: 'pointer' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(47,125,163,0.4)'; e.currentTarget.style.background = 'rgba(47,125,163,0.08)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.12)'; e.currentTarget.style.background = 'rgba(140,176,208,0.05)' }}
+                  >
+                    <Avatar profile={p.profiles} size={28} radius={7} />
+                    <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>{p.profiles?.username ?? 'Unknown'}</div>
+                    <span style={{ fontSize: 11, color: '#52a9cd' }}>Pair ⚔️</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setByeAssignMatch(null)} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(140,176,208,0.18)', background: 'transparent', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Force end tournament modal ───────────────────────────────────── */}
       {showForceEndModal && (
