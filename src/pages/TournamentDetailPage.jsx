@@ -401,6 +401,15 @@ export default function TournamentDetailPage({ session }) {
     setShowDropConfirm(false)
   }
 
+  async function undropPlayer(userId) {
+    await supabase
+      .from('sim_tournament_players')
+      .update({ dropped: false })
+      .eq('tournament_id', id)
+      .eq('user_id', userId)
+    await loadPlayers()
+  }
+
   // Finalize a match once both players have reported. Idempotent and safe to
   // call from any client: it re-reads fresh state and only writes while the
   // match is still pending, so concurrent callers and admin actions don't clash.
@@ -862,8 +871,10 @@ export default function TournamentDetailPage({ session }) {
                     <div style={{ fontSize: 12, color: '#9db2c6', fontFamily: 'monospace' }}>{s.wins + s.losses > 0 ? `${Math.round(s.owr * 100)}%` : '—'}</div>
                     {showAdminCol && (
                       <div onClick={e => e.stopPropagation()}>
-                        {!isDropped && (
+                        {!isDropped ? (
                           <button onClick={() => { setDroppingUserId(s.user_id); setShowDropConfirm(true) }} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(210,74,58,0.3)', background: 'rgba(210,74,58,0.08)', color: '#d24a3a', cursor: 'pointer', fontFamily: 'inherit' }}>Drop</button>
+                        ) : (
+                          <button onClick={() => undropPlayer(s.user_id)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(59,178,126,0.3)', background: 'rgba(59,178,126,0.08)', color: '#3bb27e', cursor: 'pointer', fontFamily: 'inherit' }}>Undo</button>
                         )}
                       </div>
                     )}
