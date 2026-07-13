@@ -27,8 +27,11 @@ export default function TournamentsPage({ session }) {
   }, [session])
 
   async function checkAdmin() {
-    const { data } = await supabase.from('profiles').select('username').eq('id', session.user.id).single()
-    if (data?.username === 'Cipin') setIsAdmin(true)
+    const [{ data }, { data: creatorGrant }] = await Promise.all([
+      supabase.from('profiles').select('username').eq('id', session.user.id).single(),
+      supabase.from('tournament_creators').select('user_id').eq('user_id', session.user.id).maybeSingle(),
+    ])
+    if (data?.username === 'Cipin' || creatorGrant) setIsAdmin(true)
   }
 
   async function load() {

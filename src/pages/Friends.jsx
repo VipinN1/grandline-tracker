@@ -28,6 +28,7 @@ export default function Friends({ session }) {
   const [adminModal, setAdminModal] = useState(null) // friend object
   const [myTournaments, setMyTournaments] = useState([])
   const [adminGrants, setAdminGrants] = useState([]) // tournament_ids friend has admin on
+  const [creatorGrant, setCreatorGrant] = useState(false) // friend can create own tournaments
   const [adminLoading, setAdminLoading] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const { isMobile } = useWindowSize()
@@ -84,13 +85,27 @@ export default function Friends({ session }) {
     e.stopPropagation()
     setAdminModal(friend)
     setAdminLoading(true)
-    const [{ data: tours }, { data: grants }] = await Promise.all([
+    const [{ data: tours }, { data: grants }, { data: creator }] = await Promise.all([
       supabase.from('sim_tournaments').select('id, name, status').eq('created_by', session.user.id).order('created_at', { ascending: false }),
       supabase.from('sim_tournament_admins').select('tournament_id').eq('user_id', friend.profiles.id),
+      supabase.from('tournament_creators').select('user_id').eq('user_id', friend.profiles.id).maybeSingle(),
     ])
     setMyTournaments(tours ?? [])
     setAdminGrants((grants ?? []).map(g => g.tournament_id))
+    setCreatorGrant(!!creator)
     setAdminLoading(false)
+  }
+
+  async function toggleCreatorGrant() {
+    if (!adminModal) return
+    const friendId = adminModal.profiles.id
+    if (creatorGrant) {
+      const { error } = await supabase.from('tournament_creators').delete().eq('user_id', friendId)
+      if (!error) setCreatorGrant(false)
+    } else {
+      const { error } = await supabase.from('tournament_creators').insert({ user_id: friendId, granted_by: session.user.id })
+      if (!error) setCreatorGrant(true)
+    }
   }
 
   async function toggleAdminGrant(tournamentId) {
@@ -219,6 +234,18 @@ export default function Friends({ session }) {
               </div>
               <button onClick={() => setAdminModal(null)} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#9db2c6', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
             </div>
+
+            {!adminLoading && (
+              <div onClick={toggleCreatorGrant} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, border: `1px solid ${creatorGrant ? 'rgba(200,162,74,0.4)' : 'rgba(140,176,208,0.07)'}`, background: creatorGrant ? 'rgba(200,162,74,0.08)' : 'rgba(140,176,208,0.02)', cursor: 'pointer', transition: 'all 0.15s', marginBottom: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e9f1f8' }}>Tournament Creator</div>
+                  <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 2 }}>Can create and run their own tournaments</div>
+                </div>
+                <div style={{ width: 36, height: 20, borderRadius: 10, background: creatorGrant ? '#c8a24a' : 'rgba(140,176,208,0.1)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: 2, left: creatorGrant ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }} />
+                </div>
+              </div>
+            )}
 
             {adminLoading ? (
               <div style={{ fontSize: 13, color: '#9db2c6', textAlign: 'center', padding: 24 }}>Loading...</div>
