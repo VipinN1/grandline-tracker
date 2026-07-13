@@ -40,17 +40,33 @@ function cleanName(name) {
 export default function BountyBoard({ session }) {
   const [loading, setLoading] = useState(true)
   const [tournaments, setTournaments] = useState([])
+  const [simData, setSimData] = useState({ tours: [], matches: [], profiles: {} })
   const { isMobile } = useWindowSize()
   const navigate = useNavigate()
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('tournaments')
-        .select('id, user_id, name, date, placement, wins, losses, leader_id, leader_name, leader_color, profiles(username, avatar_url)')
-        .eq('is_practice', false)
-        .order('date', { ascending: false })
+      const [{ data }, { data: simTours }, { data: simMatches }] = await Promise.all([
+        supabase
+          .from('tournaments')
+          .select('id, user_id, name, date, placement, wins, losses, leader_id, leader_name, leader_color, profiles(username, avatar_url)')
+          .eq('is_practice', false)
+          .order('date', { ascending: false }),
+        supabase.from('sim_tournaments').select('id, winner_id, status'),
+        supabase.from('sim_matches').select('tournament_id, player1_id, player2_id, result').eq('status', 'completed'),
+      ])
       setTournaments(data ?? [])
+
+      // Profiles for sim players who never logged a regular tournament
+      const knownIds = new Set((data ?? []).map(t => t.user_id))
+      const simIds = new Set((simMatches ?? []).flatMap(m => [m.player1_id, m.player2_id]).filter(Boolean))
+      const missing = [...simIds].filter(uid => !knownIds.has(uid))
+      let profileMap = {}
+      if (missing.length > 0) {
+        const { data: profs } = await supabase.from('profiles').select('id, username, avatar_url').in('id', missing)
+        profileMap = Object.fromEntries((profs ?? []).map(p => [p.id, p]))
+      }
+      setSimData({ tours: simTours ?? [], matches: simMatches ?? [], profiles: profileMap })
       setLoading(false)
     }
     load()
@@ -121,6 +137,36 @@ export default function BountyBoard({ session }) {
     if (t.leader_id) p.leaders[t.leader_id] = (p.leaders[t.leader_id] || 0) + 1
   })
 
+  // ── Sim tournament results (same rates: win +100K, loss −50K, champion +1M) ──
+  const simPerTour = {} // user_id -> tournament_id -> { wins, losses }
+  simData.matches.forEach(m => {
+    const add = (uid, w, l) => {
+      if (!uid) return
+      if (!simPerTour[uid]) simPerTour[uid] = {}
+      if (!simPerTour[uid][m.tournament_id]) simPerTour[uid][m.tournament_id] = { wins: 0, losses: 0 }
+      simPerTour[uid][m.tournament_id].wins += w
+      simPerTour[uid][m.tournament_id].losses += l
+    }
+    if (m.result === 'player1_win') { add(m.player1_id, 1, 0); add(m.player2_id, 0, 1) }
+    else if (m.result === 'player2_win') { add(m.player2_id, 1, 0); add(m.player1_id, 0, 1) }
+    else if (m.result === 'bye') add(m.player1_id, 1, 0)
+  })
+  const simWinners = Object.fromEntries(simData.tours.filter(t => t.winner_id).map(t => [t.id, t.winner_id]))
+  Object.entries(simPerTour).forEach(([uid, tours]) => {
+    if (!playerMap[uid]) {
+      const prof = simData.profiles[uid]
+      playerMap[uid] = { user_id: uid, username: prof?.username ?? 'Unknown', avatar_url: prof?.avatar_url ?? null, bounty: 0, wins: 0, losses: 0, tournaments: 0, leaders: {} }
+    }
+    const p = playerMap[uid]
+    Object.entries(tours).forEach(([tid, r]) => {
+      const champion = simWinners[tid] === uid
+      p.bounty += Math.max(0, r.wins * 100_000 - r.losses * 50_000 + (champion ? 1_000_000 : 0))
+      p.wins += r.wins
+      p.losses += r.losses
+      p.tournaments++
+    })
+  })
+
   const leaderboard = Object.values(playerMap)
     .sort((a, b) => b.bounty - a.bounty)
     .map((p, i) => ({
@@ -174,6 +220,9 @@ export default function BountyBoard({ session }) {
             <span style={{ fontSize: 11, fontWeight: 700, color: f.gold ? '#dcb35e' : f.dim ? '#d24a3a' : '#3bb27e', fontFamily: 'monospace' }}>{f.value}</span>
           </div>
         ))}
+        <div style={{ fontSize: 10, color: '#9db2c6', flexBasis: '100%' }}>
+          Includes logged tournaments and on-site sim tournaments — sim match wins and losses pay the same rates, and a sim tournament champion earns the 1st place bonus.
+        </div>
       </div>
 
       {/* ── Community Stats ──────────────────────────────────────────────────── */}
