@@ -23,6 +23,9 @@ import StorefrontPage from './pages/StorefrontPage'
 import BountyBoard from './pages/BountyBoard'
 import Stats from './pages/Stats'
 import BugReports from './pages/BugReports'
+import ArticlesPage from './pages/ArticlesPage'
+import ArticlePage from './pages/ArticlePage'
+import ArticleEditorPage from './pages/ArticleEditorPage'
 import About from './pages/About'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
@@ -105,6 +108,10 @@ export default function App() {
           <Route path="/tournaments/:id" element={<TournamentDetailPage session={session} />} />
           <Route path="/storefront/:id" element={<StorefrontPage session={session} />} />
           <Route path="/bounty" element={<BountyBoard session={session} />} />
+          <Route path="/articles" element={<ArticlesPage session={session} />} />
+          <Route path="/articles/new" element={<ProtectedRoute session={session}><ArticleEditorPage key="new" session={session} /></ProtectedRoute>} />
+          <Route path="/articles/edit/:id" element={<ProtectedRoute session={session}><ArticleEditorPage key="edit" session={session} /></ProtectedRoute>} />
+          <Route path="/articles/:slug" element={<ArticlePage session={session} />} />
           <Route path="/bug-reports" element={<ProtectedRoute session={session}><BugReports session={session} /></ProtectedRoute>} />
           <Route path="/about" element={<About />} />
           <Route path="/terms" element={<Terms />} />

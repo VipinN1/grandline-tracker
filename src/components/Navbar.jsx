@@ -45,6 +45,7 @@ const AUTH_LINKS = [
   { to: '/tournaments', label: 'Tournaments' },
   { to: '/marketplace', label: 'Market' },
   { to: '/deck-builder', label: 'Deck Builder' },
+  { to: '/articles', label: 'Articles' },
   { to: '/about', label: 'About' },
 ]
 
@@ -232,6 +233,7 @@ export default function Navbar({ session }) {
               <NavLink to="/community" className={navLinkClass}>Community</NavLink>
               <NavLink to="/tournaments" className={navLinkClass}>Tournaments</NavLink>
               <NavLink to="/marketplace" className={navLinkClass}>Market</NavLink>
+              <NavLink to="/articles" className={navLinkClass}>Articles</NavLink>
               <NavLink to="/about" className={navLinkClass}>About</NavLink>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
@@ -299,6 +301,7 @@ export default function Navbar({ session }) {
                 { to: '/community', label: 'Community' },
                 { to: '/tournaments', label: 'Tournaments' },
                 { to: '/marketplace', label: 'Market' },
+                { to: '/articles', label: 'Articles' },
                 { to: '/about', label: 'About' },
               ].map(link => (
                 <NavLink
