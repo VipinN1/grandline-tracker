@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { CATEGORIES, slugify, makeExcerpt, firstCardId } from '../lib/articles'
@@ -10,6 +10,7 @@ import { colors, font, radius, eyebrow, input as inputStyle, label as labelStyle
 
 export default function ArticleEditorPage({ session }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams() // present when editing
   const { isMobile } = useWindowSize()
 
@@ -22,7 +23,9 @@ export default function ArticleEditorPage({ session }) {
   const [coverModal, setCoverModal] = useState(false)
   const [isDev, setIsDev] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [notice, setNotice] = useState(null)
+  // Seeded from navigation state so "Draft saved." survives the
+  // /articles/new → /articles/edit/:id remount after the first save.
+  const [notice, setNotice] = useState(location.state?.notice ?? null)
   const [error, setError] = useState(null)
 
   const onEditorReady = useCallback(ed => setEditor(ed), [])
@@ -58,10 +61,17 @@ export default function ArticleEditorPage({ session }) {
     load()
   }, [id, session, navigate])
 
-  function flash(msg) {
-    setNotice(msg)
-    setTimeout(() => setNotice(null), 2400)
-  }
+  // Auto-dismiss any notice (including one carried in via navigation state).
+  useEffect(() => {
+    if (!notice) return
+    const t = setTimeout(() => setNotice(null), 3200)
+    return () => clearTimeout(t)
+  }, [notice])
+
+  // Strip the carried notice from history so a refresh doesn't replay it.
+  useEffect(() => {
+    if (location.state?.notice) window.history.replaceState({ ...window.history.state, usr: null }, '')
+  }, [location.state])
 
   async function save(publish) {
     if (!editor) return
@@ -109,9 +119,12 @@ export default function ArticleEditorPage({ session }) {
     setArticle(saved)
     if (publish) {
       navigate(`/articles/${saved.slug}`)
+    } else if (!article) {
+      // First save of a new draft: the edit route remounts this page, so
+      // carry the confirmation through navigation state.
+      navigate(`/articles/edit/${saved.id}`, { replace: true, state: { notice: 'Draft saved ✓ — find it any time under Articles → My Articles.' } })
     } else {
-      if (!article) navigate(`/articles/edit/${saved.id}`, { replace: true })
-      flash(saved.status === 'published' ? 'Article updated.' : 'Draft saved.')
+      setNotice(saved.status === 'published' ? 'Article updated.' : 'Draft saved.')
     }
   }
 
@@ -120,7 +133,7 @@ export default function ArticleEditorPage({ session }) {
     setSaving(true)
     const { data } = await supabase.from('articles').update({ status: 'draft', updated_at: new Date().toISOString() }).eq('id', article.id).select().single()
     setSaving(false)
-    if (data) { setArticle(data); flash('Article unpublished — it is now a draft.') }
+    if (data) { setArticle(data); setNotice('Article unpublished — it is now a draft.') }
   }
 
   async function remove() {
@@ -147,7 +160,7 @@ export default function ArticleEditorPage({ session }) {
           </h1>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          {notice && <span style={{ fontSize: 12, fontWeight: 600, color: colors.emerald }}>{notice}</span>}
+          <button className="gl-btn" style={btnGhost} onClick={() => navigate('/articles?filter=mine')}>My Articles</button>
           <button className="gl-btn" style={btnGhost} onClick={() => navigate(-1)}>Cancel</button>
           {article && (
             <button className="gl-btn" style={{ ...btnGhost, color: colors.crimson, borderColor: 'rgba(210,74,58,0.34)' }} onClick={remove} disabled={saving}>
@@ -177,6 +190,11 @@ export default function ArticleEditorPage({ session }) {
       {error && (
         <div style={{ marginBottom: 14, padding: '10px 14px', borderRadius: radius.sm, background: 'rgba(210,74,58,0.10)', border: '1px solid rgba(210,74,58,0.34)', color: colors.crimson, fontSize: 13, fontWeight: 600 }}>
           {error}
+        </div>
+      )}
+      {notice && (
+        <div style={{ marginBottom: 14, padding: '10px 14px', borderRadius: radius.sm, background: 'rgba(59,178,126,0.10)', border: '1px solid rgba(59,178,126,0.34)', color: colors.emerald, fontSize: 13, fontWeight: 600 }}>
+          {notice}
         </div>
       )}
 

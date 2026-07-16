@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { CATEGORIES, categoryLabel } from '../lib/articles'
@@ -94,27 +94,45 @@ function ArticleCard({ article, onClick, showStatus }) {
   )
 }
 
+const FULL_SELECT = 'id, title, slug, category, excerpt, cover_card_id, status, published_at, updated_at, author_id, profiles(username, avatar_url), article_likes(count), article_comments(count)'
+// Fallback without the count aggregates in case the embed-count syntax fails.
+const BASIC_SELECT = 'id, title, slug, category, excerpt, cover_card_id, status, published_at, updated_at, author_id, profiles(username, avatar_url)'
+
 export default function ArticlesPage({ session }) {
   const navigate = useNavigate()
   const { isMobile } = useWindowSize()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
 
-  const SELECT = 'id, title, slug, category, excerpt, cover_card_id, status, published_at, updated_at, author_id, profiles(username, avatar_url), article_likes(count), article_comments(count)'
+  // Filter lives in the URL (?filter=mine) so other pages can link straight
+  // to e.g. My Articles. "mine" needs a session.
+  const rawFilter = searchParams.get('filter') ?? 'all'
+  const filter = rawFilter === 'mine' && !session ? 'all' : rawFilter
+
+  function setFilter(value) {
+    setSearchParams(value === 'all' ? {} : { filter: value }, { replace: true })
+  }
 
   useEffect(() => {
     let cancelled = false
-    async function load() {
-      setLoading(true)
-      let query = supabase.from('articles').select(SELECT)
+    async function fetchArticles(select) {
+      let query = supabase.from('articles').select(select)
       if (filter === 'mine') {
         query = query.eq('author_id', session.user.id).order('updated_at', { ascending: false })
       } else {
         query = query.eq('status', 'published').order('published_at', { ascending: false })
         if (filter !== 'all') query = query.eq('category', filter)
       }
-      const { data } = await query
+      return query
+    }
+    async function load() {
+      setLoading(true)
+      let { data, error } = await fetchArticles(FULL_SELECT)
+      if (error) {
+        console.error('Articles query failed, retrying without counts:', error.message)
+        ;({ data } = await fetchArticles(BASIC_SELECT))
+      }
       if (!cancelled) {
         setArticles(data ?? [])
         setLoading(false)
@@ -126,8 +144,8 @@ export default function ArticlesPage({ session }) {
 
   const filters = [
     { value: 'all', label: 'All' },
+    ...(session ? [{ value: 'mine', label: '✍ My Articles' }] : []),
     ...CATEGORIES.map(c => ({ value: c.value, label: c.label })),
-    ...(session ? [{ value: 'mine', label: 'My Articles' }] : []),
   ]
 
   const chip = active => ({
