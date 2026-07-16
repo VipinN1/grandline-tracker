@@ -3,9 +3,8 @@ import { searchCards, searchLeaders, getCard, getCardImageUrl, enrichCards } fro
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { COLORS, CARD_COLORS, BOOSTER_SETS, ALT_ART_OPTIONS, ALT_ART_ACCENTS, pillStyle, filterCards } from '../lib/cardFilters'
 
-const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
-const CARD_COLORS = ['Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Black']
 const MAX_COPIES = 4
 const MAX_DECK = 50
 
@@ -20,30 +19,6 @@ const INPUT = {
   fontFamily: 'inherit',
   width: '100%',
   boxSizing: 'border-box',
-}
-
-function pillStyle(isActive, accentColor) {
-  return {
-    padding: '3px 9px',
-    borderRadius: 20,
-    fontSize: 11,
-    fontWeight: 600,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    border: isActive && accentColor ? `1px solid ${accentColor}66` : isActive ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(140,176,208,0.15)',
-    background: isActive && accentColor ? `${accentColor}26` : isActive ? 'rgba(140,176,208,0.2)' : 'transparent',
-    color: isActive && accentColor ? accentColor : isActive ? '#52a9cd' : '#9db2c6',
-  }
-}
-
-function getAltArtType(card) {
-  const name = (card.card_name ?? '').toLowerCase()
-  const rarity = (card.card_rarity ?? '').toLowerCase()
-  if (/\bsp\b/.test(name) || rarity === 'sp') return 'sp'
-  if (/\btr\b/.test(name) || rarity === 'tr') return 'tr'
-  if (/\bmanga\b/.test(name) || rarity === 'manga') return 'manga'
-  if (/parallel|alt[\s_]art|alternate[\s_]art/.test(name) || rarity === 'parallel' || rarity === 'p') return 'parallel'
-  return null
 }
 
 export default function DeckBuilder({ session }) {
@@ -256,19 +231,12 @@ const location = useLocation()
     navigate('/decklists')
   }
 
-  const filteredResults = cardResults.filter(card => {
-    if (filterColor.length > 0) {
-      const cc = (card.card_color ?? '').split(/[\s/]+/).map(c => c.trim()).filter(Boolean)
-      if (!filterColor.some(fc => cc.some(c => c.toLowerCase() === fc.toLowerCase()))) return false
-    }
-    if (filterType && card.card_type !== filterType) return false
-    const id = card.card_set_id ?? ''
-    if (filterSource === 'ST' && !/^ST/i.test(id)) return false
-    if (filterSource === 'Promos' && !/^P-/i.test(id)) return false
-    if (filterSource && filterSource !== 'ST' && filterSource !== 'Promos' && !id.toUpperCase().startsWith(filterSource)) return false
-    if (filterAltArt && getAltArtType(card) !== filterAltArt) return false
-    if (filterCost !== null && String(card.card_cost ?? '') !== String(filterCost)) return false
-    return true
+  const filteredResults = filterCards(cardResults, {
+    colors: filterColor,
+    type: filterType,
+    source: filterSource,
+    altArt: filterAltArt,
+    cost: filterCost,
   })
 
   const deckEntries = Object.entries(deckCards)
@@ -312,16 +280,15 @@ const location = useLocation()
             style={{ padding: '2px 7px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none', background: !['', 'ST', 'Promos'].includes(filterSource) ? 'rgba(200,162,74,0.3)' : 'rgba(26,50,81,0.85)', border: !['', 'ST', 'Promos'].includes(filterSource) ? '1px solid rgba(200,162,74,0.5)' : '1px solid rgba(200,162,74,0.3)', color: !['', 'ST', 'Promos'].includes(filterSource) ? '#52a9cd' : '#9db2c6' }}
           >
             <option value="">Booster Sets</option>
-            {['OP01','OP02','OP03','OP04','OP05','OP06','OP07','OP08','OP09','OP10','OP11','OP12','OP13','OP14','OP15','OP16','EB01','EB02','EB03','EB04','PRB01','PRB02'].map(s => <option key={s} value={s}>{s}</option>)}
+            {BOOSTER_SETS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <button onClick={() => setFilterSource('ST')} style={pillStyle(filterSource === 'ST', null)}>Starter Decks</button>
           <button onClick={() => setFilterSource('Promos')} style={pillStyle(filterSource === 'Promos', null)}>Promos</button>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {[['', 'All'], ['parallel', 'Parallel'], ['sp', 'SP'], ['manga', 'Manga'], ['tr', 'TR']].map(([val, label]) => {
-            const ac = { parallel: '#d56a9c', sp: '#3bb27e', manga: '#38bdf8', tr: '#e08a3c' }[val]
-            return <button key={val || 'a-all'} onClick={() => setFilterAltArt(val)} style={pillStyle(filterAltArt === val, ac)}>{label}</button>
-          })}
+          {ALT_ART_OPTIONS.map(([val, label]) => (
+            <button key={val || 'a-all'} onClick={() => setFilterAltArt(val)} style={pillStyle(filterAltArt === val, ALT_ART_ACCENTS[val])}>{label}</button>
+          ))}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
           <button onClick={() => setFilterCost(null)} style={pillStyle(filterCost === null, null)}>All Costs</button>
