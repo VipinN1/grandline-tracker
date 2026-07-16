@@ -62,7 +62,7 @@ export default function ArticlePage({ session }) {
       setNotFound(false)
       const { data: a } = await supabase
         .from('articles')
-        .select('*, profiles(username, avatar_url)')
+        .select('*, profiles!articles_author_id_fkey(username, avatar_url)')
         .eq('slug', slug)
         .maybeSingle()
       if (cancelled) return
@@ -71,7 +71,7 @@ export default function ArticlePage({ session }) {
 
       const [{ count }, { data: cs }, likedRes] = await Promise.all([
         supabase.from('article_likes').select('*', { count: 'exact', head: true }).eq('article_id', a.id),
-        supabase.from('article_comments').select('*, profiles(username, avatar_url)').eq('article_id', a.id).order('created_at', { ascending: true }),
+        supabase.from('article_comments').select('*, profiles!article_comments_user_id_fkey(username, avatar_url)').eq('article_id', a.id).order('created_at', { ascending: true }),
         session
           ? supabase.from('article_likes').select('user_id').eq('article_id', a.id).eq('user_id', session.user.id).maybeSingle()
           : Promise.resolve({ data: null }),
@@ -130,7 +130,7 @@ export default function ArticlePage({ session }) {
     const { data, error } = await supabase
       .from('article_comments')
       .insert({ article_id: article.id, user_id: session.user.id, body: commentText.trim() })
-      .select('*, profiles(username, avatar_url)')
+      .select('*, profiles!article_comments_user_id_fkey(username, avatar_url)')
       .single()
     setPosting(false)
     if (!error && data) {

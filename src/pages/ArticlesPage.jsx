@@ -94,9 +94,12 @@ function ArticleCard({ article, onClick, showStatus }) {
   )
 }
 
-const FULL_SELECT = 'id, title, slug, category, excerpt, cover_card_id, status, published_at, updated_at, author_id, profiles(username, avatar_url), article_likes(count), article_comments(count)'
+// The profiles embed must name the FK: articles↔profiles resolves two ways
+// (author_id, plus many-to-many through article_likes), which PostgREST
+// refuses to guess between.
+const FULL_SELECT = 'id, title, slug, category, excerpt, cover_card_id, status, published_at, updated_at, author_id, profiles!articles_author_id_fkey(username, avatar_url), article_likes(count), article_comments(count)'
 // Fallback without the count aggregates in case the embed-count syntax fails.
-const BASIC_SELECT = 'id, title, slug, category, excerpt, cover_card_id, status, published_at, updated_at, author_id, profiles(username, avatar_url)'
+const BASIC_SELECT = 'id, title, slug, category, excerpt, cover_card_id, status, published_at, updated_at, author_id, profiles!articles_author_id_fkey(username, avatar_url)'
 
 export default function ArticlesPage({ session }) {
   const navigate = useNavigate()
