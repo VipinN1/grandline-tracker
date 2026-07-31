@@ -266,7 +266,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(140,176,208,0.18)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 620, maxHeight: isMobile ? '95vh' : '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(180deg, #0f1f33, #0a1626)', border: '1px solid rgba(140,176,208,0.18)', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: isMobile ? '100%' : 620, maxHeight: isMobile ? '95dvh' : '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header with leader art */}
           <div style={{ position: 'relative', height: 120, background: 'rgba(140,176,208,0.03)', flexShrink: 0 }}>

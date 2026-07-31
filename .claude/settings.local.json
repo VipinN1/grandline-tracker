@@ -52,7 +52,8 @@
       "Bash(node -e \"const m=require\\('./node_modules/@tiptap/extension-text-style/dist/index.cjs'\\);console.log\\(Object.keys\\(m\\)\\)\")",
       "Bash(node -e \"const m=require\\('./node_modules/@tiptap/extensions/dist/index.cjs'\\);console.log\\(Object.keys\\(m\\)\\)\")",
       "Bash(node -e \"const m=require\\('./node_modules/@tiptap/starter-kit/dist/index.cjs'\\);console.log\\(Object.keys\\(m\\)\\)\")",
-      "Bash(node --input-type=module -e ' *)"
+      "Bash(node --input-type=module -e ' *)",
+      "Skill(run)"
     ]
   }
 }
