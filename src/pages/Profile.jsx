@@ -141,9 +141,17 @@ export default function Profile({ session }) {
   const bestFinish = ranked.length > 0 ? Math.min(...ranked.map(t => t.placement)) : null
   {/*const username = profile?.username ?? session?.user?.user_metadata?.username ?? 'Player'*/}
 
+  // A tournament counts toward every leader that appeared in it — its main
+  // leader plus any leader swapped in for individual rounds.
   const leaderCounts = ranked.reduce((acc, t) => {
-    if (!acc[t.leader_id]) acc[t.leader_id] = { name: t.leader_name, color: t.leader_color, count: 0 }
-    acc[t.leader_id].count++
+    const leadersHere = new Map([[t.leader_id, { name: t.leader_name, color: t.leader_color }]])
+    for (const r of (t.tournament_rounds ?? [])) {
+      if (r.leader_id && !leadersHere.has(r.leader_id)) leadersHere.set(r.leader_id, { name: r.leader_name, color: r.leader_color })
+    }
+    for (const [id, info] of leadersHere) {
+      if (!acc[id]) acc[id] = { name: info.name, color: info.color, count: 0 }
+      acc[id].count++
+    }
     return acc
   }, {})
 
@@ -290,7 +298,7 @@ export default function Profile({ session }) {
       {activeTab === 'leaders' && tournaments.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
           {Object.entries(leaderCounts).map(([id, data]) => {
-            const leaderTournaments = ranked.filter(t => t.leader_id === id)
+            const leaderTournaments = ranked.filter(t => t.leader_id === id || (t.tournament_rounds ?? []).some(r => r.leader_id === id))
             return (
               <div key={id} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ position: 'relative', height: isMobile ? 100 : 140 }}>
