@@ -33,7 +33,13 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
     const NAME_MIN = 30
     let size = isMobile ? (multi ? 38 : 56) : (multi ? 50 : 76)
     txt.style.fontSize = size + 'px'
-    while (size > NAME_MIN && txt.scrollWidth > box.clientWidth) {
+    // Fit to less than the full box width: html2canvas (used to export this
+    // card as an image) doesn't render negative letter-spacing as tightly as
+    // the live browser does, so text sized to exactly fit on-screen can spill
+    // past this box's overflow:hidden edge — and get clipped — in the saved
+    // image. The margin absorbs that difference.
+    const fitWidth = box.clientWidth * 0.85
+    while (size > NAME_MIN && txt.scrollWidth > fitWidth) {
       size -= 1
       txt.style.fontSize = size + 'px'
     }
