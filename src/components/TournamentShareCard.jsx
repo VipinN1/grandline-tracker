@@ -218,7 +218,7 @@ const TournamentShareCard = forwardRef(function TournamentShareCard({ tournament
 
       {/* 5. Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, borderTop: '1px solid rgba(140,176,208,0.2)' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#52a9cd', letterSpacing: '-0.2px' }}>☠ PirateTracker</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#52a9cd', letterSpacing: '-0.2px' }}>PirateTracker</div>
         <div style={{ fontSize: 11, color: '#5f7589' }}>piratetracker.vercel.app</div>
       </div>
     </div>
