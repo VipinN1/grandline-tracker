@@ -15,6 +15,17 @@ const COLORS = {
   Black: '#94a3b8',
 }
 
+// Group leader variants (parallels, alt art) under one base card id, and
+// strip the same suffixes from the display name — same convention as the
+// matchup matrix on the Stats page (src/pages/Stats.jsx).
+function baseId(id) {
+  return id?.match(/^[A-Z]{1,3}[0-9]{0,3}-[0-9]+/i)?.[0] ?? id ?? ''
+}
+function cleanName(name) {
+  if (!name) return ''
+  return name.replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '').replace(/\s*\([^)]*\)$/, '').trim()
+}
+
 function placementLabel(n) {
   if (n === 1) return '1st'
   if (n === 2) return '2nd'
@@ -142,15 +153,19 @@ export default function Profile({ session }) {
   {/*const username = profile?.username ?? session?.user?.user_metadata?.username ?? 'Player'*/}
 
   // A tournament counts toward every leader that appeared in it — its main
-  // leader plus any leader swapped in for individual rounds.
+  // leader plus any leader swapped in for individual rounds. Keyed by base
+  // card id so alt-art/parallel printings of the same leader (e.g. "Shanks"
+  // vs "Shanks (001)") are tracked as one leader, not two — `leaderId` keeps
+  // one representative full id per group for rendering the card art.
   const leaderCounts = ranked.reduce((acc, t) => {
-    const leadersHere = new Map([[t.leader_id, { name: t.leader_name, color: t.leader_color }]])
+    const leadersHere = new Map([[baseId(t.leader_id), { name: t.leader_name, color: t.leader_color, leaderId: t.leader_id }]])
     for (const r of (t.tournament_rounds ?? [])) {
-      if (r.leader_id && !leadersHere.has(r.leader_id)) leadersHere.set(r.leader_id, { name: r.leader_name, color: r.leader_color })
+      const key = r.leader_id ? baseId(r.leader_id) : null
+      if (key && !leadersHere.has(key)) leadersHere.set(key, { name: r.leader_name, color: r.leader_color, leaderId: r.leader_id })
     }
-    for (const [id, info] of leadersHere) {
-      if (!acc[id]) acc[id] = { name: info.name, color: info.color, count: 0 }
-      acc[id].count++
+    for (const [key, info] of leadersHere) {
+      if (!acc[key]) acc[key] = { name: cleanName(info.name) || info.name, color: info.color, leaderId: info.leaderId, count: 0 }
+      acc[key].count++
     }
     return acc
   }, {})
@@ -206,7 +221,7 @@ export default function Profile({ session }) {
 
       {/* Stats row — 2×2 on mobile, 4×1 on desktop */}
       {(() => {
-        const favLeaderId = Object.entries(leaderCounts).sort((a, b) => b[1].count - a[1].count)[0]?.[0] ?? null
+        const favLeaderId = Object.values(leaderCounts).sort((a, b) => b.count - a.count)[0]?.leaderId ?? null
         const stats = [
           { label: 'Tournaments', value: ranked.length },
           { label: 'Top 8s', value: topEights },
@@ -297,18 +312,18 @@ export default function Profile({ session }) {
       {/* Leaders tab — 1 column on mobile, 3 on desktop */}
       {activeTab === 'leaders' && tournaments.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
-          {Object.entries(leaderCounts).map(([id, data]) => {
-            const leaderTournaments = ranked.filter(t => t.leader_id === id || (t.tournament_rounds ?? []).some(r => r.leader_id === id))
+          {Object.entries(leaderCounts).map(([key, data]) => {
+            const leaderTournaments = ranked.filter(t => baseId(t.leader_id) === key || (t.tournament_rounds ?? []).some(r => baseId(r.leader_id) === key))
             return (
-              <div key={id} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+              <div key={key} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ position: 'relative', height: isMobile ? 100 : 140 }}>
-                  <img src={getCardImageUrl(id)} alt={data.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                  <img src={getCardImageUrl(data.leaderId)} alt={data.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: COLORS[data.color] ?? '#2f7da3' }} />
                   <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.6)', border: `1px solid ${COLORS[data.color]}44`, borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700, color: COLORS[data.color] }}>{data.color}</div>
                 </div>
                 <div style={{ padding: '12px 14px' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{data.name}</div>
-                  <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 2, fontFamily: 'monospace' }}>{id}</div>
+                  <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 2, fontFamily: 'monospace' }}>{data.leaderId}</div>
                   <div style={{ fontSize: 12, color: '#67809a', marginTop: 6, marginBottom: 10 }}>
                     <span style={{ color: '#9db2c6', fontWeight: 600 }}>{data.count}</span> events played
                   </div>

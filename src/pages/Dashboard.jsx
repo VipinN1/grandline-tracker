@@ -22,6 +22,17 @@ const FALLBACK = colors.ocean
 
 const TOP_LEADERS_LIMIT = 3
 
+// Group leader variants (parallels, alt art) under one base card id, and
+// strip the same suffixes from the display name — same convention as the
+// matchup matrix on the Stats page (src/pages/Stats.jsx).
+function baseId(id) {
+  return id?.match(/^[A-Z]{1,3}[0-9]{0,3}-[0-9]+/i)?.[0] ?? id ?? ''
+}
+function cleanName(name) {
+  if (!name) return ''
+  return name.replace(/\s*-\s*[A-Z]{1,3}\d*-\d+.*$/, '').replace(/\s*\([^)]*\)$/, '').trim()
+}
+
 function placementLabel(n) {
   if (n === 1) return '1st'
   if (n === 2) return '2nd'
@@ -130,36 +141,38 @@ export default function Dashboard({ session }) {
 
   const leaderUsage = Object.values(
     ranked.reduce((acc, t) => {
+      // Key by base card id so alt-art/parallel printings of the same leader
+      // (e.g. "Shanks" vs "Shanks (001)") are tracked as one leader, not two.
       function ensureLeader(leaderId, leaderName, leaderColor) {
-        if (!acc[leaderId]) {
+        const key = baseId(leaderId)
+        if (!acc[key]) {
           const primaryColor = (leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? FALLBACK
-          acc[leaderId] = { name: leaderName, fullName: leaderName, leaderColor, color: primaryColor, count: 0, wins: 0, losses: 0 }
+          const displayName = cleanName(leaderName) || leaderName
+          acc[key] = { name: displayName, fullName: displayName, leaderColor, color: primaryColor, count: 0, wins: 0, losses: 0 }
         }
+        return key
       }
 
       const rounds = t.tournament_rounds ?? []
-      const leadersInTournament = new Set([t.leader_id])
-      ensureLeader(t.leader_id, t.leader_name, t.leader_color)
+      const mainKey = ensureLeader(t.leader_id, t.leader_name, t.leader_color)
+      const leadersInTournament = new Set([mainKey])
 
       // Rounds played under a different leader (a mid-event deck swap) count
       // as that leader's own event/win/loss, not the tournament's main leader.
       for (const r of rounds) {
-        if (r.leader_id && r.leader_id !== t.leader_id) {
-          leadersInTournament.add(r.leader_id)
-          ensureLeader(r.leader_id, r.leader_name, r.leader_color)
-        }
-        const effectiveId = r.leader_id || t.leader_id
-        if (r.result === 'win') acc[effectiveId].wins++
-        else if (r.result === 'loss') acc[effectiveId].losses++
+        const effectiveKey = r.leader_id ? ensureLeader(r.leader_id, r.leader_name, r.leader_color) : mainKey
+        leadersInTournament.add(effectiveKey)
+        if (r.result === 'win') acc[effectiveKey].wins++
+        else if (r.result === 'loss') acc[effectiveKey].losses++
       }
 
       // No round data recorded — fall back to the tournament's aggregate record.
       if (rounds.length === 0) {
-        acc[t.leader_id].wins += t.wins
-        acc[t.leader_id].losses += t.losses
+        acc[mainKey].wins += t.wins
+        acc[mainKey].losses += t.losses
       }
 
-      for (const leaderId of leadersInTournament) acc[leaderId].count++
+      for (const key of leadersInTournament) acc[key].count++
       return acc
     }, {})
   ).map(l => ({ ...l, wr: l.wins + l.losses > 0 ? Math.round((l.wins / (l.wins + l.losses)) * 100) : 0 }))
