@@ -345,13 +345,13 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
 
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 8 }}>Round by Round</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {rounds.map(r => (
-                    <div key={r.id} style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 8, padding: '10px 14px' }}>
+                  {rounds.map(r => {
+                    const switchedLeader = r.leader_id && r.leader_id !== tournament.leader_id
+                    const switchColor = COLORS[r.leader_color] ?? '#9db2c6'
+                    return (
+                    <div key={r.id} style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 8, padding: '10px 14px', ...(switchedLeader ? { border: `1px solid ${switchColor}33` } : {}) }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: '#9db2c6', minWidth: 52 }}>Round {r.round_number}</div>
-                        {r.leader_id && r.leader_id !== tournament.leader_id && (
-                          <img src={getCardImageUrl(r.leader_id)} alt={r.leader_name} title={`Played ${r.leader_name} this round`} style={{ width: 18, height: 24, objectFit: 'cover', objectPosition: 'top', borderRadius: 3, border: `1px solid ${COLORS[r.leader_color] ?? 'rgba(140,176,208,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
-                        )}
                         {r.opponent_leader_id ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
                             <img src={getCardImageUrl(r.opponent_leader_id)} alt={r.opponent_leader_name} style={{ width: 22, height: 30, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
@@ -376,11 +376,20 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
                           </span>
                         </div>
                       </div>
+                      {switchedLeader && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, paddingTop: 8, borderTop: `1px dashed ${switchColor}33` }}>
+                          <img src={getCardImageUrl(r.leader_id)} alt={r.leader_name} style={{ width: 32, height: 44, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, border: `1.5px solid ${switchColor}`, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                          <div>
+                            <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#67809a' }}>Switched leader this round</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: switchColor, marginTop: 1 }}>{r.leader_name}</div>
+                          </div>
+                        </div>
+                      )}
                       {r.notes && (
                         <div style={{ fontSize: 11, color: '#9db2c6', marginTop: 5, paddingLeft: 62, fontStyle: 'italic' }}>{r.notes}</div>
                       )}
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             )}
