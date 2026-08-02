@@ -56,11 +56,18 @@ function buildMatrix(tournaments, symmetric) {
 
   for (const t of tournaments) {
     if (!t.leader_id) continue
-    const myKey = baseId(t.leader_id)
-    const myLeader = { key: myKey, id: t.leader_id, name: cleanName(t.leader_name) || 'Unknown', color: t.leader_color }
 
     for (const r of (t.tournament_rounds ?? [])) {
       if (r.result !== 'win' && r.result !== 'loss') continue
+      // A round may have been played with a different leader than the
+      // tournament's main one (a mid-event deck swap) — use that round's
+      // own leader when present, otherwise fall back to the tournament's.
+      const myId = r.leader_id || t.leader_id
+      const myName = r.leader_id ? r.leader_name : t.leader_name
+      const myColor = r.leader_id ? r.leader_color : t.leader_color
+      const myKey = baseId(myId)
+      const myLeader = { key: myKey, id: myId, name: cleanName(myName) || 'Unknown', color: myColor }
+
       const oKey = r.opponent_leader_id ? baseId(r.opponent_leader_id) : (r.opponent_leader_name ? `n:${cleanName(r.opponent_leader_name)}` : null)
       if (!oKey) continue
       const oppLeader = { key: oKey, id: r.opponent_leader_id, name: cleanName(r.opponent_leader_name) || 'Unknown', color: r.opponent_leader_color }
@@ -141,7 +148,7 @@ export default function Stats({ session }) {
       if (scope === 'mine' && !session) { setRows([]); setLoading(false); return }
       let q = supabase
         .from('tournaments')
-        .select('leader_id, leader_name, leader_color, tournament_rounds(opponent_leader_id, opponent_leader_name, opponent_leader_color, won_dice_roll, went_first, result)')
+        .select('leader_id, leader_name, leader_color, tournament_rounds(leader_id, leader_name, leader_color, opponent_leader_id, opponent_leader_name, opponent_leader_color, won_dice_roll, went_first, result)')
         .eq('is_practice', false)
         .limit(5000)
       if (scope === 'mine') q = q.eq('user_id', session.user.id)
