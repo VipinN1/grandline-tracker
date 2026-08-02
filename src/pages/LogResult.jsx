@@ -180,6 +180,32 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
   )
 }
 
+function RoundLeaderOverride({ value, onChange }) {
+  const [expanded, setExpanded] = useState(!!value)
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        style={{ background: 'none', border: 'none', color: '#52a9cd', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', padding: 0, textAlign: 'left' }}
+      >
+        + Switch leader for this round
+      </button>
+    )
+  }
+
+  return (
+    <LeaderSearchInput
+      label="Your Leader (this round)"
+      placeholder="Search your leader for this round..."
+      onSelect={onChange}
+      selected={value}
+      onClear={() => { onChange(null); setExpanded(false) }}
+    />
+  )
+}
+
 function ToggleGroup({ label, value, onChange, options }) {
   return (
     <div>
@@ -214,6 +240,11 @@ function RoundRow({ round, index, onChange, onRemove }) {
           onSelect={card => onChange(index, 'oppLeader', card)}
           selected={round.oppLeader}
           onClear={() => onChange(index, 'oppLeader', null)}
+        />
+
+        <RoundLeaderOverride
+          value={round.myLeader}
+          onChange={card => onChange(index, 'myLeader', card)}
         />
 
         <ToggleGroup
@@ -292,18 +323,25 @@ function PastTournamentForm({ session, editTournament = null }) {
             oppLeader: (r.opponent_leader_id || r.opponent_leader_name)
               ? { card_image_id: r.opponent_leader_id, card_set_id: r.opponent_leader_id, card_name: r.opponent_leader_name, card_color: r.opponent_leader_color }
               : null,
+            myLeader: (r.leader_id || r.leader_name)
+              ? { card_image_id: r.leader_id, card_set_id: r.leader_id, card_name: r.leader_name, card_color: r.leader_color }
+              : null,
             wonDice: r.won_dice_roll,
             wentFirst: r.went_first,
             result: r.result,
             notes: r.notes ?? '',
           }))
-      : [{ oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }]
+      : [{ oppLeader: null, myLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }]
   )
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const [attachedDecklist, setAttachedDecklist] = useState(editTournament?.decklists ?? null)
+  const [attachedDecklists, setAttachedDecklists] = useState(
+    editTournament?.tournament_decklists?.length
+      ? editTournament.tournament_decklists.map(td => td.decklists).filter(Boolean)
+      : (editTournament?.decklists ? [editTournament.decklists] : [])
+  )
   const [selectingDecklist, setSelectingDecklist] = useState(false)
 
   const { isMobile } = useWindowSize()
@@ -357,7 +395,7 @@ function PastTournamentForm({ session, editTournament = null }) {
   }
 
   function addRound() {
-    setRounds(prev => [...prev, { oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
+    setRounds(prev => [...prev, { oppLeader: null, myLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
   }
 
   const wins = rounds.filter(r => r.result === 'win').length
@@ -373,8 +411,8 @@ function PastTournamentForm({ session, editTournament = null }) {
 
     setSaving(true)
 
-    let decklistId = attachedDecklist?.id ?? null
-    if (!attachedDecklist && parsedCards.length > 0) {
+    let newDecklistIds = attachedDecklists.map(d => d.id)
+    if (parsedCards.length > 0) {
       const { data: dl, error: dlError } = await supabase.from('decklists').insert({
         user_id: session.user.id,
         name: deckName || `${leaderResult.card_name} Deck`,
@@ -384,7 +422,7 @@ function PastTournamentForm({ session, editTournament = null }) {
         cards: parsedCards,
       }).select().single()
       if (dlError) { setError('Failed to save decklist: ' + dlError.message); setSaving(false); return }
-      decklistId = dl.id
+      newDecklistIds = [...newDecklistIds, dl.id]
     }
 
     const finalName = selectedSeries?.name ?? tournamentName.trim()
@@ -404,7 +442,7 @@ function PastTournamentForm({ session, editTournament = null }) {
       leader_color: leaderResult.card_color,
       deck_name: deckName || `${leaderResult.card_name} Deck`,
       notes: notes.trim(),
-      decklist_id: decklistId,
+      decklist_id: newDecklistIds[0] ?? null,
       store_id: selectedStore?.id ?? null,
       series_id: selectedSeries?.id ?? null,
       is_practice: isPractice,
@@ -415,9 +453,11 @@ function PastTournamentForm({ session, editTournament = null }) {
       const { error: uError } = await supabase.from('tournaments').update(payload).eq('id', editTournament.id)
       if (uError) { setError('Failed to save: ' + uError.message); setSaving(false); return }
       tournamentId = editTournament.id
-      // Replace the rounds wholesale so removed/reordered rounds stay consistent
+      // Replace the rounds and attached decklists wholesale so removed/reordered items stay consistent
       const { error: delError } = await supabase.from('tournament_rounds').delete().eq('tournament_id', tournamentId)
       if (delError) { setError('Failed to update rounds: ' + delError.message); setSaving(false); return }
+      const { error: delDlError } = await supabase.from('tournament_decklists').delete().eq('tournament_id', tournamentId)
+      if (delDlError) { setError('Failed to update decklists: ' + delDlError.message); setSaving(false); return }
     } else {
       const { data: tournament, error: tError } = await supabase.from('tournaments').insert(payload).select().single()
       if (tError) { setError('Failed to save: ' + tError.message); setSaving(false); return }
@@ -433,6 +473,9 @@ function PastTournamentForm({ session, editTournament = null }) {
           opponent_leader_id: r.oppLeader?.card_image_id ?? r.oppLeader?.card_set_id ?? null,
           opponent_leader_name: r.oppLeader?.card_name ?? null,
           opponent_leader_color: r.oppLeader?.card_color ?? null,
+          leader_id: r.myLeader?.card_image_id ?? r.myLeader?.card_set_id ?? null,
+          leader_name: r.myLeader?.card_name ?? null,
+          leader_color: r.myLeader?.card_color ?? null,
           won_dice_roll: r.wonDice,
           went_first: r.wentFirst,
           result: r.result,
@@ -440,6 +483,14 @@ function PastTournamentForm({ session, editTournament = null }) {
         }))
       )
       if (rError) { setError('Failed to save rounds: ' + rError.message); setSaving(false); return }
+    }
+
+    // Save attached decklists
+    if (newDecklistIds.length > 0) {
+      const { error: dlLinkError } = await supabase.from('tournament_decklists').insert(
+        newDecklistIds.map(decklist_id => ({ tournament_id: tournamentId, decklist_id }))
+      )
+      if (dlLinkError) { setError('Failed to save decklists: ' + dlLinkError.message); setSaving(false); return }
     }
 
     setSaving(false)
@@ -567,72 +618,74 @@ function PastTournamentForm({ session, editTournament = null }) {
             </button>
           </div>
 
-          {/* Decklist */}
+          {/* Decklists */}
           <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: pad }}>
-            <div style={sectionTitle}>Decklist</div>
+            <div style={sectionTitle}>Decklists</div>
 
-            {attachedDecklist ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(140,176,208,0.08)', border: '1px solid rgba(200,162,74,0.25)', borderRadius: 10, padding: '12px 14px' }}>
-                <img src={getCardImageUrl(attachedDecklist.leader_id)} alt={attachedDecklist.leader_name} style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, border: `1px solid ${COLORS[attachedDecklist.leader_color] ?? 'rgba(140,176,208,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{attachedDecklist.name}</div>
-                  <div style={{ fontSize: 11, color: COLORS[attachedDecklist.leader_color] ?? '#9db2c6', marginTop: 2 }}>{attachedDecklist.leader_name} · {attachedDecklist.leader_id}</div>
-                  <div style={{ fontSize: 11, color: '#67809a', marginTop: 2 }}>{attachedDecklist.cards?.reduce((s, c) => s + c.count, 0) ?? 0} cards</div>
-                </div>
-                <button onClick={() => setAttachedDecklist(null)} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
-              </div>
-            ) : (
-              <>
-                <button onClick={() => setSelectingDecklist(true)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.3)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 14 }}>
-                  Attach Decklist From Account
-                </button>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <div style={{ flex: 1, height: 1, background: 'rgba(140,176,208,0.05)' }} />
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#67809a' }}>or</div>
-                  <div style={{ flex: 1, height: 1, background: 'rgba(140,176,208,0.05)' }} />
-                </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <label style={labelStyle}>Deck Name</label>
-                  <input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} />
-                </div>
-                <label style={labelStyle}>Paste your decklist</label>
-                <textarea value={decklistRaw} onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }} placeholder={'1xOP15-002\n4xOP15-053\n...'} style={{ ...inputStyle, minHeight: 140, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />
-                <button onClick={handleParseDeck} disabled={!decklistRaw.trim() || enriching} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: decklistRaw.trim() ? 'rgba(140,176,208,0.05)' : 'transparent', color: decklistRaw.trim() ? '#e9f1f8' : '#67809a', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
-                  {enriching ? 'Fetching card data...' : 'Preview Decklist'}
-                </button>
-
-                {deckParsed && parsedCards.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 10 }}>
-                      {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed
+            {attachedDecklists.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                {attachedDecklists.map(deck => (
+                  <div key={deck.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(140,176,208,0.08)', border: '1px solid rgba(200,162,74,0.25)', borderRadius: 10, padding: '12px 14px' }}>
+                    <img src={getCardImageUrl(deck.leader_id)} alt={deck.leader_name} style={{ width: 36, height: 50, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, border: `1px solid ${COLORS[deck.leader_color] ?? 'rgba(140,176,208,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.opacity = '0.2' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#e9f1f8' }}>{deck.name}</div>
+                      <div style={{ fontSize: 11, color: COLORS[deck.leader_color] ?? '#9db2c6', marginTop: 2 }}>{deck.leader_name} · {deck.leader_id}</div>
+                      <div style={{ fontSize: 11, color: '#67809a', marginTop: 2 }}>{deck.cards?.reduce((s, c) => s + c.count, 0) ?? 0} cards</div>
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                      {parsedCards.flatMap(card =>
-                        Array.from({ length: card.count }, (_, i) => (
-                          <img key={`${card.id}-${i}`} src={getCardImageUrl(card.id)} alt={card.name} title={`${card.name} (${card.id})`} style={{ width: 62, borderRadius: 5, border: `2px solid ${COLORS[card.color] ?? 'rgba(140,176,208,0.08)'}` }} onError={e => { e.target.style.opacity = '0.2' }} />
-                        ))
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {parsedCards.map(card => (
-                        <div key={card.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderRadius: 6, fontSize: 12 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[card.color] ?? '#67809a', flexShrink: 0 }} />
-                            <span style={{ fontWeight: 700, color: '#2f7da3', fontFamily: 'monospace' }}>{card.count}×</span>
-                            <span style={{ color: '#e9f1f8' }}>{card.name !== card.id ? card.name : card.id}</span>
-                          </div>
-                          <span style={{ color: '#67809a', fontFamily: 'monospace', fontSize: 11 }}>{card.id}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <button onClick={() => setAttachedDecklists(prev => prev.filter(d => d.id !== deck.id))} style={{ background: 'none', border: 'none', color: '#9db2c6', cursor: 'pointer', fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
                   </div>
-                )}
-                {deckParsed && parsedCards.length === 0 && (
-                  <div style={{ marginTop: 12, fontSize: 13, color: '#d24a3a' }}>Could not parse any cards. Use format: 4xOP01-024</div>
-                )}
-              </>
+                ))}
+              </div>
+            )}
+
+            <button onClick={() => setSelectingDecklist(true)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(200,162,74,0.3)', background: 'rgba(140,176,208,0.08)', color: '#52a9cd', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 14 }}>
+              Attach Decklist From Account
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(140,176,208,0.05)' }} />
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#67809a' }}>or</div>
+              <div style={{ flex: 1, height: 1, background: 'rgba(140,176,208,0.05)' }} />
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={labelStyle}>Deck Name</label>
+              <input type="text" placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChange={e => setDeckName(e.target.value)} style={inputStyle} />
+            </div>
+            <label style={labelStyle}>Paste a decklist to add</label>
+            <textarea value={decklistRaw} onChange={e => { setDecklistRaw(e.target.value); setDeckParsed(false); setParsedCards([]) }} placeholder={'1xOP15-002\n4xOP15-053\n...'} style={{ ...inputStyle, minHeight: 140, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />
+            <button onClick={handleParseDeck} disabled={!decklistRaw.trim() || enriching} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: decklistRaw.trim() ? 'rgba(140,176,208,0.05)' : 'transparent', color: decklistRaw.trim() ? '#e9f1f8' : '#67809a', fontSize: 13, fontWeight: 600, cursor: decklistRaw.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+              {enriching ? 'Fetching card data...' : 'Preview Decklist'}
+            </button>
+
+            {deckParsed && parsedCards.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 10 }}>
+                  {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed — will be added as a new decklist on save
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                  {parsedCards.flatMap(card =>
+                    Array.from({ length: card.count }, (_, i) => (
+                      <img key={`${card.id}-${i}`} src={getCardImageUrl(card.id)} alt={card.name} title={`${card.name} (${card.id})`} style={{ width: 62, borderRadius: 5, border: `2px solid ${COLORS[card.color] ?? 'rgba(140,176,208,0.08)'}` }} onError={e => { e.target.style.opacity = '0.2' }} />
+                    ))
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {parsedCards.map(card => (
+                    <div key={card.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderRadius: 6, fontSize: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS[card.color] ?? '#67809a', flexShrink: 0 }} />
+                        <span style={{ fontWeight: 700, color: '#2f7da3', fontFamily: 'monospace' }}>{card.count}×</span>
+                        <span style={{ color: '#e9f1f8' }}>{card.name !== card.id ? card.name : card.id}</span>
+                      </div>
+                      <span style={{ color: '#67809a', fontFamily: 'monospace', fontSize: 11 }}>{card.id}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {deckParsed && parsedCards.length === 0 && (
+              <div style={{ marginTop: 12, fontSize: 13, color: '#d24a3a' }}>Could not parse any cards. Use format: 4xOP01-024</div>
             )}
           </div>
 
@@ -657,8 +710,9 @@ function PastTournamentForm({ session, editTournament = null }) {
         <SelectDecklistModal
           session={session}
           isMobile={isMobile}
+          excludeIds={attachedDecklists.map(d => d.id)}
           onClose={() => setSelectingDecklist(false)}
-          onSelect={deck => { setAttachedDecklist(deck); setDecklistRaw(''); setParsedCards([]) }}
+          onSelect={deck => setAttachedDecklists(prev => [...prev, deck])}
         />
       )}
     </div>

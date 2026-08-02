@@ -43,7 +43,7 @@ export default function UserProfilePage({ session }) {
       setLoading(true)
       const promises = [
         supabase.from('profiles').select('*').eq('id', userId).single(),
-        supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*)').eq('user_id', userId).order('date', { ascending: false }),
+        supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*), tournament_decklists(decklists(*))').eq('user_id', userId).order('date', { ascending: false }),
       ]
       if (session) {
         promises.push(

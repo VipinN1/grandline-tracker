@@ -94,6 +94,32 @@ function LeaderSearchInput({ label, placeholder, onSelect, selected, onClear }) 
   )
 }
 
+function RoundLeaderOverride({ value, onChange }) {
+  const [expanded, setExpanded] = useState(!!value)
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        style={{ background: 'none', border: 'none', color: '#52a9cd', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', padding: 0, textAlign: 'left' }}
+      >
+        + Switch leader for this round
+      </button>
+    )
+  }
+
+  return (
+    <LeaderSearchInput
+      label="Your Leader (this round)"
+      placeholder="Search your leader for this round..."
+      onSelect={onChange}
+      selected={value}
+      onClear={() => { onChange(null); setExpanded(false) }}
+    />
+  )
+}
+
 function SetupScreen({ session, onStart }) {
   const { isMobile } = useWindowSize()
   const [name, setName] = useState('')
@@ -277,6 +303,7 @@ function SetupScreen({ session, onStart }) {
 function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
   const DRAFT_KEY = `live_round_draft_${tournament.id}`
   const [oppLeader, setOppLeader] = useState(() => readJSON(DRAFT_KEY)?.oppLeader ?? null)
+  const [myLeader, setMyLeader] = useState(() => readJSON(DRAFT_KEY)?.myLeader ?? null)
   const [wonDice, setWonDice] = useState(() => readJSON(DRAFT_KEY)?.wonDice ?? null)
   const [wentFirst, setWentFirst] = useState(() => readJSON(DRAFT_KEY)?.wentFirst ?? null)
   const [result, setResult] = useState(() => readJSON(DRAFT_KEY)?.result ?? null)
@@ -288,12 +315,12 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
 
   // Autosave the in-progress round so a reload mid-entry doesn't lose it.
   useEffect(() => {
-    const empty = !oppLeader && wonDice === null && wentFirst === null && !result && !notes.trim()
+    const empty = !oppLeader && !myLeader && wonDice === null && wentFirst === null && !result && !notes.trim()
     try {
       if (empty) localStorage.removeItem(DRAFT_KEY)
-      else localStorage.setItem(DRAFT_KEY, JSON.stringify({ oppLeader, wonDice, wentFirst, result, notes }))
+      else localStorage.setItem(DRAFT_KEY, JSON.stringify({ oppLeader, myLeader, wonDice, wentFirst, result, notes }))
     } catch { /* storage unavailable — ignore */ }
-  }, [DRAFT_KEY, oppLeader, wonDice, wentFirst, result, notes])
+  }, [DRAFT_KEY, oppLeader, myLeader, wonDice, wentFirst, result, notes])
 
   async function logRound() {
     setError('')
@@ -308,12 +335,15 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
         opponent_leader_id: oppLeader?.card_image_id ?? oppLeader?.card_set_id ?? null,
         opponent_leader_name: oppLeader?.card_name ?? null,
         opponent_leader_color: oppLeader?.card_color ?? null,
+        leader_id: myLeader?.card_image_id ?? myLeader?.card_set_id ?? null,
+        leader_name: myLeader?.card_name ?? null,
+        leader_color: myLeader?.card_color ?? null,
         won_dice_roll: wonDice,
         went_first: wentFirst,
         result,
         notes: notes.trim(),
       })
-      setOppLeader(null); setWonDice(null); setWentFirst(null); setResult(null); setNotes('')
+      setOppLeader(null); setMyLeader(null); setWonDice(null); setWentFirst(null); setResult(null); setNotes('')
       setSaving(false)
       return
     }
@@ -324,6 +354,9 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
       opponent_leader_id: oppLeader?.card_image_id ?? oppLeader?.card_set_id ?? null,
       opponent_leader_name: oppLeader?.card_name ?? null,
       opponent_leader_color: oppLeader?.card_color ?? null,
+      leader_id: myLeader?.card_image_id ?? myLeader?.card_set_id ?? null,
+      leader_name: myLeader?.card_name ?? null,
+      leader_color: myLeader?.card_color ?? null,
       won_dice_roll: wonDice,
       went_first: wentFirst,
       result,
@@ -333,6 +366,7 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
     if (err) { setError(err.message); setSaving(false); return }
     onRoundLogged(data)
     setOppLeader(null)
+    setMyLeader(null)
     setWonDice(null)
     setWentFirst(null)
     setResult(null)
@@ -373,6 +407,8 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
           selected={oppLeader}
           onClear={() => setOppLeader(null)}
         />
+
+        <RoundLeaderOverride value={myLeader} onChange={setMyLeader} />
 
         <ToggleGroup
           label="Dice Roll"
@@ -419,7 +455,7 @@ function RoundLogger({ tournament, rounds, onRoundLogged, session }) {
   )
 }
 
-function RoundHistory({ rounds }) {
+function RoundHistory({ rounds, mainLeaderId }) {
   if (rounds.length === 0) return null
 
   return (
@@ -430,6 +466,10 @@ function RoundHistory({ rounds }) {
           <div key={r.id} style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 10, padding: '10px 14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#9db2c6', minWidth: 60 }}>R{r.round_number}</div>
+
+              {r.leader_id && r.leader_id !== mainLeaderId && (
+                <img src={getCardImageUrl(r.leader_id)} alt={r.leader_name} title={`Switched to ${r.leader_name}`} style={{ width: 20, height: 27, objectFit: 'cover', objectPosition: 'top', borderRadius: 3, border: `1px solid ${COLORS[r.leader_color] ?? 'rgba(140,176,208,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+              )}
 
               {r.opponent_leader_id && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
@@ -589,7 +629,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, alignItems: 'start' }}>
         <RoundLogger tournament={tournament} rounds={rounds} onRoundLogged={r => setRounds(prev => [...prev, r])} session={session} />
-        <RoundHistory rounds={rounds} />
+        <RoundHistory rounds={rounds} mainLeaderId={tournament.leader_id} />
       </div>
 
       <div style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, padding: 20, marginTop: 14 }}>
@@ -655,6 +695,9 @@ function ActiveTournament({ tournament, session, onFinish }) {
                           opponent_leader_id: r.opponent_leader_id ?? null,
                           opponent_leader_name: r.opponent_leader_name ?? null,
                           opponent_leader_color: r.opponent_leader_color ?? null,
+                          leader_id: r.leader_id ?? null,
+                          leader_name: r.leader_name ?? null,
+                          leader_color: r.leader_color ?? null,
                           won_dice_roll: r.won_dice_roll,
                           went_first: r.went_first,
                           result: r.result,

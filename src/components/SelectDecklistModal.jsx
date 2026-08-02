@@ -36,7 +36,7 @@ function LeaderCard({ deck, onClick }) {
   )
 }
 
-export default function SelectDecklistModal({ session, onClose, onSelect, isMobile }) {
+export default function SelectDecklistModal({ session, onClose, onSelect, isMobile, excludeIds = [] }) {
   const [decklists, setDecklists] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -51,8 +51,9 @@ export default function SelectDecklistModal({ session, onClose, onSelect, isMobi
   }, [session])
 
   const filtered = decklists.filter(d =>
-    d.name?.toLowerCase().includes(search.toLowerCase()) ||
-    d.leader_name?.toLowerCase().includes(search.toLowerCase())
+    !excludeIds.includes(d.id) &&
+    (d.name?.toLowerCase().includes(search.toLowerCase()) ||
+      d.leader_name?.toLowerCase().includes(search.toLowerCase()))
   )
 
   const modalBox = {

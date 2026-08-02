@@ -240,7 +240,9 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
   if (!tournament) return null
 
   const color = COLORS[tournament.leader_color] ?? '#2f7da3'
-  const cards = tournament.decklists?.cards ?? []
+  const decklists = tournament.tournament_decklists?.length
+    ? tournament.tournament_decklists.map(td => td.decklists).filter(Boolean)
+    : (tournament.decklists ? [tournament.decklists] : [])
   const rounds = (tournament.tournament_rounds ?? []).sort((a, b) => a.round_number - b.round_number)
 
   const wentFirstWins = rounds.filter(r => r.went_first === true && r.result === 'win').length
@@ -340,6 +342,9 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
                     <div key={r.id} style={{ background: 'rgba(140,176,208,0.03)', borderRadius: 8, padding: '10px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: '#9db2c6', minWidth: 52 }}>Round {r.round_number}</div>
+                        {r.leader_id && r.leader_id !== tournament.leader_id && (
+                          <img src={getCardImageUrl(r.leader_id)} alt={r.leader_name} title={`Played ${r.leader_name} this round`} style={{ width: 18, height: 24, objectFit: 'cover', objectPosition: 'top', borderRadius: 3, border: `1px solid ${COLORS[r.leader_color] ?? 'rgba(140,176,208,0.08)'}`, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                        )}
                         {r.opponent_leader_id ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
                             <img src={getCardImageUrl(r.opponent_leader_id)} alt={r.opponent_leader_name} style={{ width: 22, height: 30, objectFit: 'cover', objectPosition: 'top', borderRadius: 3 }} onError={e => { e.target.style.display = 'none' }} />
@@ -373,32 +378,36 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
               </div>
             )}
 
-            {cards.length > 0 && (
-              <>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 10 }}>
-                  Decklist — {cards.reduce((s, c) => s + c.count, 0)} cards · click to enlarge
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 20 }}>
-                  {cards.flatMap(card =>
-                    Array.from({ length: card.count }, (_, i) => (
-                      <div key={`${card.id}-${i}`} onClick={() => setSelectedCard(card)} style={{ cursor: 'pointer', borderRadius: 6, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                        <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 56 : 72, borderRadius: 6, border: '1px solid rgba(140,176,208,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid rgba(140,176,208,0.05)' }}>Card List</div>
-                {cards.map(card => (
-                  <div key={card.id} onClick={() => setSelectedCard(card)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', borderRadius: 6, cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#2f7da3', fontFamily: 'monospace', minWidth: 20 }}>{card.count}×</span>
-                      <span style={{ fontSize: 13, color: '#e9f1f8' }}>{card.name ?? card.id}</span>
-                    </div>
-                    <span style={{ fontSize: 11, color: '#67809a', fontFamily: 'monospace' }}>{card.id}</span>
+            {decklists.map((dl, dlIndex) => {
+              const dlCards = dl.cards ?? []
+              if (dlCards.length === 0) return null
+              return (
+                <div key={dl.id} style={dlIndex > 0 ? { marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(140,176,208,0.07)' } : undefined}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 10 }}>
+                    {dl.name ?? 'Decklist'}{dl.leader_name ? ` — ${dl.leader_name}` : ''} · {dlCards.reduce((s, c) => s + c.count, 0)} cards · click to enlarge
                   </div>
-                ))}
-              </>
-            )}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 20 }}>
+                    {dlCards.flatMap(card =>
+                      Array.from({ length: card.count }, (_, i) => (
+                        <div key={`${card.id}-${i}`} onClick={() => setSelectedCard(card)} style={{ cursor: 'pointer', borderRadius: 6, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                          <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 56 : 72, borderRadius: 6, border: '1px solid rgba(140,176,208,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid rgba(140,176,208,0.05)' }}>Card List</div>
+                  {dlCards.map(card => (
+                    <div key={card.id} onClick={() => setSelectedCard(card)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', borderRadius: 6, cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#2f7da3', fontFamily: 'monospace', minWidth: 20 }}>{card.count}×</span>
+                        <span style={{ fontSize: 13, color: '#e9f1f8' }}>{card.name ?? card.id}</span>
+                      </div>
+                      <span style={{ fontSize: 11, color: '#67809a', fontFamily: 'monospace' }}>{card.id}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
 
             {tournament.notes && (
               <div style={{ marginBottom: 8 }}>
@@ -409,7 +418,7 @@ export default function TournamentModal({ tournament, onClose, zIndex = 200, isM
               </div>
             )}
 
-            {cards.length === 0 && rounds.length === 0 && !tournament.notes && (
+            {decklists.length === 0 && rounds.length === 0 && !tournament.notes && (
               <div style={{ fontSize: 13, color: '#67809a', textAlign: 'center', padding: '20px 0' }}>No additional data for this tournament.</div>
             )}
           </div>

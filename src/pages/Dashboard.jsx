@@ -103,7 +103,7 @@ export default function Dashboard({ session }) {
     async function load() {
       const { data } = await supabase
         .from('tournaments')
-        .select('*, decklists(*), tournament_rounds(*)')
+        .select('*, decklists(*), tournament_rounds(*), tournament_decklists(decklists(*))')
         .eq('user_id', session.user.id)
         .order('date', { ascending: false })
       setTournaments(data ?? [])

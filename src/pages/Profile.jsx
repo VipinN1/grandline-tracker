@@ -112,7 +112,7 @@ export default function Profile({ session }) {
     async function load() {
       setLoading(true)
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-      const { data: tournamentData } = await supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*)').eq('user_id', session.user.id).order('date', { ascending: false })
+      const { data: tournamentData } = await supabase.from('tournaments').select('*, decklists(*), tournament_rounds(*), tournament_decklists(decklists(*))').eq('user_id', session.user.id).order('date', { ascending: false })
       setProfile(profileData)
       setAvatarUrl(profileData?.avatar_url ?? null)
       setTournaments(tournamentData ?? [])
