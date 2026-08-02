@@ -14,7 +14,10 @@ export async function captureAndShare(node, { fileName = 'share.png', title = ''
   const canvas = await html2canvas(node, {
     backgroundColor: null,
     useCORS: true,
-    scale: Math.min(2, window.devicePixelRatio || 1),
+    // Fixed, not tied to the viewing device's devicePixelRatio — a share
+    // image should come out crisp even when captured on a plain 1x desktop
+    // display, since it's meant to be viewed/zoomed elsewhere.
+    scale: 3,
   })
 
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
