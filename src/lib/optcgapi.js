@@ -467,10 +467,17 @@ export function getCardImageUrl(cardOrId) {
 // rasterize a DOM node (e.g. exporting a share card as an image). Route
 // through our own same-origin proxy (api/card-image.js) instead, which does.
 // Only needed for card art inside something that gets captured to canvas.
+// Mirrors getCardImageUrl's exact resolution (cache-first, id-guess as a
+// fallback) — some cards (promos, certain variants) don't live at the naive
+// {id}.jpg path, so skipping the cache lookup silently breaks their art.
 export function getProxiedCardImageUrl(cardOrId) {
-  const id = typeof cardOrId === 'object'
-    ? (cardOrId?.card_image_id ?? cardOrId?.card_set_id ?? '')
-    : (cardOrId ?? '')
-  if (!id) return ''
-  return `/api/card-image?id=${encodeURIComponent(id)}`
+  if (!cardOrId) return ''
+  if (typeof cardOrId === 'object') {
+    if (cardOrId.card_image) return `/api/card-image?url=${encodeURIComponent(cardOrId.card_image)}`
+    const id = cardOrId.card_image_id ?? cardOrId.card_set_id ?? ''
+    return id ? `/api/card-image?id=${encodeURIComponent(id)}` : ''
+  }
+  const cached = getCache()[cardOrId]
+  if (cached?.card_image) return `/api/card-image?url=${encodeURIComponent(cached.card_image)}`
+  return `/api/card-image?id=${encodeURIComponent(cardOrId)}`
 }
