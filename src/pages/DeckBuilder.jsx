@@ -5,7 +5,6 @@ import { useWindowSize } from '../hooks/useWindowSize'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { COLORS, CARD_COLORS, BOOSTER_SETS, ALT_ART_OPTIONS, ALT_ART_ACCENTS, pillStyle, filterCards } from '../lib/cardFilters'
 
-const MAX_COPIES = 4
 const MAX_DECK = 50
 
 const INPUT = {
@@ -130,7 +129,6 @@ const location = useLocation()
     setDeckCards(prev => {
       const existing = prev[key]
       const currTotal = Object.values(prev).reduce((s, e) => s + e.count, 0)
-      if (existing && existing.count >= MAX_COPIES) return prev
       if (currTotal >= MAX_DECK) return prev
       return { ...prev, [key]: { card, count: (existing?.count ?? 0) + 1 } }
     })
@@ -144,7 +142,6 @@ const location = useLocation()
       const currTotal = Object.values(prev).reduce((s, e) => s + e.count, 0)
       const newCount = existing.count + delta
       if (newCount <= 0) { const next = { ...prev }; delete next[key]; return next }
-      if (newCount > MAX_COPIES) return prev
       if (delta > 0 && currTotal >= MAX_DECK) return prev
       return { ...prev, [key]: { ...existing, count: newCount } }
     })
@@ -180,7 +177,7 @@ const location = useLocation()
         for (const c of enriched) {
           deck[c.id] = {
             card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image },
-            count: Math.min(c.count, MAX_COPIES),
+            count: c.count,
           }
         }
         setDeckCards(deck)
@@ -319,15 +316,14 @@ const location = useLocation()
           {filteredResults.map(card => {
             const key = card.card_set_id
             const inDeck = deckCards[key]
-            const atMax = inDeck && inDeck.count >= MAX_COPIES
             const atLimit = totalCards >= MAX_DECK
-            const disabled = atMax || atLimit
+            const disabled = atLimit
             return (
               <div
                 key={card.card_image_id ?? card.card_set_id}
                 onClick={() => !disabled && addCard(card)}
-                title={`${card.card_name} — ${card.card_set_id}${card.card_cost ? ` · Cost ${card.card_cost}` : ''}${inDeck ? ` · ${inDeck.count}/${MAX_COPIES} in deck` : ''}`}
-                style={{ position: 'relative', cursor: disabled ? 'default' : 'pointer', opacity: atMax ? 0.4 : 1, transition: 'transform 0.1s, opacity 0.1s', flexShrink: 0 }}
+                title={`${card.card_name} — ${card.card_set_id}${card.card_cost ? ` · Cost ${card.card_cost}` : ''}${inDeck ? ` · ${inDeck.count} in deck` : ''}`}
+                style={{ position: 'relative', cursor: disabled ? 'default' : 'pointer', opacity: disabled && !inDeck ? 0.4 : 1, transition: 'transform 0.1s, opacity 0.1s', flexShrink: 0 }}
                 onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = 'scale(1.06)'; showPreview(card, e) }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; hidePreview() }}
               >
@@ -340,11 +336,6 @@ const location = useLocation()
                 {inDeck && (
                   <div style={{ position: 'absolute', bottom: 3, right: 3, background: '#2f7da3', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 }}>
                     {inDeck.count}
-                  </div>
-                )}
-                {atMax && (
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: 7, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#52a9cd', background: 'rgba(0,0,0,0.7)', padding: '2px 4px', borderRadius: 3 }}>MAX</span>
                   </div>
                 )}
               </div>
@@ -463,8 +454,8 @@ const location = useLocation()
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#52a9cd', minWidth: 18, textAlign: 'center' }}>{count}</span>
                     <button
                       onClick={() => adjustCount(key, 1)}
-                      disabled={count >= MAX_COPIES || totalCards >= MAX_DECK}
-                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(140,176,208,0.1)', background: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'transparent' : 'rgba(140,176,208,0.05)', color: count >= MAX_COPIES || totalCards >= MAX_DECK ? '#67809a' : '#e9f1f8', fontSize: 15, cursor: count >= MAX_COPIES || totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
+                      disabled={totalCards >= MAX_DECK}
+                      style={{ width: 22, height: 22, borderRadius: 4, border: '1px solid rgba(140,176,208,0.1)', background: totalCards >= MAX_DECK ? 'transparent' : 'rgba(140,176,208,0.05)', color: totalCards >= MAX_DECK ? '#67809a' : '#e9f1f8', fontSize: 15, cursor: totalCards >= MAX_DECK ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, fontFamily: 'inherit' }}
                     >+</button>
                   </div>
                 </div>
@@ -494,7 +485,7 @@ const location = useLocation()
                         onContextMenu={e => { e.preventDefault(); adjustCount(key, -1) }}
                         onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; showPreview(card, e) }}
                         onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; hidePreview() }}
-                        title={`${card.card_name} · ${count}/${MAX_COPIES} — click +1, right-click −1`}
+                        title={`${card.card_name} · ${count}x — click +1, right-click −1`}
                       >
                         <img
                           src={getCardImageUrl(card)}
