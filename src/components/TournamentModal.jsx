@@ -150,12 +150,19 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
             {rounds.map(r => {
               const oppColor = COLORS[r.opponent_leader_color] ?? '#94a3b8'
               const isWin = r.result === 'win'
+              const switchedLeader = r.leader_id && r.leader_id !== tournament.leader_id
               return (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 7, marginTop: 5, background: isWin ? 'rgba(59,178,126,0.06)' : 'rgba(210,74,58,0.06)' }}>
+                <div key={r.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 7, marginTop: 5, background: isWin ? 'rgba(59,178,126,0.06)' : 'rgba(210,74,58,0.06)' }}>
                   {/* Round */}
                   <div style={{ width: 22, flexShrink: 0, textAlign: 'center', fontSize: 12, fontWeight: 700, fontFamily: 'monospace', color: isWin ? '#3bb27e' : '#d24a3a' }}>
                     {r.round_number}
                   </div>
+                  {/* Leader-switch badge — only rendered when this round used a different leader, absolutely positioned so normal rounds are untouched */}
+                  {switchedLeader && (
+                    <div title={`Played ${cleanName(r.leader_name)} this round`} style={{ position: 'absolute', top: -5, left: 10, width: 17, height: 23, borderRadius: 4, overflow: 'hidden', border: `1.5px solid ${COLORS[r.leader_color] ?? color}`, boxShadow: '0 2px 6px rgba(0,0,0,0.55)', zIndex: 2 }}>
+                      <img src={getCardImageUrl(r.leader_id)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                    </div>
+                  )}
                   {/* Opponent */}
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {r.opponent_leader_id ? (
