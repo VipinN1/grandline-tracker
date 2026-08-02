@@ -80,7 +80,7 @@ const location = useLocation()
         const built = {}
         for (const c of deck.cards) {
           built[c.id] = {
-            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image },
+            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image, card_cost: c.cost },
             count: c.count,
           }
         }
@@ -176,7 +176,7 @@ const location = useLocation()
         const deck = {}
         for (const c of enriched) {
           deck[c.id] = {
-            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image },
+            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image, card_cost: c.cost },
             count: c.count,
           }
         }
@@ -199,6 +199,7 @@ const location = useLocation()
       type: card.card_type ?? null,
       color: card.card_color ?? null,
       image: card.card_image ?? null,
+      cost: card.card_cost ?? null,
     }))
 
     if (editingDeckId) {

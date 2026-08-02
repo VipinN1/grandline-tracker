@@ -211,6 +211,7 @@ export async function enrichCards(cards) {
     color: cache[card.id]?.card_color ?? null,
     type: cache[card.id]?.card_type ?? null,
     image: cache[card.id]?.card_image ?? null,
+    cost: cache[card.id]?.card_cost ?? card.cost ?? null,
   }))
 }
 

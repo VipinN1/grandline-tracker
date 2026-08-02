@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
-import CardPreview from '../components/CardPreview'
 
 const COLORS = {
   Red: '#d24a3a',
@@ -12,95 +11,6 @@ const COLORS = {
   Purple: '#8d7ae6',
   Yellow: '#dcb35e',
   Black: '#94a3b8',
-}
-
-function DeckModal({ deck, onClose, isMobile }) {
-  const [selectedCard, setSelectedCard] = useState(null)
-  const navigate = useNavigate()
-  if (!deck) return null
-  const color = COLORS[deck.leader_color] ?? '#2f7da3'
-  const cards = deck.cards ?? []
-  const characters = cards.filter(c => c.type === 'Character')
-  const events = cards.filter(c => c.type === 'Event')
-  const stages = cards.filter(c => c.type === 'Stage')
-  const others = cards.filter(c => !['Character', 'Event', 'Stage'].includes(c.type))
-
-
-  const modalBox = {
-    background: 'rgba(140,176,208,0.05)',
-    border: '1px solid rgba(140,176,208,0.12)',
-    borderRadius: isMobile ? '16px 16px 0 0' : 16,
-    width: isMobile ? '100%' : 700,
-    maxHeight: isMobile ? '95vh' : '90vh',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    animation: isMobile ? 'slideUp 0.25s ease-out' : undefined,
-  }
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }}>
-        <div onClick={e => e.stopPropagation()} style={modalBox}>
-          <div style={{ position: 'relative', height: 120, background: 'rgba(140,176,208,0.03)', flexShrink: 0 }}>
-            <img src={getCardImageUrl(deck.leader_id)} alt={deck.leader_name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(140,176,208,0.05) 100%)' }} />
-            <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(140,176,208,0.15)', borderRadius: 6, color: '#e9f1f8', fontSize: 16, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-            <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#e9f1f8' }}>{deck.name}</div>
-              <div style={{ fontSize: 12, color: '#9db2c6' }}>{deck.leader_name} · {deck.leader_id}</div>
-            </div>
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: color }} />
-          </div>
-
-          <div style={{ overflowY: 'auto', padding: 20 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 10 }}>
-              All Cards ({cards.reduce((s, c) => s + c.count, 0)}) — click to enlarge
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-              {cards.flatMap(card =>
-                Array.from({ length: card.count }, (_, i) => (
-                  <div key={`${card.id}-${i}`} onClick={() => setSelectedCard(card)} style={{ cursor: 'pointer', borderRadius: 6, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                    <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 56 : 70, borderRadius: 6, border: '1px solid rgba(140,176,208,0.08)', display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
-                  </div>
-                ))
-              )}
-            </div>
-
-            {[['Characters', characters], ['Events', events], ['Stages', stages], ['Other', others]].map(([label, group]) =>
-              group.length > 0 ? (
-                <div key={label} style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#67809a', marginBottom: 6, paddingBottom: 4, borderBottom: '1px solid rgba(140,176,208,0.05)' }}>
-                    {label} ({group.reduce((s, c) => s + c.count, 0)})
-                  </div>
-                  {group.map(card => (
-                    <div key={card.id} onClick={() => setSelectedCard(card)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 8px', borderRadius: 6, cursor: 'pointer', transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#2f7da3', fontFamily: 'monospace', minWidth: 20 }}>{card.count}×</span>
-                        <span style={{ fontSize: 13, color: '#e9f1f8' }}>{card.name ?? card.id}</span>
-                      </div>
-                      <span style={{ fontSize: 11, color: '#67809a', fontFamily: 'monospace' }}>{card.id}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : null
-            )}
-          </div>
-          <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(140,176,208,0.07)', flexShrink: 0, display: 'flex', gap: 8 }}>
-            <button onClick={() => { navigate('/deck-builder', { state: { deck } }); onClose() }} style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid rgba(59,178,126,0.3)', background: 'rgba(59,178,126,0.08)', color: '#3bb27e', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Edit Decklist</button>
-            <button style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.04)', color: '#e9f1f8', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Copy Decklist</button>
-          </div>
-        </div>
-      </div>
-      {selectedCard && (
-        <CardPreview
-          card={selectedCard}
-          onClose={() => setSelectedCard(null)}
-          onSearchMarketplace={() => { navigate('/marketplace', { state: { search: selectedCard.name } }); setSelectedCard(null) }}
-        />
-      )}
-    </>
-  )
 }
 
 function LeaderCard({ deck, onClick, onDelete }) {
@@ -162,7 +72,6 @@ function LeaderCard({ deck, onClick, onDelete }) {
 export default function Decklists({ session }) {
   const [decks, setDecks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedDeck, setSelectedDeck] = useState(null)
   const [search, setSearch] = useState('')
   const { isMobile } = useWindowSize()
   const navigate = useNavigate()
@@ -222,12 +131,10 @@ export default function Decklists({ session }) {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
           {filtered.map(deck => (
-            <LeaderCard key={deck.id} deck={deck} onClick={setSelectedDeck} onDelete={handleDelete} />
+            <LeaderCard key={deck.id} deck={deck} onClick={d => navigate(`/decklists/${d.id}`)} onDelete={handleDelete} />
           ))}
         </div>
       )}
-
-      {selectedDeck && <DeckModal deck={selectedDeck} onClose={() => setSelectedDeck(null)} isMobile={isMobile} />}
     </div>
   )
 }
