@@ -87,6 +87,7 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
                 src={getProxiedCardImageUrl(deck.leader_id)}
                 alt={deck.leader_name}
                 style={{ width: '100%', aspectRatio: '63/88', objectFit: 'cover', objectPosition: 'top center', display: 'block' }}
+                onError={e => { e.target.style.display = 'none' }}
               />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -127,6 +128,7 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
                 src={getProxiedCardImageUrl(card.id)}
                 alt=""
                 style={{ width: 58, borderRadius: 5, border: `1px solid ${colors.line}`, display: 'block' }}
+                onError={e => { e.target.style.display = 'none' }}
               />
               <div style={{ position: 'absolute', bottom: 3, right: 3, background: 'rgba(6,16,27,0.88)', border: `1px solid ${colors.goldLine}`, color: colors.gold, fontSize: 10, fontWeight: 700, borderRadius: 4, padding: '0 4px', fontFamily: font.mono }}>
                 ×{card.count}

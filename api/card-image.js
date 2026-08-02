@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     try { parsed = new URL(url) } catch { return res.status(400).end() }
     if (parsed.protocol !== 'https:' || parsed.hostname !== 'optcgapi.com') return res.status(400).end()
     target = parsed.toString()
-  } else if (id && /^[A-Za-z0-9\-]+$/.test(id)) {
+  } else if (id && /^[A-Za-z0-9_-]+$/.test(id)) {
     target = `https://optcgapi.com/media/static/Card_Images/${id}.jpg`
   } else {
     return res.status(400).end()

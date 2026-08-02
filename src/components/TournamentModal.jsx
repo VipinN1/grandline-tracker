@@ -105,6 +105,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                 src={getProxiedCardImageUrl(tournament.leader_id)}
                 alt={tournament.leader_name}
                 style={{ width: '100%', aspectRatio: '63/88', objectFit: 'cover', objectPosition: 'top center', display: 'block' }}
+                onError={e => { e.target.style.display = 'none' }}
               />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 4px 3px', textAlign: 'center', background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', fontSize: 12, fontWeight: 800, fontFamily: 'monospace', color: '#fff', letterSpacing: '-0.5px', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                 {tournament.wins}-{tournament.losses}
