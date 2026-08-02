@@ -11,6 +11,16 @@ export async function captureAndShare(node, { fileName = 'share.png', title = ''
   // reasoning as the lazy-loaded CardScanner/tesseract.js in Navbar.jsx).
   const { default: html2canvas } = await import('html2canvas')
 
+  // Inter/Fraunces load from Google Fonts via <link> — if that hasn't
+  // finished yet when the canvas is captured, html2canvas silently
+  // substitutes a system fallback font, which renders visibly different
+  // (garbled with the watermark's negative letter-spacing, subtly
+  // different kerning everywhere else, e.g. "PirateTracker" looking like
+  // it has a gap). Waiting for document.fonts.ready avoids that.
+  if (document.fonts?.ready) {
+    try { await document.fonts.ready } catch { /* proceed with capture regardless */ }
+  }
+
   const canvas = await html2canvas(node, {
     backgroundColor: null,
     useCORS: true,
