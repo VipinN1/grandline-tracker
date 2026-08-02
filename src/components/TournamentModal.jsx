@@ -131,7 +131,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
 
         {/* Brand bar — kept high so screenshots can't crop it out */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 18px', background: 'rgba(140,176,208,0.06)', borderBottom: '1px solid rgba(140,176,208,0.12)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#2f7da3', letterSpacing: '-0.2px' }}>☠ PirateTracker</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#2f7da3', letterSpacing: '-0.2px' }}>PirateTracker</div>
           <div style={{ fontSize: 9.5, color: '#5f7589' }}>piratetracker.vercel.app</div>
         </div>
 
