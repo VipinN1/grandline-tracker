@@ -1,5 +1,6 @@
-import { useRef, useLayoutEffect } from 'react'
-import { getCardImageUrl } from '../lib/optcgapi'
+import { useRef, useState, useLayoutEffect } from 'react'
+import { getProxiedCardImageUrl } from '../lib/optcgapi'
+import { captureAndShare } from '../lib/shareImage'
 import { colors, radius, font } from '../theme'
 
 const LEADER_COLORS = {
@@ -22,6 +23,9 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
 
   const nameBoxRef = useRef(null)
   const nameTextRef = useRef(null)
+  const cardRef = useRef(null)
+  const [sharing, setSharing] = useState(false)
+  const [shareError, setShareError] = useState('')
   useLayoutEffect(() => {
     const box = nameBoxRef.current, txt = nameTextRef.current
     if (!box || !txt) return
@@ -39,6 +43,21 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
   const totalCards = cards.reduce((s, c) => s + c.count, 0)
   const maxCostCount = Math.max(1, ...Object.values(stats.costBuckets))
 
+  async function handleShare() {
+    setShareError('')
+    setSharing(true)
+    try {
+      await captureAndShare(cardRef.current, {
+        fileName: `${(deck.name ?? 'decklist').replace(/[^\w\- ]+/g, '').trim() || 'decklist'}.png`,
+        title: deck.name,
+        text: 'Check out my decklist on PirateTracker!',
+      })
+    } catch {
+      setShareError('Could not generate the image. Try again.')
+    }
+    setSharing(false)
+  }
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: colors.abyss, zIndex: 600, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', padding: isMobile ? '18px 0 28px' : '24px 20px 36px' }}>
 
@@ -47,7 +66,7 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
         <div style={{ fontSize: 11, color: colors.faint, marginTop: 3 }}>Crop below the card — the close button won't be captured</div>
       </div>
 
-      <div style={{
+      <div ref={cardRef} style={{
         width: isMobile ? '100%' : 460,
         maxWidth: '100%',
         background: `radial-gradient(ellipse 280px 220px at 0% 0%, ${color}26 0%, transparent 62%), ${colors.abyss}`,
@@ -65,7 +84,7 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 13, alignItems: 'center' }}>
             <div style={{ position: 'relative', width: 58, flexShrink: 0, borderRadius: 8, overflow: 'hidden', border: `2px solid ${color}88`, boxShadow: `0 0 16px ${color}33, 0 4px 12px rgba(0,0,0,0.5)` }}>
               <img
-                src={getCardImageUrl(deck.leader_id)}
+                src={getProxiedCardImageUrl(deck.leader_id)}
                 alt={deck.leader_name}
                 style={{ width: '100%', aspectRatio: '63/88', objectFit: 'cover', objectPosition: 'top center', display: 'block' }}
               />
@@ -105,7 +124,7 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
           {cards.map(card => (
             <div key={card.id} style={{ position: 'relative' }}>
               <img
-                src={getCardImageUrl(card.id)}
+                src={getProxiedCardImageUrl(card.id)}
                 alt=""
                 style={{ width: 58, borderRadius: 5, border: `1px solid ${colors.line}`, display: 'block' }}
               />
@@ -158,12 +177,22 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
         </div>
       </div>
 
-      <button
-        onClick={onClose}
-        style={{ marginTop: 22, padding: '10px 32px', borderRadius: 10, border: `1px solid ${colors.line}`, background: 'rgba(140,176,208,0.05)', color: colors.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
-      >
-        ✕ Close
-      </button>
+      <div style={{ marginTop: 22, display: 'flex', gap: 10, flexShrink: 0 }}>
+        <button
+          onClick={handleShare}
+          disabled={sharing}
+          style={{ padding: '10px 24px', borderRadius: 10, border: `1px solid ${colors.goldLine}`, background: sharing ? 'rgba(200,162,74,0.08)' : colors.goldSoft, color: colors.gold, fontSize: 13, fontWeight: 700, cursor: sharing ? 'default' : 'pointer', fontFamily: 'inherit' }}
+        >
+          {sharing ? 'Generating...' : '📤 Share / Save Image'}
+        </button>
+        <button
+          onClick={onClose}
+          style={{ padding: '10px 24px', borderRadius: 10, border: `1px solid ${colors.line}`, background: 'rgba(140,176,208,0.05)', color: colors.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          ✕ Close
+        </button>
+      </div>
+      {shareError && <div style={{ marginTop: 10, fontSize: 12, color: colors.crimson }}>{shareError}</div>}
     </div>
   )
 }

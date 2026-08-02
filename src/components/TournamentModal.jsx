@@ -1,5 +1,6 @@
 import { useState, useRef, useLayoutEffect } from 'react'
-import { getCardImageUrl } from '../lib/optcgapi'
+import { getCardImageUrl, getProxiedCardImageUrl } from '../lib/optcgapi'
+import { captureAndShare } from '../lib/shareImage'
 import CardPreview from '../components/CardPreview'
 
 const COLORS = { Red: '#e05545', Blue: '#3f8fd6', Green: '#3bb27e', Purple: '#8d7ae6', Yellow: '#e6b84f', Black: '#94a3b8' }
@@ -27,7 +28,25 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
   // stays large; a single long word scales down to fit the right-side region.
   const nameBoxRef = useRef(null)
   const nameTextRef = useRef(null)
+  const cardRef = useRef(null)
   const [nameFontSize, setNameFontSize] = useState(76)
+  const [sharing, setSharing] = useState(false)
+  const [shareError, setShareError] = useState('')
+
+  async function handleShare() {
+    setShareError('')
+    setSharing(true)
+    try {
+      await captureAndShare(cardRef.current, {
+        fileName: `${tournament.name.replace(/[^\w\- ]+/g, '').trim() || 'tournament'}.png`,
+        title: tournament.name,
+        text: 'Check out my tournament result on PirateTracker!',
+      })
+    } catch {
+      setShareError('Could not generate the image. Try again.')
+    }
+    setSharing(false)
+  }
   useLayoutEffect(() => {
     const box = nameBoxRef.current, txt = nameTextRef.current
     if (!box || !txt) return
@@ -64,7 +83,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
       </div>
 
       {/* The card */}
-      <div style={{
+      <div ref={cardRef} style={{
         width: isMobile ? '100%' : 440,
         maxWidth: '100%',
         background: 'radial-gradient(ellipse 280px 220px at 0% 0%, rgba(47,125,163,0.28) 0%, transparent 62%), radial-gradient(ellipse 200px 160px at 100% 100%, rgba(47,125,163,0.14) 0%, transparent 66%), #06101b',
@@ -83,7 +102,7 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
             {/* Leader portrait thumbnail */}
             <div style={{ position: 'relative', width: 58, flexShrink: 0, borderRadius: 8, overflow: 'hidden', border: `2px solid ${color}88`, boxShadow: `0 0 16px ${color}33, 0 4px 12px rgba(0,0,0,0.5)` }}>
               <img
-                src={getCardImageUrl(tournament.leader_id)}
+                src={getProxiedCardImageUrl(tournament.leader_id)}
                 alt={tournament.leader_name}
                 style={{ width: '100%', aspectRatio: '63/88', objectFit: 'cover', objectPosition: 'top center', display: 'block' }}
               />
@@ -160,13 +179,13 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
                   {/* Leader-switch badge — only rendered when this round used a different leader, absolutely positioned so normal rounds are untouched */}
                   {switchedLeader && (
                     <div title={`Played ${cleanName(r.leader_name)} this round`} style={{ position: 'absolute', top: -5, left: 10, width: 17, height: 23, borderRadius: 4, overflow: 'hidden', border: `1.5px solid ${COLORS[r.leader_color] ?? color}`, boxShadow: '0 2px 6px rgba(0,0,0,0.55)', zIndex: 2 }}>
-                      <img src={getCardImageUrl(r.leader_id)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
+                      <img src={getProxiedCardImageUrl(r.leader_id)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} onError={e => { e.target.style.display = 'none' }} />
                     </div>
                   )}
                   {/* Opponent */}
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {r.opponent_leader_id ? (
-                      <img src={getCardImageUrl(r.opponent_leader_id)} alt="" style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, flexShrink: 0, border: `1.5px solid ${oppColor}66`, boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }} onError={e => { e.target.style.display = 'none' }} />
+                      <img src={getProxiedCardImageUrl(r.opponent_leader_id)} alt="" style={{ width: 40, height: 56, objectFit: 'cover', objectPosition: 'top', borderRadius: 5, flexShrink: 0, border: `1.5px solid ${oppColor}66`, boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }} onError={e => { e.target.style.display = 'none' }} />
                     ) : (
                       <div style={{ width: 40, height: 56, borderRadius: 5, background: 'rgba(140,176,208,0.05)', flexShrink: 0 }} />
                     )}
@@ -227,13 +246,23 @@ function ShareOverlay({ tournament, onClose, isMobile }) {
         )}
       </div>
 
-      {/* Close button — below card, clearly outside the screenshot area */}
-      <button
-        onClick={onClose}
-        style={{ marginTop: 22, padding: '10px 32px', borderRadius: 10, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.05)', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
-      >
-        ✕ Close
-      </button>
+      {/* Actions — below card, clearly outside the screenshot area */}
+      <div style={{ marginTop: 22, display: 'flex', gap: 10, flexShrink: 0 }}>
+        <button
+          onClick={handleShare}
+          disabled={sharing}
+          style={{ padding: '10px 24px', borderRadius: 10, border: '1px solid rgba(200,162,74,0.4)', background: sharing ? 'rgba(200,162,74,0.08)' : 'rgba(200,162,74,0.14)', color: '#dcb35e', fontSize: 13, fontWeight: 700, cursor: sharing ? 'default' : 'pointer', fontFamily: 'inherit' }}
+        >
+          {sharing ? 'Generating...' : '📤 Share / Save Image'}
+        </button>
+        <button
+          onClick={onClose}
+          style={{ padding: '10px 24px', borderRadius: 10, border: '1px solid rgba(140,176,208,0.1)', background: 'rgba(140,176,208,0.05)', color: '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          ✕ Close
+        </button>
+      </div>
+      {shareError && <div style={{ marginTop: 10, fontSize: 12, color: '#d24a3a' }}>{shareError}</div>}
     </div>
   )
 }

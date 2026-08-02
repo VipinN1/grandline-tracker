@@ -462,3 +462,15 @@ export function getCardImageUrl(cardOrId) {
   if (cached?.card_image) return cached.card_image
   return `https://optcgapi.com/media/static/Card_Images/${cardOrId}.jpg`
 }
+
+// optcgapi.com doesn't send CORS headers, which taints a <canvas> used to
+// rasterize a DOM node (e.g. exporting a share card as an image). Route
+// through our own same-origin proxy (api/card-image.js) instead, which does.
+// Only needed for card art inside something that gets captured to canvas.
+export function getProxiedCardImageUrl(cardOrId) {
+  const id = typeof cardOrId === 'object'
+    ? (cardOrId?.card_image_id ?? cardOrId?.card_set_id ?? '')
+    : (cardOrId ?? '')
+  if (!id) return ''
+  return `/api/card-image?id=${encodeURIComponent(id)}`
+}
