@@ -100,28 +100,31 @@ export default function DeckShareOverlay({ deck, stats, onClose, isMobile }) {
           <div style={{ fontSize: 9.5, color: colors.faint }}>piratetracker.vercel.app</div>
         </div>
 
-        {/* Compact card grid */}
-        <div style={{ padding: '12px 14px 2px', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {cards.flatMap(card =>
-            Array.from({ length: card.count }, (_, i) => (
+        {/* Card grid — one thumbnail per unique card, with a count badge */}
+        <div style={{ padding: '12px 14px 2px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {cards.map(card => (
+            <div key={card.id} style={{ position: 'relative' }}>
               <img
-                key={`${card.id}-${i}`}
                 src={getCardImageUrl(card.id)}
                 alt=""
-                style={{ width: 34, borderRadius: 3, border: `1px solid ${colors.line}`, display: 'block' }}
+                style={{ width: 58, borderRadius: 5, border: `1px solid ${colors.line}`, display: 'block' }}
               />
-            ))
-          )}
+              <div style={{ position: 'absolute', bottom: 3, right: 3, background: 'rgba(6,16,27,0.88)', border: `1px solid ${colors.goldLine}`, color: colors.gold, fontSize: 10, fontWeight: 700, borderRadius: 4, padding: '0 4px', fontFamily: font.mono }}>
+                ×{card.count}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Stats footer */}
         <div style={{ padding: '14px 18px 16px', borderTop: `1px solid ${colors.line}`, marginTop: 10 }}>
           <div style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: colors.faint, marginBottom: 6 }}>Cost Curve</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 40, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 48, marginBottom: 12 }}>
             {Array.from({ length: 11 }, (_, cost) => {
               const n = stats.costBuckets[cost] ?? 0
               return (
                 <div key={cost} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                  {n > 0 && <div style={{ fontSize: 8, fontWeight: 700, color: colors.oceanBright, fontFamily: font.mono, marginBottom: 2 }}>{n}</div>}
                   <div style={{ width: '100%', height: `${Math.max(n > 0 ? 6 : 0, (n / maxCostCount) * 32)}px`, background: n > 0 ? `linear-gradient(180deg, ${colors.oceanBright}, ${colors.ocean})` : 'transparent', borderRadius: '2px 2px 0 0' }} />
                   <div style={{ fontSize: 7.5, color: colors.faint, marginTop: 3, fontFamily: font.mono }}>{cost}</div>
                 </div>

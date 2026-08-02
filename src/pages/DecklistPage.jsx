@@ -156,11 +156,12 @@ export default function DecklistPage({ session }) {
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 20 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: colors.faint, marginBottom: 8 }}>Cost Curve</div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 60 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 70 }}>
               {Array.from({ length: 11 }, (_, cost) => {
                 const n = stats.costBuckets[cost] ?? 0
                 return (
                   <div key={cost} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                    {n > 0 && <div style={{ fontSize: 11, fontWeight: 700, color: colors.oceanBright, fontFamily: font.mono, marginBottom: 3 }}>{n}</div>}
                     <div title={`Cost ${cost}: ${n}`} style={{ width: '100%', height: `${Math.max(n > 0 ? 8 : 0, (n / maxCostCount) * 48)}px`, background: n > 0 ? `linear-gradient(180deg, ${colors.oceanBright}, ${colors.ocean})` : 'transparent', borderRadius: '3px 3px 0 0' }} />
                     <div style={{ fontSize: 10, color: colors.faint, marginTop: 4, fontFamily: font.mono }}>{cost}</div>
                   </div>
@@ -196,18 +197,19 @@ export default function DecklistPage({ session }) {
         )}
       </div>
 
-      {/* All cards grid */}
+      {/* All cards grid — one thumbnail per unique card, with a count badge */}
       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.faint, marginBottom: 10 }}>
-        All Cards ({totalCards}) — click to enlarge
+        All Cards ({cards.length} unique · {totalCards} total) — click to enlarge
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-        {cards.flatMap(card =>
-          Array.from({ length: card.count }, (_, i) => (
-            <div key={`${card.id}-${i}`} onClick={() => setSelectedCard(card)} style={{ cursor: 'pointer', borderRadius: 6, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.07)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-              <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 56 : 70, borderRadius: 6, border: `1px solid ${colors.line}`, display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+        {cards.map(card => (
+          <div key={card.id} onClick={() => setSelectedCard(card)} style={{ position: 'relative', cursor: 'pointer', borderRadius: 8, transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+            <img src={getCardImageUrl(card.id)} alt={card.name} style={{ width: isMobile ? 92 : 120, borderRadius: 8, border: `1px solid ${colors.line}`, display: 'block' }} onError={e => { e.target.style.opacity = '0.15' }} />
+            <div style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(6,16,27,0.88)', border: `1px solid ${colors.goldLine}`, color: colors.gold, fontSize: 13, fontWeight: 700, borderRadius: 6, padding: '1px 7px', fontFamily: font.mono }}>
+              ×{card.count}
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
 
       {[['Characters', characters], ['Events', events], ['Stages', stages], ['Other', others]].map(([label, group]) =>
