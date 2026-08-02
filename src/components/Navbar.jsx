@@ -1,5 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { supabase } from '../lib/supabase'
 import { useWindowSize } from '../hooks/useWindowSize'
 import BugReportModal from './BugReportModal'
@@ -33,15 +33,21 @@ const LOGO_STYLE = {
 // Active state and hover are handled by the .gl-navlink CSS classes.
 const navLinkClass = ({ isActive }) => (isActive ? 'gl-navlink gl-navlink--active' : 'gl-navlink')
 
-const AUTH_LINKS = [
+// Kept directly in the top bar — the highest-traffic destinations.
+const MAIN_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/stats', label: 'Stats' },
   { to: '/log', label: 'Log Result' },
   { to: '/decklists', label: 'Decklists' },
   { to: '/friends', label: 'Friends' },
-  { to: '/profile', label: 'Profile' },
   { to: '/bounty', label: '☠ Bounty' },
   { to: '/community', label: 'Community' },
+]
+
+// Tucked behind the "More" dropdown on desktop to keep the bar from
+// overflowing — still shown as a flat list in the mobile menu.
+const MORE_LINKS = [
+  { to: '/profile', label: 'Profile' },
   { to: '/tournaments', label: 'Tournaments' },
   { to: '/marketplace', label: 'Market' },
   { to: '/deck-builder', label: 'Deck Builder' },
@@ -49,18 +55,33 @@ const AUTH_LINKS = [
   { to: '/about', label: 'About' },
 ]
 
+const AUTH_LINKS = [...MAIN_LINKS, ...MORE_LINKS]
+
 export default function Navbar({ session }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [scanOpen, setScanOpen] = useState(false)
   const [bugOpen, setBugOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [unreadMktCount, setUnreadMktCount] = useState(0)
   const [unreadDmCount, setUnreadDmCount] = useState(0)
   const { isMobile } = useWindowSize()
+  const moreRef = useRef(null)
 
   const links = isAdmin ? [...AUTH_LINKS, { to: '/bug-reports', label: 'Bug Reports' }] : AUTH_LINKS
+  const moreLinks = isAdmin ? [...MORE_LINKS, { to: '/bug-reports', label: 'Bug Reports' }] : MORE_LINKS
+  const moreActive = moreLinks.some(l => location.pathname === l.to || location.pathname.startsWith(l.to + '/'))
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   function openScanner() {
     setMenuOpen(false)
@@ -199,15 +220,10 @@ export default function Navbar({ session }) {
         ) : session ? (
           <>
             <div style={{ marginLeft: 14, paddingLeft: 14, borderLeft: '1px solid rgba(140,176,208,0.14)', display: 'flex', alignItems: 'center', gap: 2 }}>
-              {links.map(link => (
+              {MAIN_LINKS.map(link => (
                 <NavLink key={link.to} to={link.to} className={navLinkClass}>
                   <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     {link.label}
-                    {link.to === '/marketplace' && unreadMktCount > 0 && (
-                      <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#d24a3a', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
-                        {unreadMktCount > 9 ? '9+' : unreadMktCount}
-                      </span>
-                    )}
                     {link.to === '/community' && unreadDmCount > 0 && (
                       <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#d24a3a', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
                         {unreadDmCount > 9 ? '9+' : unreadDmCount}
@@ -216,6 +232,44 @@ export default function Navbar({ session }) {
                   </span>
                 </NavLink>
               ))}
+
+              <div ref={moreRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setMoreOpen(o => !o)}
+                  className={moreActive ? 'gl-navlink gl-navlink--active' : 'gl-navlink'}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  More
+                  {unreadMktCount > 0 && (
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#d24a3a', display: 'inline-block' }} />
+                  )}
+                  <span style={{ fontSize: 10, opacity: 0.7, transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+                </button>
+                {moreOpen && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 60, marginTop: 8, minWidth: 170, background: 'rgba(10,22,38,0.98)', border: '1px solid rgba(200,162,74,0.35)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.6)', overflow: 'hidden', padding: 4 }}>
+                    {moreLinks.map(link => (
+                      <NavLink
+                        key={link.to}
+                        to={link.to}
+                        onClick={() => setMoreOpen(false)}
+                        style={({ isActive }) => ({
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                          padding: '9px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600,
+                          color: isActive ? '#dcb35e' : '#e9f1f8', textDecoration: 'none',
+                          background: isActive ? 'rgba(200,162,74,0.1)' : 'transparent',
+                        })}
+                      >
+                        {link.label}
+                        {link.to === '/marketplace' && unreadMktCount > 0 && (
+                          <span style={{ minWidth: 16, height: 16, borderRadius: 8, background: '#d24a3a', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
+                            {unreadMktCount > 9 ? '9+' : unreadMktCount}
+                          </span>
+                        )}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto', paddingLeft: 14, borderLeft: '1px solid rgba(140,176,208,0.14)' }}>
               {bugButton}
