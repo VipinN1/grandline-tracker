@@ -52,6 +52,7 @@ const MORE_LINKS = [
   { to: '/marketplace', label: 'Market' },
   { to: '/deck-builder', label: 'Deck Builder' },
   { to: '/articles', label: 'Articles' },
+  { to: '/creators', label: 'Creators' },
   { to: '/about', label: 'About' },
 ]
 
