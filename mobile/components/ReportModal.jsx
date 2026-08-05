@@ -46,7 +46,9 @@ export default function ReportModal({ contentType, contentId, contentOwnerId, on
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' }}>
         <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderWidth: 1, borderColor: colors.lineStrong, padding: 20, paddingBottom: 36, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.text }}>🚩 Report {contentType === 'comment' ? 'Comment' : 'Post'}</Text>
+            <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.text }}>
+              🚩 Report {contentType === 'comment' ? 'Comment' : contentType === 'chat' ? 'Message' : 'Post'}
+            </Text>
             <TouchableOpacity onPress={onClose} hitSlop={8} style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: colors.muted, fontSize: 14 }}>✕</Text>
             </TouchableOpacity>

@@ -7,7 +7,7 @@ import { colors, font, radius, input, label, btnPrimaryText } from '../theme'
 import { GlassButton } from '../components/glass'
 
 export default function Login() {
-  const { session } = useSession()
+  const { session, bannedMessage } = useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -18,6 +18,10 @@ export default function Login() {
   useEffect(() => {
     if (session) router.replace('/(tabs)/dashboard')
   }, [session])
+
+  useEffect(() => {
+    if (bannedMessage) setError(bannedMessage)
+  }, [bannedMessage])
 
   async function handleLogin() {
     setLoading(true)

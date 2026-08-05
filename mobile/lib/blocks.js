@@ -18,7 +18,7 @@ export function BlocksProvider({ children }) {
 
   useEffect(() => { refresh() }, [refresh])
 
-  const block = useCallback(async (userId) => {
+  const block = useCallback(async (userId, reportReason) => {
     if (!session || userId === session.user.id) return
     const { error } = await supabase.from('blocked_users').insert({ blocker_id: session.user.id, blocked_id: userId })
     // 23505 = already blocked
@@ -27,6 +27,16 @@ export function BlocksProvider({ children }) {
     await supabase.from('friends').delete().eq('user_id', session.user.id).eq('friend_id', userId)
     await supabase.from('friends').delete().eq('user_id', userId).eq('friend_id', session.user.id)
     setBlockedIds(prev => new Set(prev).add(userId))
+    // Apple UGC guideline 1.2: blocking must also notify the developer of the
+    // inappropriate content. File it as a content_report so it lands in the
+    // admin's Content Reports queue (app/reports.jsx) for 24h review.
+    await supabase.from('content_reports').insert({
+      reporter_id: session.user.id,
+      content_type: 'user',
+      content_id: userId,
+      content_owner_id: userId,
+      reason: reportReason || 'Blocked user',
+    })
   }, [session])
 
   const unblock = useCallback(async (userId) => {

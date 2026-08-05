@@ -27,8 +27,9 @@ export default function ContentReports() {
   const { session } = useSession()
   const [isAdmin, setIsAdmin] = useState(null)
   const [reports, setReports] = useState([])
-  const [content, setContent] = useState({})   // `${type}:${id}` -> post/comment row or null (deleted)
+  const [content, setContent] = useState({})   // `${type}:${id}` -> post/comment/chat row or null (deleted)
   const [usernames, setUsernames] = useState({})
+  const [banned, setBanned] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('open')
 
@@ -44,16 +45,20 @@ export default function ContentReports() {
 
     const postIds = rows.filter(r => r.content_type === 'post').map(r => r.content_id)
     const commentIds = rows.filter(r => r.content_type === 'comment').map(r => r.content_id)
+    const chatIds = rows.filter(r => r.content_type === 'chat').map(r => r.content_id)
     const userIds = [...new Set(rows.flatMap(r => [r.reporter_id, r.content_owner_id]).filter(Boolean))]
-    const [postsRes, commentsRes, profilesRes] = await Promise.all([
+    const [postsRes, commentsRes, chatRes, profilesRes] = await Promise.all([
       postIds.length ? supabase.from('posts').select('id, title, body, user_id').in('id', postIds) : { data: [] },
       commentIds.length ? supabase.from('comments').select('id, body, user_id').in('id', commentIds) : { data: [] },
-      userIds.length ? supabase.from('profiles').select('id, username').in('id', userIds) : { data: [] },
+      chatIds.length ? supabase.from('sim_match_messages').select('id, message, user_id').in('id', chatIds) : { data: [] },
+      userIds.length ? supabase.from('profiles').select('id, username, banned_at').in('id', userIds) : { data: [] },
     ])
     const contentMap = {}
     for (const p of (postsRes.data ?? [])) contentMap[`post:${p.id}`] = p
     for (const c of (commentsRes.data ?? [])) contentMap[`comment:${c.id}`] = c
+    for (const m of (chatRes.data ?? [])) contentMap[`chat:${m.id}`] = { body: m.message, user_id: m.user_id }
     setContent(contentMap)
+    setBanned(new Set((profilesRes.data ?? []).filter(p => p.banned_at).map(p => p.id)))
     setUsernames(Object.fromEntries((profilesRes.data ?? []).map(p => [p.id, p.username])))
     setLoading(false)
   }, [session])
@@ -66,6 +71,8 @@ export default function ContentReports() {
     setReports(prev => prev.map(r => r.id === report.id ? { ...r, status } : r))
   }
 
+  const CONTENT_TABLES = { post: 'posts', comment: 'comments', chat: 'sim_match_messages' }
+
   function confirmDeleteContent(report) {
     Alert.alert(
       `Delete reported ${report.content_type}`,
@@ -75,11 +82,42 @@ export default function ContentReports() {
         {
           text: 'Delete Content', style: 'destructive',
           onPress: async () => {
-            const table = report.content_type === 'post' ? 'posts' : 'comments'
-            await supabase.from(table).delete().eq('id', report.content_id)
+            await supabase.from(CONTENT_TABLES[report.content_type]).delete().eq('id', report.content_id)
             await supabase.from('content_reports').update({ status: 'resolved' }).eq('id', report.id)
             setContent(prev => ({ ...prev, [`${report.content_type}:${report.content_id}`]: null }))
             setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: 'resolved' } : r))
+          },
+        },
+      ]
+    )
+  }
+
+  // Apple UGC guideline 1.2: reports must be acted on within 24h by removing
+  // the content AND ejecting the user who posted it. This deletes everything
+  // that user has posted across the app and flags their profile as banned —
+  // lib/auth.js signs them out (and login.jsx blocks sign-in) once banned_at is set.
+  function confirmEjectUser(report) {
+    const userId = report.content_owner_id
+    if (!userId) return
+    const username = usernames[userId] ?? 'this user'
+    Alert.alert(
+      `Eject ${username}?`,
+      `This permanently deletes all of ${username}'s posts, comments, match chat messages, and direct messages, and bans their account from signing back in. This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Eject User', style: 'destructive',
+          onPress: async () => {
+            await Promise.all([
+              supabase.from('posts').delete().eq('user_id', userId),
+              supabase.from('comments').delete().eq('user_id', userId),
+              supabase.from('sim_match_messages').delete().eq('user_id', userId),
+              supabase.from('direct_messages').delete().eq('sender_id', userId),
+            ])
+            await supabase.from('profiles').update({ banned_at: new Date().toISOString(), ban_reason: report.reason }).eq('id', userId)
+            await supabase.from('content_reports').update({ status: 'resolved' }).eq('id', report.id)
+            setBanned(prev => new Set(prev).add(userId))
+            setReports(prev => prev.map(r => r.content_owner_id === userId ? { ...r, status: 'resolved' } : r))
           },
         },
       ]
@@ -176,28 +214,38 @@ export default function ContentReports() {
 
               <Text style={{ fontSize: 12, color: colors.muted, fontFamily: font.body }}>
                 <Text style={{ fontFamily: font.semi, color: colors.oceanBright }}>{usernames[r.reporter_id] ?? 'Unknown'}</Text>
-                {' reported a '}{r.content_type}{' by '}
+                {r.content_type === 'user' ? ' blocked ' : ` reported a ${r.content_type} by `}
                 <Text style={{ fontFamily: font.semi, color: colors.oceanBright }} onPress={() => r.content_owner_id && router.push(`/user/${r.content_owner_id}`)}>
                   {usernames[r.content_owner_id] ?? 'Unknown'}
                 </Text>
+                {r.content_owner_id && banned.has(r.content_owner_id) ? (
+                  <Text style={{ fontFamily: font.bold, color: colors.crimson }}> · ejected</Text>
+                ) : null}
               </Text>
               {r.details ? <Text style={{ fontSize: 12, color: colors.textSoft, fontFamily: font.body, fontStyle: 'italic' }}>“{r.details}”</Text> : null}
 
-              <View style={{ padding: 10, backgroundColor: 'rgba(140,176,208,0.04)', borderWidth: 1, borderColor: colors.line, borderRadius: 8 }}>
-                {item ? (
-                  <>
-                    {item.title ? <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.text, marginBottom: 3 }}>{item.title}</Text> : null}
-                    <Text numberOfLines={4} style={{ fontSize: 12, color: colors.textSoft, lineHeight: 18, fontFamily: font.body }}>{item.body}</Text>
-                  </>
-                ) : (
-                  <Text style={{ fontSize: 12, color: colors.faint, fontFamily: font.body, fontStyle: 'italic' }}>Content already deleted</Text>
-                )}
-              </View>
+              {r.content_type === 'user' ? null : (
+                <View style={{ padding: 10, backgroundColor: 'rgba(140,176,208,0.04)', borderWidth: 1, borderColor: colors.line, borderRadius: 8 }}>
+                  {item ? (
+                    <>
+                      {item.title ? <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.text, marginBottom: 3 }}>{item.title}</Text> : null}
+                      <Text numberOfLines={4} style={{ fontSize: 12, color: colors.textSoft, lineHeight: 18, fontFamily: font.body }}>{item.body}</Text>
+                    </>
+                  ) : (
+                    <Text style={{ fontSize: 12, color: colors.faint, fontFamily: font.body, fontStyle: 'italic' }}>Content already deleted</Text>
+                  )}
+                </View>
+              )}
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
                 {item ? (
                   <GlassButton onPress={() => confirmDeleteContent(r)} pad={{ paddingVertical: 7, paddingHorizontal: 14 }}>
                     <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.crimson }}>Delete Content</Text>
+                  </GlassButton>
+                ) : null}
+                {r.content_owner_id && !banned.has(r.content_owner_id) ? (
+                  <GlassButton onPress={() => confirmEjectUser(r)} pad={{ paddingVertical: 7, paddingHorizontal: 14 }}>
+                    <Text style={{ fontSize: 12, fontFamily: font.bold, color: colors.crimson }}>Eject User</Text>
                   </GlassButton>
                 ) : null}
                 <GlassButton onPress={() => toggleResolved(r)} pad={{ paddingVertical: 7, paddingHorizontal: 14 }}>

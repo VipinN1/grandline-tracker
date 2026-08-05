@@ -13,6 +13,7 @@ export default function Signup() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [agreed, setAgreed] = useState(false)
 
   async function handleSignup() {
     setLoading(true)
@@ -25,6 +26,11 @@ export default function Signup() {
     }
     if (username.length < 3) {
       setError('Username must be at least 3 characters')
+      setLoading(false)
+      return
+    }
+    if (!agreed) {
+      setError('You must agree to the Terms of Service and Privacy Policy to continue')
       setLoading(false)
       return
     }
@@ -124,16 +130,29 @@ export default function Signup() {
               </View>
             ) : null}
 
-            <GlassButton onPress={handleSignup} disabled={loading} tint={colors.gold} pad={{ paddingVertical: 12, paddingHorizontal: 18 }} style={{ marginTop: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+              <TouchableOpacity onPress={() => setAgreed(a => !a)} hitSlop={8} activeOpacity={0.7}>
+                <View style={{
+                  width: 20, height: 20, borderRadius: 5, marginTop: 1,
+                  borderWidth: 1.5, borderColor: agreed ? colors.gold : 'rgba(140,176,208,0.35)',
+                  backgroundColor: agreed ? colors.gold : 'transparent',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {agreed ? <Text style={{ fontSize: 12, color: '#0f1117', fontFamily: font.bold }}>✓</Text> : null}
+                </View>
+              </TouchableOpacity>
+              <Text style={{ flex: 1, fontSize: 12, color: colors.textSoft, lineHeight: 18, fontFamily: font.body }} onPress={() => setAgreed(a => !a)}>
+                I agree to the{' '}
+                <Text style={{ color: colors.ocean }} onPress={() => router.push('/terms')}>Terms of Service</Text>
+                {' '}and{' '}
+                <Text style={{ color: colors.ocean }} onPress={() => router.push('/privacy')}>Privacy Policy</Text>,
+                and understand PirateTracker has zero tolerance for objectionable content or abusive users.
+              </Text>
+            </View>
+
+            <GlassButton onPress={handleSignup} disabled={loading || !agreed} tint={colors.gold} pad={{ paddingVertical: 12, paddingHorizontal: 18 }} style={{ marginTop: 4, opacity: agreed ? 1 : 0.5 }}>
               <Text style={btnPrimaryText}>{loading ? 'Creating account...' : 'Create Account'}</Text>
             </GlassButton>
-
-            <Text style={{ fontSize: 11, color: colors.faint, textAlign: 'center', lineHeight: 17, fontFamily: font.body }}>
-              By creating an account you agree to the{' '}
-              <Text style={{ color: colors.ocean }} onPress={() => router.push('/terms')}>Terms of Service</Text>
-              {' '}and{' '}
-              <Text style={{ color: colors.ocean }} onPress={() => router.push('/privacy')}>Privacy Policy</Text>.
-            </Text>
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, gap: 5 }}>

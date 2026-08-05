@@ -4,12 +4,16 @@ import { useState, useEffect, useRef } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { colors, font, radius } from '../theme'
+import { useBlocks } from '../lib/blocks'
+import ReportModal from './ReportModal'
 
 export default function MatchChat({ matchId, currentUserId, player1Id, player2Id, isAdmin, messages, getProfile, onMessageSent }) {
   const [open, setOpen] = useState(false)
   const [hasNew, setHasNew] = useState(false)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [reporting, setReporting] = useState(null)   // message being reported, or null
+  const { blockedIds } = useBlocks()
   const scrollRef = useRef(null)
   const prevLenRef = useRef(0)
 
@@ -64,7 +68,7 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
               <Text style={{ fontSize: 12, color: colors.faint, textAlign: 'center', paddingVertical: 12, fontFamily: font.body }}>
                 No messages yet — share your match code here!
               </Text>
-            ) : messages.map(msg => {
+            ) : messages.filter(msg => !blockedIds.has(msg.user_id)).map(msg => {
               const profile = getProfile(msg.user_id)
               const isMe = msg.user_id === currentUserId
               return (
@@ -84,6 +88,11 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
                     </Text>
                     {msg.message}
                   </Text>
+                  {!isMe ? (
+                    <TouchableOpacity onPress={() => setReporting(msg)} hitSlop={8} style={{ paddingHorizontal: 2 }}>
+                      <Text style={{ fontSize: 11, color: colors.faint }}>🚩</Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
               )
             })}
@@ -102,6 +111,14 @@ export default function MatchChat({ matchId, currentUserId, player1Id, player2Id
             </TouchableOpacity>
           </View>
         </View>
+      )}
+      {reporting && (
+        <ReportModal
+          contentType="chat"
+          contentId={reporting.id}
+          contentOwnerId={reporting.user_id}
+          onClose={() => setReporting(null)}
+        />
       )}
     </View>
   )
