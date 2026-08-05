@@ -4,10 +4,12 @@
 -- Run this in the Supabase SQL editor AFTER db/moderation.sql.
 
 -- Allow 'user' (filed automatically when someone blocks another user) and
--- 'chat' (match chat messages) report types alongside 'post'/'comment'.
+-- 'chat' (match chat messages) report types alongside the existing
+-- 'post'/'comment'/'article'/'article_comment' (db/articles.sql). Must list
+-- every prior value here too, or this silently drops article-reporting support.
 alter table public.content_reports drop constraint if exists content_reports_content_type_check;
 alter table public.content_reports add constraint content_reports_content_type_check
-  check (content_type in ('post', 'comment', 'user', 'chat'));
+  check (content_type in ('post', 'comment', 'article', 'article_comment', 'user', 'chat'));
 
 -- Ban fields on profiles. A non-null banned_at ejects the user: the app signs
 -- them out on their next session check and refuses new sign-ins.
