@@ -2,7 +2,7 @@
 // Create-post supports attaching a saved decklist (paste-a-list stays web-only).
 import { useState, useEffect, useCallback } from 'react'
 import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView, Image, Modal, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack, router, useLocalSearchParams } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/auth'
 import { useBlocks } from '../lib/blocks'
@@ -13,22 +13,13 @@ import SelectDecklistModal from '../components/SelectDecklistModal'
 import ProfileCard, { Avatar } from '../components/ProfileCard'
 import DirectMessages from '../components/DirectMessages'
 import ReportModal from '../components/ReportModal'
+import CardPreview from '../components/CardPreview'
 import { GlassButton } from '../components/glass'
-
-function CardLightbox({ url, onClose }) {
-  return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity activeOpacity={1} onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <Image source={{ uri: url }} style={{ width: '90%', height: '75%' }} resizeMode="contain" />
-      </TouchableOpacity>
-    </Modal>
-  )
-}
 
 // Expandable decklist attached to a post.
 function DeckPanel({ decklist }) {
   const [expanded, setExpanded] = useState(false)
-  const [lightbox, setLightbox] = useState(null)
+  const [selectedCard, setSelectedCard] = useState(null)
   if (!decklist) return null
   const cards = decklist.cards ?? []
 
@@ -50,7 +41,7 @@ function DeckPanel({ decklist }) {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {cards.flatMap(c =>
               Array.from({ length: c.count }, (_, i) => (
-                <TouchableOpacity key={`${c.id}-${i}`} onPress={() => setLightbox(getCardImageUrl(c.id))}>
+                <TouchableOpacity key={`${c.id}-${i}`} onPress={() => setSelectedCard(c)}>
                   <Image source={{ uri: getCardImageUrl(c.id) }} style={{ width: 56, height: 78, borderRadius: 5 }} resizeMode="cover" />
                 </TouchableOpacity>
               ))
@@ -58,7 +49,13 @@ function DeckPanel({ decklist }) {
           </View>
         </View>
       )}
-      {lightbox && <CardLightbox url={lightbox} onClose={() => setLightbox(null)} />}
+      {selectedCard && (
+        <CardPreview
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onSearchMarketplace={() => { setSelectedCard(null); router.push({ pathname: '/marketplace', params: { search: selectedCard.name } }) }}
+        />
+      )}
     </View>
   )
 }

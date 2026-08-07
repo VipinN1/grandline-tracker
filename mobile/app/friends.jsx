@@ -13,16 +13,19 @@ import { GlassButton } from '../components/glass'
 function TournamentAdminModal({ session, friendProfile, onClose }) {
   const [tournaments, setTournaments] = useState([])
   const [grantedIds, setGrantedIds] = useState(new Set())
+  const [creatorGrant, setCreatorGrant] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-      const [{ data: mine }, { data: grants }] = await Promise.all([
+      const [{ data: mine }, { data: grants }, { data: creator }] = await Promise.all([
         supabase.from('sim_tournaments').select('id, name, status').eq('created_by', session.user.id).order('created_at', { ascending: false }),
         supabase.from('sim_tournament_admins').select('tournament_id').eq('user_id', friendProfile.id),
+        supabase.from('tournament_creators').select('user_id').eq('user_id', friendProfile.id).maybeSingle(),
       ])
       setTournaments(mine ?? [])
       setGrantedIds(new Set((grants ?? []).map(g => g.tournament_id)))
+      setCreatorGrant(!!creator)
       setLoading(false)
     }
     load()
@@ -41,6 +44,15 @@ function TournamentAdminModal({ session, friendProfile, onClose }) {
     }
   }
 
+  async function toggleCreatorGrant(on) {
+    setCreatorGrant(on)
+    if (on) {
+      await supabase.from('tournament_creators').insert({ user_id: friendProfile.id, granted_by: session.user.id })
+    } else {
+      await supabase.from('tournament_creators').delete().eq('user_id', friendProfile.id)
+    }
+  }
+
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }}>
@@ -52,6 +64,25 @@ function TournamentAdminModal({ session, friendProfile, onClose }) {
           <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 14, fontFamily: font.body }}>
             Give {friendProfile.username} admin access on your tournaments (start rounds, resolve disputes).
           </Text>
+
+          {!loading && (
+            <TouchableOpacity
+              onPress={() => toggleCreatorGrant(!creatorGrant)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.sm, borderWidth: 1, borderColor: creatorGrant ? colors.goldLine : colors.line, backgroundColor: creatorGrant ? 'rgba(200,162,74,0.08)' : 'rgba(140,176,208,0.02)', marginBottom: 14 }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.text }}>Tournament Creator</Text>
+                <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>Can create and run their own tournaments</Text>
+              </View>
+              <Switch
+                value={creatorGrant}
+                onValueChange={toggleCreatorGrant}
+                trackColor={{ false: 'rgba(140,176,208,0.2)', true: colors.gold }}
+                thumbColor="#fff"
+              />
+            </TouchableOpacity>
+          )}
+
           {loading ? (
             <ActivityIndicator color={colors.gold} style={{ padding: 20 }} />
           ) : tournaments.length === 0 ? (

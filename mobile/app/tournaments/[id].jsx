@@ -121,6 +121,7 @@ export default function SimTournamentDetail() {
   const [showWinner, setShowWinner] = useState(false)
   const [showForceEndModal, setShowForceEndModal] = useState(false)
   const [submittingMatches, setSubmittingMatches] = useState(new Set())
+  const [byeAssignMatch, setByeAssignMatch] = useState(null)
   const [decklistModal, setDecklistModal] = useState(false)
   const [decklistLeader, setDecklistLeader] = useState(null)
   const [decklistText, setDecklistText] = useState('')
@@ -140,6 +141,7 @@ export default function SimTournamentDetail() {
   const allMatchesDone = currentMatches.length > 0 && currentMatches.every(m => m.status === 'completed')
   const disputedMatches = currentMatches.filter(m => m.status === 'disputed')
   const winnerEntry = tournament?.winner_id ? players.find(p => p.user_id === tournament.winner_id) : null
+  const showAdminCol = isAdmin && tournament?.status !== 'completed'
 
   // ── Load + realtime ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -270,6 +272,24 @@ export default function SimTournamentDetail() {
       }
     }
     await loadPlayers()
+  }
+
+  async function undropPlayer(userId) {
+    await supabase
+      .from('sim_tournament_players').update({ dropped: false })
+      .eq('tournament_id', id).eq('user_id', userId)
+    await loadPlayers()
+  }
+
+  // Convert a bye into a real match by assigning an opponent. The bye's
+  // auto-win goes away since the match returns to pending.
+  async function assignByeOpponent(match, userId) {
+    await supabase
+      .from('sim_matches')
+      .update({ player2_id: userId, result: null, status: 'pending' })
+      .eq('id', match.id)
+    setByeAssignMatch(null)
+    await loadMatches()
   }
 
   async function resolveIfReady(matchId) {
@@ -676,6 +696,11 @@ export default function SimTournamentDetail() {
                           </GlassButton>
                         </View>
                       )}
+                      {showAdminCol && m.result === 'bye' && (
+                        <GlassButton onPress={() => setByeAssignMatch(m)} tint={colors.ocean} pad={{ paddingVertical: 4, paddingHorizontal: 10 }} style={{ marginLeft: 'auto' }}>
+                          <Text style={{ fontSize: 11, fontFamily: font.bold, color: colors.oceanBright }}>Assign Opponent</Text>
+                        </GlassButton>
+                      )}
                     </View>
 
                     <MatchChat
@@ -729,10 +754,16 @@ export default function SimTournamentDetail() {
                     <Text style={{ fontSize: 11, color: colors.muted, fontFamily: font.mono, width: 44, textAlign: 'right' }}>
                       {s.wins + s.losses > 0 ? `${Math.round(s.owr * 100)}%` : '—'}
                     </Text>
-                    {isAdmin && tournament.status === 'active' && !isDropped && (
-                      <TouchableOpacity onPress={() => confirmDrop(s.user_id)} hitSlop={4} style={{ paddingVertical: 3, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(210,74,58,0.3)' }}>
-                        <Text style={{ fontSize: 10, fontFamily: font.semi, color: colors.crimson }}>Drop</Text>
-                      </TouchableOpacity>
+                    {showAdminCol && (
+                      isDropped ? (
+                        <TouchableOpacity onPress={() => undropPlayer(s.user_id)} hitSlop={4} style={{ paddingVertical: 3, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(59,178,126,0.3)' }}>
+                          <Text style={{ fontSize: 10, fontFamily: font.semi, color: colors.emerald }}>Undo</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity onPress={() => confirmDrop(s.user_id)} hitSlop={4} style={{ paddingVertical: 3, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(210,74,58,0.3)' }}>
+                          <Text style={{ fontSize: 10, fontFamily: font.semi, color: colors.crimson }}>Drop</Text>
+                        </TouchableOpacity>
+                      )
                     )}
                   </TouchableOpacity>
                 )
@@ -764,12 +795,32 @@ export default function SimTournamentDetail() {
                         const p2 = m.player2_id ? playerProfile(m.player2_id) : null
                         const winner = m.result === 'player1_win' ? p1 : m.result === 'player2_win' ? p2 : null
                         return (
-                          <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(140,176,208,0.04)', borderRadius: radius.sm }}>
-                            <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontFamily: m.result === 'player1_win' ? font.bold : font.body, color: m.result === 'player1_win' ? colors.emerald : colors.muted }}>{p1?.username ?? '?'}</Text>
-                            <Text style={{ fontSize: 11, color: m.result === 'bye' ? colors.oceanBright : colors.faint, fontFamily: font.body }}>{m.result === 'bye' ? 'BYE' : 'vs'}</Text>
-                            {p2 ? <Text numberOfLines={1} style={{ flex: 1, textAlign: 'right', fontSize: 13, fontFamily: m.result === 'player2_win' ? font.bold : font.body, color: m.result === 'player2_win' ? colors.emerald : colors.muted }}>{p2.username}</Text> : <View style={{ flex: 1 }} />}
-                            {m.status === 'pending' ? <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body }}>Pending</Text> : null}
-                            {m.status === 'disputed' ? <Text style={{ fontSize: 11, color: colors.orange, fontFamily: font.body }}>Disputed</Text> : null}
+                          <View key={m.id} style={{ paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(140,176,208,0.04)', borderRadius: radius.sm }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, fontFamily: m.result === 'player1_win' ? font.bold : font.body, color: m.result === 'player1_win' ? colors.emerald : colors.muted }}>{p1?.username ?? '?'}</Text>
+                              <Text style={{ fontSize: 11, color: m.result === 'bye' ? colors.oceanBright : colors.faint, fontFamily: font.body }}>{m.result === 'bye' ? 'BYE' : 'vs'}</Text>
+                              {p2 ? <Text numberOfLines={1} style={{ flex: 1, textAlign: 'right', fontSize: 13, fontFamily: m.result === 'player2_win' ? font.bold : font.body, color: m.result === 'player2_win' ? colors.emerald : colors.muted }}>{p2.username}</Text> : <View style={{ flex: 1 }} />}
+                              {m.status === 'pending' ? <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body }}>Pending</Text> : null}
+                              {m.status === 'disputed' ? <Text style={{ fontSize: 11, color: colors.orange, fontFamily: font.body }}>Disputed</Text> : null}
+                            </View>
+                            {showAdminCol && m.result !== 'bye' && m.player2_id && (
+                              <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+                                <TouchableOpacity
+                                  onPress={() => resolveDispute(m.id, 'player1_win')}
+                                  disabled={m.result === 'player1_win'}
+                                  style={{ paddingVertical: 4, paddingHorizontal: 9, borderRadius: 6, backgroundColor: m.result === 'player1_win' ? 'rgba(59,178,126,0.18)' : 'rgba(47,125,163,0.18)' }}
+                                >
+                                  <Text style={{ fontSize: 11, fontFamily: font.bold, color: m.result === 'player1_win' ? colors.emerald : colors.oceanBright }}>▲ {p1?.username ?? 'P1'}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  onPress={() => resolveDispute(m.id, 'player2_win')}
+                                  disabled={m.result === 'player2_win'}
+                                  style={{ paddingVertical: 4, paddingHorizontal: 9, borderRadius: 6, backgroundColor: m.result === 'player2_win' ? 'rgba(59,178,126,0.18)' : 'rgba(47,125,163,0.18)' }}
+                                >
+                                  <Text style={{ fontSize: 11, fontFamily: font.bold, color: m.result === 'player2_win' ? colors.emerald : colors.oceanBright }}>▲ {p2?.username ?? 'P2'}</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
                           </View>
                         )
                       })}
@@ -855,6 +906,44 @@ export default function SimTournamentDetail() {
             <GlassButton onPress={() => setShowForceEndModal(false)} pad={{ paddingVertical: 10, paddingHorizontal: 16 }} style={{ marginTop: 12 }}>
               <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.muted }}>Cancel</Text>
             </GlassButton>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Assign bye opponent modal */}
+      <Modal visible={!!byeAssignMatch} transparent animationType="fade" onRequestClose={() => setByeAssignMatch(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.goldLine, borderRadius: 16, width: '100%', maxWidth: 400, maxHeight: '80%', padding: 20 }}>
+            {byeAssignMatch && (() => {
+              const takenIds = new Set(currentMatches.filter(cm => cm.id !== byeAssignMatch.id).flatMap(cm => [cm.player1_id, cm.player2_id]).filter(Boolean))
+              const eligible = players.filter(p => !p.dropped && p.user_id !== byeAssignMatch.player1_id && !takenIds.has(p.user_id))
+              const byeProfile = playerProfile(byeAssignMatch.player1_id)
+              return (
+                <>
+                  <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.text, marginBottom: 4 }}>Assign Opponent</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 14, fontFamily: font.body }}>
+                    Pick an opponent for <Text style={{ color: colors.text, fontFamily: font.semi }}>{byeProfile?.username ?? 'the bye player'}</Text>. The bye (and its free win) is replaced with a normal match.
+                  </Text>
+                  <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 6 }}>
+                    {eligible.length === 0 && (
+                      <Text style={{ fontSize: 13, color: colors.faint, textAlign: 'center', paddingVertical: 20, fontFamily: font.body }}>
+                        No available players — everyone else is already paired this round.
+                      </Text>
+                    )}
+                    {eligible.map(p => (
+                      <TouchableOpacity key={p.user_id} onPress={() => assignByeOpponent(byeAssignMatch, p.user_id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: 'rgba(140,176,208,0.05)', borderWidth: 1, borderColor: colors.lineStrong, borderRadius: 10 }}>
+                        <Avatar profile={p.profiles} size={28} />
+                        <Text style={{ flex: 1, fontSize: 13, fontFamily: font.semi, color: colors.text }}>{p.profiles?.username ?? 'Unknown'}</Text>
+                        <Text style={{ fontSize: 11, color: colors.oceanBright, fontFamily: font.body }}>Pair ⚔️</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                  <GlassButton onPress={() => setByeAssignMatch(null)} pad={{ paddingVertical: 10, paddingHorizontal: 16 }} style={{ marginTop: 12 }}>
+                    <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.muted }}>Cancel</Text>
+                  </GlassButton>
+                </>
+              )
+            })()}
           </View>
         </View>
       </Modal>

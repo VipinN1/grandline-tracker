@@ -1,31 +1,17 @@
 import { useState } from 'react'
-import { Modal, View, Text, TouchableOpacity, ScrollView, Image, useWindowDimensions } from 'react-native'
+import { Modal, View, Text, TouchableOpacity, ScrollView, Image } from 'react-native'
+import { router } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { colors, font, radius } from '../theme'
 import { LEADER_COLORS } from './forms'
+import CardPreview from './CardPreview'
+import DeckShareOverlay from './DeckShareOverlay'
 
-function CardPreview({ card, onClose }) {
-  const { width } = useWindowDimensions()
-  const w = Math.min(300, width * 0.85)
-  if (!card) return null
-  return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity activeOpacity={1} onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.88)', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <Image source={{ uri: getCardImageUrl(card.id) }} style={{ width: w, height: w * 1.4, borderRadius: 14, borderWidth: 2, borderColor: 'rgba(140,176,208,0.15)' }} resizeMode="contain" />
-        <Text style={{ fontSize: 16, fontFamily: font.bold, color: colors.text, marginTop: 14 }}>{card.name ?? card.id}</Text>
-        <Text style={{ fontSize: 12, color: colors.muted, marginTop: 3, fontFamily: font.mono }}>{card.id}</Text>
-        <TouchableOpacity onPress={onClose} style={{ marginTop: 14, backgroundColor: 'rgba(140,176,208,0.08)', borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingVertical: 7, paddingHorizontal: 24 }}>
-          <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.semi }}>Close</Text>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
-  )
-}
-
-export default function DeckModal({ deck, onClose }) {
+export default function DeckModal({ deck, onClose, onEdit }) {
   const [selectedCard, setSelectedCard] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [showShare, setShowShare] = useState(false)
   if (!deck) return null
 
   const color = LEADER_COLORS[deck.leader_color] ?? colors.ocean
@@ -96,14 +82,29 @@ export default function DeckModal({ deck, onClose }) {
             )}
           </ScrollView>
 
-          <View style={{ paddingVertical: 12, paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: 'rgba(140,176,208,0.07)' }}>
-            <TouchableOpacity onPress={copyDecklist} style={{ paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: 'rgba(140,176,208,0.04)', alignItems: 'center' }}>
+          <View style={{ paddingVertical: 12, paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: 'rgba(140,176,208,0.07)', flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {onEdit && (
+              <TouchableOpacity onPress={() => onEdit(deck)} style={{ flexGrow: 1, minWidth: 100, paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: 'rgba(59,178,126,0.3)', backgroundColor: 'rgba(59,178,126,0.08)', alignItems: 'center' }}>
+                <Text style={{ color: colors.emerald, fontSize: 13, fontFamily: font.semi }}>Edit Decklist</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => setShowShare(true)} style={{ flexGrow: 1, minWidth: 100, paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.goldLine, backgroundColor: 'rgba(200,162,74,0.08)', alignItems: 'center' }}>
+              <Text style={{ color: colors.gold, fontSize: 13, fontFamily: font.semi }}>📤 Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={copyDecklist} style={{ flexGrow: 1, minWidth: 100, paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: 'rgba(140,176,208,0.04)', alignItems: 'center' }}>
               <Text style={{ color: copied ? colors.emerald : colors.text, fontSize: 13, fontFamily: font.semi }}>{copied ? 'Copied!' : 'Copy Decklist'}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
-      {selectedCard && <CardPreview card={selectedCard} onClose={() => setSelectedCard(null)} />}
+      {selectedCard && (
+        <CardPreview
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+          onSearchMarketplace={() => { setSelectedCard(null); onClose?.(); router.push({ pathname: '/marketplace', params: { search: selectedCard.name } }) }}
+        />
+      )}
+      {showShare && <DeckShareOverlay deck={deck} onClose={() => setShowShare(false)} />}
     </Modal>
   )
 }

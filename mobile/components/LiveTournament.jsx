@@ -124,9 +124,35 @@ function SetupScreen({ session, onStart }) {
   )
 }
 
+// Collapsed by default — expands into a leader search for logging a mid-event
+// deck swap on this one round only. NULL/cleared means "same as the
+// tournament's main leader".
+function RoundLeaderOverride({ value, onChange }) {
+  const [expanded, setExpanded] = useState(!!value)
+
+  if (!expanded) {
+    return (
+      <TouchableOpacity onPress={() => setExpanded(true)} hitSlop={6}>
+        <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>+ Switch leader for this round</Text>
+      </TouchableOpacity>
+    )
+  }
+
+  return (
+    <LeaderSearchInput
+      label="Your Leader (this round)"
+      placeholder="Search your leader for this round..."
+      onSelect={onChange}
+      selected={value}
+      onClear={() => { onChange(null); setExpanded(false) }}
+    />
+  )
+}
+
 function RoundLogger({ tournament, rounds, onRoundLogged }) {
   const DRAFT_KEY = `live_round_draft_${tournament.id}`
   const [oppLeader, setOppLeader] = useState(null)
+  const [myLeader, setMyLeader] = useState(null)
   const [wonDice, setWonDice] = useState(null)
   const [wentFirst, setWentFirst] = useState(null)
   const [result, setResult] = useState(null)
@@ -144,6 +170,7 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
         const d = JSON.parse(raw ?? 'null')
         if (d) {
           setOppLeader(d.oppLeader ?? null)
+          setMyLeader(d.myLeader ?? null)
           setWonDice(d.wonDice ?? null)
           setWentFirst(d.wentFirst ?? null)
           setResult(d.result ?? null)
@@ -157,10 +184,10 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
   // Autosave the in-progress round so closing the app mid-entry doesn't lose it.
   useEffect(() => {
     if (!hydrated) return
-    const empty = !oppLeader && wonDice === null && wentFirst === null && !result && !notes.trim()
+    const empty = !oppLeader && !myLeader && wonDice === null && wentFirst === null && !result && !notes.trim()
     if (empty) AsyncStorage.removeItem(DRAFT_KEY).catch(() => {})
-    else AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ oppLeader, wonDice, wentFirst, result, notes })).catch(() => {})
-  }, [DRAFT_KEY, hydrated, oppLeader, wonDice, wentFirst, result, notes])
+    else AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ oppLeader, myLeader, wonDice, wentFirst, result, notes })).catch(() => {})
+  }, [DRAFT_KEY, hydrated, oppLeader, myLeader, wonDice, wentFirst, result, notes])
 
   async function logRound() {
     setError('')
@@ -173,6 +200,9 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
       opponent_leader_id: oppLeader?.card_image_id ?? oppLeader?.card_set_id ?? null,
       opponent_leader_name: oppLeader?.card_name ?? null,
       opponent_leader_color: oppLeader?.card_color ?? null,
+      leader_id: myLeader?.card_image_id ?? myLeader?.card_set_id ?? null,
+      leader_name: myLeader?.card_name ?? null,
+      leader_color: myLeader?.card_color ?? null,
       won_dice_roll: wonDice,
       went_first: wentFirst,
       result,
@@ -181,7 +211,7 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
 
     if (err) { setError(err.message); setSaving(false); return }
     onRoundLogged(data)
-    setOppLeader(null); setWonDice(null); setWentFirst(null); setResult(null); setNotes('')
+    setOppLeader(null); setMyLeader(null); setWonDice(null); setWentFirst(null); setResult(null); setNotes('')
     AsyncStorage.removeItem(DRAFT_KEY).catch(() => {})
     setSaving(false)
   }
@@ -197,6 +227,7 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
           selected={oppLeader}
           onClear={() => setOppLeader(null)}
         />
+        <RoundLeaderOverride value={myLeader} onChange={setMyLeader} />
         <ToggleGroup label="Dice Roll" value={wonDice} onChange={setWonDice} options={[
           { value: true, label: '🎲 Won', color: colors.emerald },
           { value: false, label: '🎲 Lost', color: colors.crimson },
@@ -229,7 +260,7 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
   )
 }
 
-function RoundHistory({ rounds }) {
+function RoundHistory({ rounds, mainLeaderId }) {
   if (rounds.length === 0) return null
   return (
     <View style={panel}>
@@ -239,6 +270,13 @@ function RoundHistory({ rounds }) {
           <View key={r.id} style={{ backgroundColor: 'rgba(140,176,208,0.03)', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Text style={{ fontSize: 12, fontFamily: font.bold, color: colors.muted, minWidth: 28 }}>R{r.round_number}</Text>
+              {r.leader_id && r.leader_id !== mainLeaderId ? (
+                <Image
+                  source={{ uri: getCardImageUrl(r.leader_id) }}
+                  style={{ width: 20, height: 27, borderRadius: 3, borderWidth: 1, borderColor: LEADER_COLORS[r.leader_color] ?? colors.line }}
+                  resizeMode="cover"
+                />
+              ) : null}
               {r.opponent_leader_id ? (
                 <Image source={{ uri: getCardImageUrl(r.opponent_leader_id) }} style={{ width: 24, height: 33, borderRadius: 3 }} resizeMode="cover" />
               ) : null}
@@ -346,6 +384,9 @@ function ActiveTournament({ tournament, session, onFinish }) {
           opponent_leader_id: r.opponent_leader_id ?? null,
           opponent_leader_name: r.opponent_leader_name ?? null,
           opponent_leader_color: r.opponent_leader_color ?? null,
+          leader_id: r.leader_id ?? null,
+          leader_name: r.leader_name ?? null,
+          leader_color: r.leader_color ?? null,
           won_dice_roll: r.won_dice_roll,
           went_first: r.went_first,
           result: r.result,
@@ -406,7 +447,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
       </View>
 
       <RoundLogger tournament={tournament} rounds={rounds} onRoundLogged={r => setRounds(prev => [...prev, r])} />
-      <RoundHistory rounds={rounds} />
+      <RoundHistory rounds={rounds} mainLeaderId={tournament.leader_id} />
 
       <View style={panel}>
         <FieldLabel>Overall Tournament Notes (optional)</FieldLabel>

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { colors, font, radius } from '../theme'
 import { LEADER_COLORS } from './forms'
 
-export default function SelectDecklistModal({ session, visible, onClose, onSelect }) {
+export default function SelectDecklistModal({ session, visible, onClose, onSelect, excludeIds = [] }) {
   const [decklists, setDecklists] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -26,8 +26,9 @@ export default function SelectDecklistModal({ session, visible, onClose, onSelec
   }, [session, visible])
 
   const filtered = decklists.filter(d =>
-    d.name?.toLowerCase().includes(search.toLowerCase()) ||
-    d.leader_name?.toLowerCase().includes(search.toLowerCase())
+    !excludeIds.includes(d.id) &&
+    (d.name?.toLowerCase().includes(search.toLowerCase()) ||
+      d.leader_name?.toLowerCase().includes(search.toLowerCase()))
   )
 
   return (

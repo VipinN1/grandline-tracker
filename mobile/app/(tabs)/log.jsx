@@ -64,6 +64,31 @@ function LeaderBanner({ leader, onChange }) {
   )
 }
 
+// Collapsed by default — expands into a leader search for logging a mid-event
+// deck swap on this one round only. NULL/cleared means "same as the
+// tournament's main leader".
+function RoundLeaderOverride({ value, onChange }) {
+  const [expanded, setExpanded] = useState(!!value)
+
+  if (!expanded) {
+    return (
+      <TouchableOpacity onPress={() => setExpanded(true)} hitSlop={6}>
+        <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>+ Switch leader for this round</Text>
+      </TouchableOpacity>
+    )
+  }
+
+  return (
+    <LeaderSearchInput
+      label="Your Leader (this round)"
+      placeholder="Search your leader for this round..."
+      onSelect={onChange}
+      selected={value}
+      onClear={() => { onChange(null); setExpanded(false) }}
+    />
+  )
+}
+
 function RoundRow({ round, index, onChange, onRemove }) {
   return (
     <View>
@@ -81,6 +106,11 @@ function RoundRow({ round, index, onChange, onRemove }) {
           onSelect={card => onChange(index, 'oppLeader', card)}
           selected={round.oppLeader}
           onClear={() => onChange(index, 'oppLeader', null)}
+        />
+
+        <RoundLeaderOverride
+          value={round.myLeader}
+          onChange={card => onChange(index, 'myLeader', card)}
         />
 
         <ToggleGroup
@@ -166,25 +196,26 @@ function PastTournamentForm({ editId, onDoneEditing }) {
   const [deckParsed, setDeckParsed] = useState(false)
   const [enriching, setEnriching] = useState(false)
 
-  const [rounds, setRounds] = useState([{ oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
+  const [rounds, setRounds] = useState([{ oppLeader: null, myLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const [attachedDecklist, setAttachedDecklist] = useState(null)
+  const [attachedDecklists, setAttachedDecklists] = useState([])
   const [selectingDecklist, setSelectingDecklist] = useState(false)
 
   useEffect(() => { loadStoresAndSeries() }, [])
 
-  // Edit mode: prefill from an existing tournament. Rounds are wholesale
-  // replaced on save (delete + reinsert), matching the web app.
+  // Edit mode: prefill from an existing tournament. Rounds and attached
+  // decklists are wholesale replaced on save (delete + reinsert), matching
+  // the web app.
   useEffect(() => {
     if (!editId) return
     let cancelled = false
     async function loadForEdit() {
       const { data: t } = await supabase
         .from('tournaments')
-        .select('*, tournament_rounds(*)')
+        .select('*, tournament_rounds(*), tournament_decklists(decklists(*))')
         .eq('id', editId)
         .single()
       if (!t || cancelled) return
@@ -199,14 +230,18 @@ function PastTournamentForm({ editId, onDoneEditing }) {
       const sorted = (t.tournament_rounds ?? []).slice().sort((a, b) => a.round_number - b.round_number)
       setRounds(sorted.length > 0 ? sorted.map(r => ({
         oppLeader: leaderFromColumns(r.opponent_leader_id, r.opponent_leader_name, r.opponent_leader_color),
+        myLeader: leaderFromColumns(r.leader_id, r.leader_name, r.leader_color),
         wonDice: r.won_dice_roll,
         wentFirst: r.went_first,
         result: r.result,
         notes: r.notes ?? '',
-      })) : [{ oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
-      if (t.decklist_id) {
+      })) : [{ oppLeader: null, myLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
+      const fromJoin = (t.tournament_decklists ?? []).map(td => td.decklists).filter(Boolean)
+      if (fromJoin.length > 0) {
+        if (!cancelled) setAttachedDecklists(fromJoin)
+      } else if (t.decklist_id) {
         const { data: dl } = await supabase.from('decklists').select('*').eq('id', t.decklist_id).maybeSingle()
-        if (dl && !cancelled) setAttachedDecklist(dl)
+        if (dl && !cancelled) setAttachedDecklists([dl])
       }
     }
     loadForEdit()
@@ -250,7 +285,7 @@ function PastTournamentForm({ editId, onDoneEditing }) {
   }
 
   function addRound() {
-    setRounds(prev => [...prev, { oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
+    setRounds(prev => [...prev, { oppLeader: null, myLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
   }
 
   function resetForm() {
@@ -258,8 +293,8 @@ function PastTournamentForm({ editId, onDoneEditing }) {
     setNotes(''); setDeckName(''); setIsPractice(false)
     setSelectedStore(null); setSelectedSeries(null); setLeaderResult(null)
     setDecklistRaw(''); setParsedCards([]); setDeckParsed(false)
-    setRounds([{ oppLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
-    setAttachedDecklist(null)
+    setRounds([{ oppLeader: null, myLeader: null, wonDice: null, wentFirst: null, result: null, notes: '' }])
+    setAttachedDecklists([])
   }
 
   const wins = rounds.filter(r => r.result === 'win').length
@@ -275,8 +310,8 @@ function PastTournamentForm({ editId, onDoneEditing }) {
 
     setSaving(true)
 
-    let decklistId = attachedDecklist?.id ?? null
-    if (!attachedDecklist && parsedCards.length > 0) {
+    let newDecklistIds = attachedDecklists.map(d => d.id)
+    if (parsedCards.length > 0) {
       const { data: dl, error: dlError } = await supabase.from('decklists').insert({
         user_id: session.user.id,
         name: deckName || `${leaderResult.card_name} Deck`,
@@ -286,7 +321,7 @@ function PastTournamentForm({ editId, onDoneEditing }) {
         cards: parsedCards,
       }).select().single()
       if (dlError) { setError('Failed to save decklist: ' + dlError.message); setSaving(false); return }
-      decklistId = dl.id
+      newDecklistIds = [...newDecklistIds, dl.id]
     }
 
     const finalName = selectedSeries?.name ?? tournamentName.trim()
@@ -304,7 +339,7 @@ function PastTournamentForm({ editId, onDoneEditing }) {
       leader_color: leaderResult.card_color,
       deck_name: deckName || `${leaderResult.card_name} Deck`,
       notes: notes.trim(),
-      decklist_id: decklistId,
+      decklist_id: newDecklistIds[0] ?? null,
       is_practice: isPractice,
     }
     // Only overwrite the flattened location snapshot if a store was picked.
@@ -316,9 +351,12 @@ function PastTournamentForm({ editId, onDoneEditing }) {
     if (editId) {
       const { error: tError } = await supabase.from('tournaments').update(payload).eq('id', editId)
       if (tError) { setError('Failed to save: ' + tError.message); setSaving(false); return }
-      // Rounds are always wholesale-replaced on edit (same as web).
+      // Rounds and attached decklists are always wholesale-replaced on edit
+      // (same as web).
       const { error: dError } = await supabase.from('tournament_rounds').delete().eq('tournament_id', editId)
       if (dError) { setError('Failed to update rounds: ' + dError.message); setSaving(false); return }
+      const { error: delDlError } = await supabase.from('tournament_decklists').delete().eq('tournament_id', editId)
+      if (delDlError) { setError('Failed to update decklists: ' + delDlError.message); setSaving(false); return }
     } else {
       const { data: tournament, error: tError } = await supabase.from('tournaments')
         .insert({ ...payload, user_id: session.user.id }).select().single()
@@ -334,6 +372,9 @@ function PastTournamentForm({ editId, onDoneEditing }) {
           opponent_leader_id: r.oppLeader?.card_image_id ?? r.oppLeader?.card_set_id ?? null,
           opponent_leader_name: r.oppLeader?.card_name ?? null,
           opponent_leader_color: r.oppLeader?.card_color ?? null,
+          leader_id: r.myLeader?.card_image_id ?? r.myLeader?.card_set_id ?? null,
+          leader_name: r.myLeader?.card_name ?? null,
+          leader_color: r.myLeader?.card_color ?? null,
           won_dice_roll: r.wonDice,
           went_first: r.wentFirst,
           result: r.result,
@@ -341,6 +382,13 @@ function PastTournamentForm({ editId, onDoneEditing }) {
         }))
       )
       if (rError) { setError('Failed to save rounds: ' + rError.message); setSaving(false); return }
+    }
+
+    if (newDecklistIds.length > 0) {
+      const { error: dlLinkError } = await supabase.from('tournament_decklists').insert(
+        newDecklistIds.map(decklist_id => ({ tournament_id: tournamentId, decklist_id }))
+      )
+      if (dlLinkError) { setError('Failed to save decklists: ' + dlLinkError.message); setSaving(false); return }
     }
 
     setSaving(false)
@@ -455,90 +503,92 @@ function PastTournamentForm({ editId, onDoneEditing }) {
           </GlassButton>
         </View>
 
-        {/* Decklist */}
+        {/* Decklists */}
         <Glass style={{ padding: 16 }}>
-          <SectionTitle>Decklist</SectionTitle>
+          <SectionTitle>Decklists</SectionTitle>
 
-          {attachedDecklist ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(140,176,208,0.08)', borderWidth: 1, borderColor: 'rgba(200,162,74,0.25)', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14 }}>
-              <Image source={{ uri: getCardImageUrl(attachedDecklist.leader_id) }} style={{ width: 36, height: 50, borderRadius: 5 }} resizeMode="cover" />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{attachedDecklist.name}</Text>
-                <Text style={{ fontSize: 11, color: LEADER_COLORS[attachedDecklist.leader_color] ?? colors.muted, marginTop: 2, fontFamily: font.body }}>
-                  {attachedDecklist.leader_name} · {attachedDecklist.leader_id}
-                </Text>
-                <Text style={{ fontSize: 11, color: colors.faint, marginTop: 2, fontFamily: font.body }}>
-                  {attachedDecklist.cards?.reduce((s, c) => s + c.count, 0) ?? 0} cards
-                </Text>
-              </View>
-              <GlassButton onPress={() => setAttachedDecklist(null)} pad={{ paddingVertical: 5, paddingHorizontal: 12 }}>
-                <Text style={{ color: colors.textSoft, fontSize: 14 }}>✕</Text>
-              </GlassButton>
-            </View>
-          ) : (
-            <View>
-              <GlassButton onPress={() => setSelectingDecklist(true)} pad={{ paddingVertical: 14, paddingHorizontal: 16 }} style={{ marginBottom: 14 }}>
-                <Text style={{ fontSize: 14, fontFamily: font.semi, color: colors.oceanBright }}>Attach Decklist From Account</Text>
-              </GlassButton>
-
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(140,176,208,0.05)' }} />
-                <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.faint }}>or</Text>
-                <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(140,176,208,0.05)' }} />
-              </View>
-
-              <View style={{ marginBottom: 12 }}>
-                <FieldLabel>Deck Name</FieldLabel>
-                <GlassInput placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChangeText={setDeckName} />
-              </View>
-              <FieldLabel>Paste your decklist</FieldLabel>
-              <GlassInput
-                value={decklistRaw}
-                onChangeText={val => { setDecklistRaw(val); setDeckParsed(false); setParsedCards([]) }}
-                placeholder={'1xOP15-002\n4xOP15-053\n...'}
-                multiline
-                autoCapitalize="characters"
-                autoCorrect={false}
-                inputStyle={{ minHeight: 140, textAlignVertical: 'top', fontFamily: font.mono, fontSize: 12 }}
-              />
-              <GlassButton
-                onPress={handleParseDeck}
-                disabled={!decklistRaw.trim() || enriching}
-                pad={{ paddingVertical: 12, paddingHorizontal: 22 }}
-                style={{ marginTop: 10, alignSelf: 'flex-start' }}
-              >
-                <Text style={{ fontSize: 14, fontFamily: font.semi, color: decklistRaw.trim() ? colors.text : colors.faint }}>
-                  {enriching ? 'Fetching card data...' : 'Preview Decklist'}
-                </Text>
-              </GlassButton>
-
-              {deckParsed && parsedCards.length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1.2, color: colors.faint, marginBottom: 10 }}>
-                    {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed
-                  </Text>
-                  <View style={{ gap: 2 }}>
-                    {parsedCards.map(card => (
-                      <View key={card.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: LEADER_COLORS[card.color] ?? colors.faint }} />
-                          <Text style={{ fontFamily: font.mono, fontSize: 12, color: colors.ocean }}>{card.count}×</Text>
-                          <Text numberOfLines={1} style={{ fontSize: 12, color: colors.text, fontFamily: font.body, flexShrink: 1 }}>
-                            {card.name !== card.id ? card.name : card.id}
-                          </Text>
-                        </View>
-                        <Text style={{ color: colors.faint, fontFamily: font.mono, fontSize: 11 }}>{card.id}</Text>
-                      </View>
-                    ))}
+          {attachedDecklists.length > 0 && (
+            <View style={{ gap: 8, marginBottom: 14 }}>
+              {attachedDecklists.map(deck => (
+                <View key={deck.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(140,176,208,0.08)', borderWidth: 1, borderColor: 'rgba(200,162,74,0.25)', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14 }}>
+                  <Image source={{ uri: getCardImageUrl(deck.leader_id) }} style={{ width: 36, height: 50, borderRadius: 5 }} resizeMode="cover" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{deck.name}</Text>
+                    <Text style={{ fontSize: 11, color: LEADER_COLORS[deck.leader_color] ?? colors.muted, marginTop: 2, fontFamily: font.body }}>
+                      {deck.leader_name} · {deck.leader_id}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.faint, marginTop: 2, fontFamily: font.body }}>
+                      {deck.cards?.reduce((s, c) => s + c.count, 0) ?? 0} cards
+                    </Text>
                   </View>
+                  <GlassButton onPress={() => setAttachedDecklists(prev => prev.filter(d => d.id !== deck.id))} pad={{ paddingVertical: 5, paddingHorizontal: 12 }}>
+                    <Text style={{ color: colors.textSoft, fontSize: 14 }}>✕</Text>
+                  </GlassButton>
                 </View>
-              )}
-              {deckParsed && parsedCards.length === 0 && (
-                <Text style={{ marginTop: 12, fontSize: 13, color: colors.crimson, fontFamily: font.body }}>
-                  Could not parse any cards. Use format: 4xOP01-024
-                </Text>
-              )}
+              ))}
             </View>
+          )}
+
+          <GlassButton onPress={() => setSelectingDecklist(true)} pad={{ paddingVertical: 14, paddingHorizontal: 16 }} style={{ marginBottom: 14 }}>
+            <Text style={{ fontSize: 14, fontFamily: font.semi, color: colors.oceanBright }}>Attach Decklist From Account</Text>
+          </GlassButton>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(140,176,208,0.05)' }} />
+            <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.faint }}>or</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(140,176,208,0.05)' }} />
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <FieldLabel>Deck Name</FieldLabel>
+            <GlassInput placeholder="e.g. Red Luffy Aggro v3" value={deckName} onChangeText={setDeckName} />
+          </View>
+          <FieldLabel>Paste a decklist to add</FieldLabel>
+          <GlassInput
+            value={decklistRaw}
+            onChangeText={val => { setDecklistRaw(val); setDeckParsed(false); setParsedCards([]) }}
+            placeholder={'1xOP15-002\n4xOP15-053\n...'}
+            multiline
+            autoCapitalize="characters"
+            autoCorrect={false}
+            inputStyle={{ minHeight: 140, textAlignVertical: 'top', fontFamily: font.mono, fontSize: 12 }}
+          />
+          <GlassButton
+            onPress={handleParseDeck}
+            disabled={!decklistRaw.trim() || enriching}
+            pad={{ paddingVertical: 12, paddingHorizontal: 22 }}
+            style={{ marginTop: 10, alignSelf: 'flex-start' }}
+          >
+            <Text style={{ fontSize: 14, fontFamily: font.semi, color: decklistRaw.trim() ? colors.text : colors.faint }}>
+              {enriching ? 'Fetching card data...' : 'Preview Decklist'}
+            </Text>
+          </GlassButton>
+
+          {deckParsed && parsedCards.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1.2, color: colors.faint, marginBottom: 10 }}>
+                {parsedCards.reduce((s, c) => s + c.count, 0)} cards parsed — will be added as a new decklist on save
+              </Text>
+              <View style={{ gap: 2 }}>
+                {parsedCards.map(card => (
+                  <View key={card.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: LEADER_COLORS[card.color] ?? colors.faint }} />
+                      <Text style={{ fontFamily: font.mono, fontSize: 12, color: colors.ocean }}>{card.count}×</Text>
+                      <Text numberOfLines={1} style={{ fontSize: 12, color: colors.text, fontFamily: font.body, flexShrink: 1 }}>
+                        {card.name !== card.id ? card.name : card.id}
+                      </Text>
+                    </View>
+                    <Text style={{ color: colors.faint, fontFamily: font.mono, fontSize: 11 }}>{card.id}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+          {deckParsed && parsedCards.length === 0 && (
+            <Text style={{ marginTop: 12, fontSize: 13, color: colors.crimson, fontFamily: font.body }}>
+              Could not parse any cards. Use format: 4xOP01-024
+            </Text>
           )}
         </Glass>
 
@@ -599,8 +649,9 @@ function PastTournamentForm({ editId, onDoneEditing }) {
       <SelectDecklistModal
         session={session}
         visible={selectingDecklist}
+        excludeIds={attachedDecklists.map(d => d.id)}
         onClose={() => setSelectingDecklist(false)}
-        onSelect={deck => { setAttachedDecklist(deck); setDecklistRaw(''); setParsedCards([]) }}
+        onSelect={deck => setAttachedDecklists(prev => [...prev, deck])}
       />
     </KeyboardAvoidingView>
   )

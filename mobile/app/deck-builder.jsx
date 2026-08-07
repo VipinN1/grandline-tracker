@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Modal, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, Keyboard, Pressable } from 'react-native'
-import { router, Stack } from 'expo-router'
+import { router, Stack, useLocalSearchParams } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { searchCards, searchLeaders, getCard, getCardImageUrl, enrichCards } from '../lib/optcgapi'
 import { supabase } from '../lib/supabase'
@@ -42,6 +42,7 @@ function Pill({ active, accent, label, onPress }) {
 export default function DeckBuilder() {
   const { session } = useSession()
   const { width: screenW } = useWindowDimensions()
+  const { editDeckId } = useLocalSearchParams()
 
   // Search grid: 4 per row. Visual deck view: 3 per row (bigger cards).
   const searchThumbW = Math.floor((screenW - 32 - 3 * 6) / 4)
@@ -74,9 +75,38 @@ export default function DeckBuilder() {
   const [importText, setImportText] = useState('')
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState('')
+  const [editingDeckId, setEditingDeckId] = useState(null)
+  const [loadingEdit, setLoadingEdit] = useState(!!editDeckId)
 
   const cardDebounce = useRef(null)
   const leaderDebounce = useRef(null)
+
+  useEffect(() => {
+    if (!editDeckId) return
+    let cancelled = false
+    ;(async () => {
+      const { data: deck } = await supabase.from('decklists').select('*').eq('id', editDeckId).single()
+      if (cancelled || !deck) { setLoadingEdit(false); return }
+      setEditingDeckId(deck.id)
+      setDeckName(deck.name ?? '')
+      if (deck.leader_id) {
+        setLeader({ card_set_id: deck.leader_id, card_name: deck.leader_name, card_color: deck.leader_color })
+      }
+      if (deck.cards?.length > 0) {
+        const built = {}
+        for (const c of deck.cards) {
+          built[c.id] = {
+            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image, card_cost: c.cost },
+            count: c.count,
+          }
+        }
+        setDeckCards(built)
+      }
+      setTab('deck')
+      setLoadingEdit(false)
+    })()
+    return () => { cancelled = true }
+  }, [editDeckId])
 
   function handleCardQuery(val) {
     setCardQuery(val)
@@ -158,7 +188,7 @@ export default function DeckBuilder() {
         const deck = {}
         for (const c of enriched) {
           deck[c.id] = {
-            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image },
+            card: { card_set_id: c.id, card_name: c.name, card_color: c.color, card_type: c.type, card_image: c.image, card_cost: c.cost },
             count: Math.min(c.count, MAX_COPIES),
           }
         }
@@ -180,17 +210,31 @@ export default function DeckBuilder() {
       type: card.card_type ?? null,
       color: card.card_color ?? null,
       image: card.card_image ?? null,
+      cost: card.card_cost ?? null,
     }))
-    const { error: err } = await supabase.from('decklists').insert({
-      user_id: session.user.id,
-      name: deckName.trim(),
-      leader_id: leader.card_set_id,
-      leader_name: leader.card_name,
-      leader_color: leader.card_color,
-      cards,
-    })
-    setSaving(false)
-    if (err) { setError('Failed to save. ' + err.message); return }
+    if (editingDeckId) {
+      const { error: err } = await supabase.from('decklists').update({
+        name: deckName.trim(),
+        leader_id: leader.card_set_id,
+        leader_name: leader.card_name,
+        leader_color: leader.card_color,
+        cards,
+        updated_at: new Date().toISOString(),
+      }).eq('id', editingDeckId)
+      setSaving(false)
+      if (err) { setError('Failed to save. ' + err.message); return }
+    } else {
+      const { error: err } = await supabase.from('decklists').insert({
+        user_id: session.user.id,
+        name: deckName.trim(),
+        leader_id: leader.card_set_id,
+        leader_name: leader.card_name,
+        leader_color: leader.card_color,
+        cards,
+      })
+      setSaving(false)
+      if (err) { setError('Failed to save. ' + err.message); return }
+    }
     router.back()
   }
 
@@ -221,11 +265,16 @@ export default function DeckBuilder() {
     <>
       <Stack.Screen options={{
         headerShown: true,
-        title: 'Deck Builder',
+        title: editingDeckId ? 'Edit Deck' : 'Deck Builder',
         headerStyle: { backgroundColor: '#08101b' },
         headerTitleStyle: { fontFamily: font.display, fontSize: 17, color: colors.parchment },
         headerTintColor: colors.parchment,
       }} />
+      {loadingEdit ? (
+        <View style={{ flex: 1, backgroundColor: colors.abyss, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={colors.gold} />
+        </View>
+      ) : (
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.abyss }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
 
         {/* Search / Deck tab toggle */}
@@ -502,7 +551,7 @@ export default function DeckBuilder() {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleSave} disabled={saving} style={{ flex: 2, paddingVertical: 9, borderRadius: radius.sm, backgroundColor: saving ? 'rgba(140,176,208,0.05)' : colors.ocean, alignItems: 'center' }}>
                   <Text style={{ color: saving ? colors.muted : '#fff', fontSize: 12, fontFamily: font.bold }}>
-                    {saving ? 'Saving...' : saveMsg || 'Save Deck'}
+                    {saving ? 'Saving...' : saveMsg || (editingDeckId ? 'Save Changes' : 'Save Deck')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -554,6 +603,7 @@ export default function DeckBuilder() {
           </KeyboardAvoidingView>
         </Modal>
       </KeyboardAvoidingView>
+      )}
     </>
   )
 }

@@ -3,21 +3,29 @@
 // Tournament History and Leaders Played tabs. Viewing yourself redirects to
 // the own-profile screen (same contract as web).
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, FlatList, Image, ActivityIndicator, useWindowDimensions } from 'react-native'
 import { Stack, router, useLocalSearchParams, Redirect } from 'expo-router'
+import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { getCardImageUrl } from '../../lib/optcgapi'
 import { colors, font, radius, card } from '../../theme'
 import { LEADER_COLORS } from '../../components/forms'
 import { Avatar } from '../../components/ProfileCard'
-import { GlassButton, GlassPills } from '../../components/glass'
+import { Glass, GlassButton, GlassPills } from '../../components/glass'
 
 function placementLabel(n) {
   if (n === 1) return '1st'
   if (n === 2) return '2nd'
   if (n === 3) return '3rd'
   return `${n}th`
+}
+
+function placementColors(n) {
+  if (n === 1) return { bg: 'rgba(200,162,74,0.16)', color: colors.gold }
+  if (n === 2) return { bg: 'rgba(148,163,184,0.14)', color: '#94a3b8' }
+  if (n === 3) return { bg: 'rgba(251,146,60,0.14)', color: '#fb923c' }
+  return { bg: 'rgba(140,176,208,0.08)', color: colors.faint }
 }
 
 function cleanName(name) {
@@ -36,6 +44,7 @@ const screenOpts = {
 export default function UserProfilePage() {
   const { id } = useLocalSearchParams()
   const { session } = useSession()
+  const { width: screenW } = useWindowDimensions()
   const [profile, setProfile] = useState(null)
   const [tournaments, setTournaments] = useState([])
   const [friendStatus, setFriendStatus] = useState(null)
@@ -45,7 +54,7 @@ export default function UserProfilePage() {
   const load = useCallback(async () => {
     const queries = [
       supabase.from('profiles').select('*').eq('id', id).maybeSingle(),
-      supabase.from('tournaments').select('*').eq('user_id', id).order('date', { ascending: false }),
+      supabase.from('tournaments').select('*, tournament_rounds(leader_id, leader_name, leader_color)').eq('user_id', id).order('date', { ascending: false }),
     ]
     if (session) {
       queries.push(
@@ -125,10 +134,18 @@ export default function UserProfilePage() {
     : ''
 
   // Leaders played (ranked only), with their tournaments grouped underneath.
+  // A tournament counts toward every leader that appeared in it — its main
+  // leader plus any leader swapped in for individual rounds.
   const leaderGroups = Object.values(ranked.reduce((acc, t) => {
-    if (!t.leader_id) return acc
-    if (!acc[t.leader_id]) acc[t.leader_id] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, tournaments: [] }
-    acc[t.leader_id].tournaments.push(t)
+    const leadersHere = new Map([[t.leader_id, { name: t.leader_name, color: t.leader_color }]])
+    for (const r of (t.tournament_rounds ?? [])) {
+      if (r.leader_id && !leadersHere.has(r.leader_id)) leadersHere.set(r.leader_id, { name: r.leader_name, color: r.leader_color })
+    }
+    for (const [leaderId, info] of leadersHere) {
+      if (!leaderId) continue
+      if (!acc[leaderId]) acc[leaderId] = { id: leaderId, name: info.name, color: info.color, tournaments: [] }
+      acc[leaderId].tournaments.push(t)
+    }
     return acc
   }, {})).sort((a, b) => b.tournaments.length - a.tournaments.length)
 
@@ -280,27 +297,67 @@ export default function UserProfilePage() {
               <Text style={{ color: colors.crimson }}>{item.losses}L</Text>
             </Text>
           </TouchableOpacity>
-        ) : (
-          <View style={{ ...card, padding: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Image source={{ uri: getCardImageUrl(item.id) }} style={{ width: 44, height: 62, borderRadius: 5, borderWidth: 1.5, borderColor: (LEADER_COLORS[item.color] ?? '#94a3b8') + '66' }} resizeMode="cover" />
-              <View style={{ flex: 1 }}>
-                <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{cleanName(item.name)}</Text>
-                <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>
-                  {item.tournaments.length} event{item.tournaments.length !== 1 ? 's' : ''}
-                </Text>
+        ) : (() => {
+          const leaderColor = LEADER_COLORS[item.color] ?? colors.ocean
+          const lWins = item.tournaments.reduce((s, t) => s + t.wins, 0)
+          const lLosses = item.tournaments.reduce((s, t) => s + t.losses, 0)
+          const lWr = lWins + lLosses > 0 ? Math.round((lWins / (lWins + lLosses)) * 100) : null
+          // Head-crop art banner, same construction as the own-profile Leaders Played tab.
+          const bannerW = screenW - 32
+          const imgH = bannerW * 1.4
+          return (
+            <Glass style={{ borderWidth: 1, borderColor: leaderColor + '40', overflow: 'hidden' }}>
+              <View style={{ height: 120, overflow: 'hidden' }}>
+                <Image
+                  source={{ uri: getCardImageUrl(item.id) }}
+                  style={{ position: 'absolute', top: -imgH * 0.11, width: bannerW, height: imgH }}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={['rgba(6,16,27,0.05)', 'rgba(6,16,27,0.6)', 'rgba(6,16,27,1)']}
+                  locations={[0, 0.6, 1]}
+                  style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: -1 }}
+                />
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', padding: 14 }}>
+                  <View style={{ flex: 1, marginRight: 10 }}>
+                    <Text numberOfLines={1} style={{ fontFamily: font.display, fontSize: 19, color: colors.text }}>{cleanName(item.name)}</Text>
+                    <Text style={{ fontSize: 11.5, color: leaderColor, fontFamily: font.semi, marginTop: 2 }}>
+                      {item.tournaments.length} event{item.tournaments.length !== 1 ? 's' : ''}
+                      {lWr !== null ? `  ·  ${lWins}W-${lLosses}L  ·  ${lWr}%` : ''}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            </View>
-            <View style={{ marginTop: 8, gap: 4 }}>
-              {item.tournaments.map(t => (
-                <TouchableOpacity key={t.id} onPress={() => router.push(`/tournament/${t.id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4, paddingHorizontal: 6 }}>
-                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 11, color: colors.muted, fontFamily: font.body }}>{t.name} · {t.date}</Text>
-                  <Text style={{ fontSize: 11, fontFamily: font.mono, color: colors.faint }}>#{t.placement} · {t.wins}-{t.losses}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
+
+              <View style={{ paddingVertical: 6, paddingHorizontal: 10 }}>
+                {item.tournaments.map((t, ti) => {
+                  const pc = placementColors(t.placement)
+                  return (
+                    <TouchableOpacity
+                      key={t.id}
+                      onPress={() => router.push(`/tournament/${t.id}`)}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 4, borderTopWidth: ti > 0 ? 1 : 0, borderTopColor: 'rgba(140,176,208,0.06)' }}
+                    >
+                      <View style={{ width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pc.bg }}>
+                        <Text style={{ fontSize: 10, fontFamily: font.bold, color: pc.color }}>{placementLabel(t.placement)}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text numberOfLines={1} style={{ fontSize: 12.5, fontFamily: font.semi, color: colors.text }}>{t.name}</Text>
+                        <Text style={{ fontSize: 10.5, color: colors.faint, marginTop: 1, fontFamily: font.body }}>{t.date}</Text>
+                      </View>
+                      <Text style={{ fontSize: 12, fontFamily: font.mono }}>
+                        <Text style={{ color: colors.emerald }}>{t.wins}W</Text>
+                        <Text style={{ color: colors.faint }}> · </Text>
+                        <Text style={{ color: colors.crimson }}>{t.losses}L</Text>
+                      </Text>
+                      <Text style={{ fontSize: 13, color: colors.faint }}>›</Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </Glass>
+          )
+        })()}
       />
     </>
   )

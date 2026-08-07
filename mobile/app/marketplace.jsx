@@ -3,7 +3,7 @@
 // on the storefront page itself (app/storefront/[id].jsx).
 import { useState, useEffect, useCallback } from 'react'
 import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView, Image, Modal, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native'
-import { Stack, router } from 'expo-router'
+import { Stack, router, useLocalSearchParams } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/auth'
 import { getCardImageUrl } from '../lib/optcgapi'
@@ -568,6 +568,7 @@ export default function Marketplace() {
   const { session } = useSession()
   const { width: screenW } = useWindowDimensions()
   const cardW = Math.floor((screenW - 32 - 10) / 2)
+  const { search: incomingSearch } = useLocalSearchParams()
 
   const [activeTab, setActiveTab] = useState('browse')
   const [profile, setProfile] = useState(null)
@@ -575,7 +576,7 @@ export default function Marketplace() {
   // Browse
   const [allListings, setAllListings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(incomingSearch ?? '')
   const [colorFilter, setColorFilter] = useState('')
   const [conditionFilter, setConditionFilter] = useState('')
   const [minPrice, setMinPrice] = useState('')
@@ -676,6 +677,9 @@ export default function Marketplace() {
 
   useEffect(() => { if (activeTab === 'wants') loadWants() }, [activeTab])
   useEffect(() => { if (activeTab === 'stores') loadStores() }, [activeTab])
+  useEffect(() => {
+    if (incomingSearch) { setSearch(incomingSearch); setActiveTab('browse') }
+  }, [incomingSearch])
   useEffect(() => { if (activeTab === 'mine' && session) loadMine() }, [activeTab, session])
 
   const filteredListings = allListings.filter(l => {

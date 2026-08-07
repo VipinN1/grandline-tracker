@@ -147,7 +147,13 @@ export default function Decklists() {
           )
         }}
       />
-      {selectedDeck && <DeckModal deck={selectedDeck} onClose={() => setSelectedDeck(null)} />}
+      {selectedDeck && (
+        <DeckModal
+          deck={selectedDeck}
+          onClose={() => setSelectedDeck(null)}
+          onEdit={(deck) => { setSelectedDeck(null); router.push({ pathname: '/deck-builder', params: { editDeckId: deck.id } }) }}
+        />
+      )}
     </View>
   )
 }

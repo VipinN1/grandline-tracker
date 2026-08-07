@@ -100,6 +100,8 @@ export default function More() {
     { icon: 'storefront-outline', label: 'Marketplace', href: '/marketplace', badge: unreadMarket },
     { icon: 'construct-outline', label: 'Deck Builder', href: '/deck-builder' },
     { icon: 'trophy-outline', label: 'Online Tournaments', href: '/tournaments' },
+    { icon: 'newspaper-outline', label: 'Articles', href: '/articles' },
+    { icon: 'videocam-outline', label: 'Creators', href: '/creators' },
     { icon: 'information-circle-outline', label: 'About', href: '/about' },
     { icon: 'document-text-outline', label: 'Terms of Service', href: '/terms' },
     { icon: 'lock-closed-outline', label: 'Privacy Policy', href: '/privacy' },

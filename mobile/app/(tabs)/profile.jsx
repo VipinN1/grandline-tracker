@@ -109,7 +109,7 @@ export default function Profile() {
     if (!session) return
     const [{ data: profileData }, { data: tournamentData }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', session.user.id).single(),
-      supabase.from('tournaments').select('*').eq('user_id', session.user.id).order('date', { ascending: false }),
+      supabase.from('tournaments').select('*, tournament_rounds(leader_id, leader_name, leader_color)').eq('user_id', session.user.id).order('date', { ascending: false }),
     ])
     setProfile(profileData)
     setTournaments(tournamentData ?? [])
@@ -153,10 +153,18 @@ export default function Profile() {
 
   // Leaders played (ranked only) with their tournaments grouped underneath —
   // powers both the hero backdrop / fav leader and the Leaders Played tab.
+  // A tournament counts toward every leader that appeared in it — its main
+  // leader plus any leader swapped in for individual rounds.
   const leaderGroups = Object.values(ranked.reduce((acc, t) => {
-    if (!t.leader_id) return acc
-    if (!acc[t.leader_id]) acc[t.leader_id] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, tournaments: [] }
-    acc[t.leader_id].tournaments.push(t)
+    const leadersHere = new Map([[t.leader_id, { name: t.leader_name, color: t.leader_color }]])
+    for (const r of (t.tournament_rounds ?? [])) {
+      if (r.leader_id && !leadersHere.has(r.leader_id)) leadersHere.set(r.leader_id, { name: r.leader_name, color: r.leader_color })
+    }
+    for (const [id, info] of leadersHere) {
+      if (!id) continue
+      if (!acc[id]) acc[id] = { id, name: info.name, color: info.color, tournaments: [] }
+      acc[id].tournaments.push(t)
+    }
     return acc
   }, {})).sort((a, b) => b.tournaments.length - a.tournaments.length)
   const favLeader = leaderGroups[0] ?? null

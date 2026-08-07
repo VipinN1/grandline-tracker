@@ -78,7 +78,7 @@ export default function Dashboard() {
     if (!session) return
     const { data } = await supabase
       .from('tournaments')
-      .select('id, name, date, placement, player_count, location, wins, losses, leader_id, leader_name, leader_color, is_practice')
+      .select('id, name, date, placement, player_count, location, wins, losses, leader_id, leader_name, leader_color, is_practice, tournament_rounds(leader_id, leader_name, leader_color, result)')
       .eq('user_id', session.user.id)
       .eq('is_practice', false)
       .order('date', { ascending: false })
@@ -112,13 +112,36 @@ export default function Dashboard() {
 
   const leaderUsage = Object.values(
     tournaments.reduce((acc, t) => {
-      if (!acc[t.leader_id]) {
-        const primary = leaderColorList(t.leader_color)[0] ?? colors.ocean
-        acc[t.leader_id] = { id: t.leader_id, fullName: t.leader_name, leaderColor: t.leader_color, color: primary, count: 0, wins: 0, losses: 0 }
+      function ensureLeader(leaderId, leaderName, leaderColor) {
+        if (!acc[leaderId]) {
+          const primary = leaderColorList(leaderColor)[0] ?? colors.ocean
+          acc[leaderId] = { id: leaderId, fullName: leaderName, leaderColor, color: primary, count: 0, wins: 0, losses: 0 }
+        }
       }
-      acc[t.leader_id].count++
-      acc[t.leader_id].wins += t.wins
-      acc[t.leader_id].losses += t.losses
+
+      const rounds = t.tournament_rounds ?? []
+      const leadersInTournament = new Set([t.leader_id])
+      ensureLeader(t.leader_id, t.leader_name, t.leader_color)
+
+      // Rounds played under a different leader (a mid-event deck swap) count
+      // as that leader's own event/win/loss, not the tournament's main leader.
+      for (const r of rounds) {
+        if (r.leader_id && r.leader_id !== t.leader_id) {
+          leadersInTournament.add(r.leader_id)
+          ensureLeader(r.leader_id, r.leader_name, r.leader_color)
+        }
+        const effectiveId = r.leader_id || t.leader_id
+        if (r.result === 'win') acc[effectiveId].wins++
+        else if (r.result === 'loss') acc[effectiveId].losses++
+      }
+
+      // No round data recorded — fall back to the tournament's aggregate record.
+      if (rounds.length === 0) {
+        acc[t.leader_id].wins += t.wins
+        acc[t.leader_id].losses += t.losses
+      }
+
+      for (const leaderId of leadersInTournament) acc[leaderId].count++
       return acc
     }, {})
   ).map(l => ({ ...l, wr: l.wins + l.losses > 0 ? Math.round((l.wins / (l.wins + l.losses)) * 100) : 0 }))

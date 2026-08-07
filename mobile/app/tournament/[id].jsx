@@ -1,13 +1,14 @@
 // Tournament detail — modeled on the web share card (TournamentModal):
 // zoomed leader-art hero, round table with dice/order/result columns,
 // and a Going 1st / Going 2nd / Dice Won stats strip. Liquid Glass cards.
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native'
 import { useLocalSearchParams, router, Stack } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { getCardImageUrl } from '../../lib/optcgapi'
+import { captureAndShare } from '../../lib/shareImage'
 import { colors, font, radius } from '../../theme'
 import { Glass, GlassButton } from '../../components/glass'
 import { LEADER_COLORS, baseCardId } from '../../components/forms'
@@ -92,29 +93,34 @@ export default function TournamentDetail() {
   const { id } = useLocalSearchParams()
   const { session } = useSession()
   const [t, setT] = useState(null)
-  const [decklist, setDecklist] = useState(null)
-  const [showDeck, setShowDeck] = useState(false)
+  const [decklists, setDecklists] = useState([])
+  const [showDeck, setShowDeck] = useState(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const shareRef = useRef(null)
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from('tournaments')
-        .select('*, tournament_rounds(*)')
+        .select('*, tournament_rounds(*), tournament_decklists(decklists(*))')
         .eq('id', id)
         .single()
       setT(data)
       setLoading(false)
-      if (data?.decklist_id) {
+      const fromJoin = (data?.tournament_decklists ?? []).map(td => td.decklists).filter(Boolean)
+      if (fromJoin.length > 0) {
+        setDecklists(fromJoin)
+      } else if (data?.decklist_id) {
         const { data: dl } = await supabase.from('decklists').select('*').eq('id', data.decklist_id).maybeSingle()
-        setDecklist(dl ?? null)
+        if (dl) setDecklists([dl])
       }
     }
     load()
   }, [id])
 
-  async function handleShare() {
+  async function shareAsText() {
     const rounds = (t.tournament_rounds ?? []).slice().sort((a, b) => a.round_number - b.round_number)
     const lines = [
       `⚓ ${t.name} — ${t.date}`,
@@ -126,6 +132,23 @@ export default function TournamentDetail() {
       'Tracked with PirateTracker 🏴‍☠️',
     ]
     try { await Share.share({ message: lines.join('\n') }) } catch {}
+  }
+
+  async function handleShare() {
+    if (sharing) return
+    setSharing(true)
+    try {
+      await captureAndShare(shareRef, {
+        fileName: `${(t.name ?? 'tournament').replace(/[^\w\- ]+/g, '').trim() || 'tournament'}.png`,
+        title: t.name,
+        text: 'Check out my tournament result on PirateTracker!',
+      })
+    } catch {
+      // Image capture failed for any reason (e.g. no share provider) — a
+      // plain text share still gets the result out.
+      await shareAsText()
+    }
+    setSharing(false)
   }
 
   function confirmDelete() {
@@ -201,22 +224,28 @@ export default function TournamentDetail() {
       <Stack.Screen options={screenOpts} />
       <ScrollView style={{ flex: 1, backgroundColor: colors.abyss }} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}>
 
-        {/* Hero */}
-        <LeaderHero t={t} leaderColor={leaderColor} />
+        {/* Everything inside this wrapper is what gets captured for the share
+            image (mirrors the web ShareOverlay's cropped "screenshot zone")
+            — decklist/notes/edit/delete stay outside it. collapsable={false}
+            keeps Android from flattening the view out of the native tree,
+            which would make it uncapturable. */}
+        <View ref={shareRef} collapsable={false} style={{ gap: 12 }}>
+          {/* Hero */}
+          <LeaderHero t={t} leaderColor={leaderColor} />
 
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          <Pill text={`#${t.placement}${t.player_count ? ` of ${t.player_count}` : ''}`} color={colors.gold} />
-          <Pill text={`${t.wins}W · ${t.losses}L`} color={t.wins >= t.losses ? colors.emerald : colors.crimson} />
-          {winPct !== null ? <Pill text={`${winPct}%`} color={colors.oceanBright} /> : null}
-          {t.is_practice ? <Pill text="Practice" color={colors.muted} /> : null}
-        </View>
+          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+            <Pill text={`#${t.placement}${t.player_count ? ` of ${t.player_count}` : ''}`} color={colors.gold} />
+            <Pill text={`${t.wins}W · ${t.losses}L`} color={t.wins >= t.losses ? colors.emerald : colors.crimson} />
+            {winPct !== null ? <Pill text={`${winPct}%`} color={colors.oceanBright} /> : null}
+            {t.is_practice ? <Pill text="Practice" color={colors.muted} /> : null}
+          </View>
 
-        {/* Brand line above the rounds — can't be cropped out of a rounds screenshot */}
-        <Text style={{ textAlign: 'center', fontSize: 13.5, fontFamily: font.body, letterSpacing: 0.4, color: colors.muted, marginTop: 2, marginBottom: -4 }}>
-          piratetracker.vercel.app
-        </Text>
+          {/* Brand line above the rounds — can't be cropped out of a rounds screenshot */}
+          <Text style={{ textAlign: 'center', fontSize: 13.5, fontFamily: font.body, letterSpacing: 0.4, color: colors.muted, marginTop: 2, marginBottom: -4 }}>
+            piratetracker.vercel.app
+          </Text>
 
-        {/* Rounds table */}
+          {/* Rounds table */}
         <Glass style={{ padding: 14 }}>
           <Text style={{ fontSize: 11, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.gold, marginBottom: 10 }}>
             Rounds ({rounds.length})
@@ -237,8 +266,10 @@ export default function TournamentDetail() {
               {rounds.map(r => {
                 const isWin = r.result === 'win'
                 const oppColor = LEADER_COLORS[r.opponent_leader_color] ?? '#94a3b8'
+                const switchedLeader = r.leader_id && r.leader_id !== t.leader_id
+                const switchColor = LEADER_COLORS[r.leader_color] ?? colors.muted
                 return (
-                  <View key={r.id} style={{ marginTop: 7, borderRadius: 12, backgroundColor: isWin ? 'rgba(59,178,126,0.07)' : 'rgba(210,74,58,0.07)', paddingVertical: 10, paddingHorizontal: 8 }}>
+                  <View key={r.id} style={{ marginTop: 7, borderRadius: 12, backgroundColor: isWin ? 'rgba(59,178,126,0.07)' : 'rgba(210,74,58,0.07)', paddingVertical: 10, paddingHorizontal: 8, ...(switchedLeader ? { borderWidth: 1, borderColor: switchColor + '33' } : null) }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Text style={{ width: 20, textAlign: 'center', fontSize: 14, fontFamily: font.mono, color: isWin ? colors.emerald : colors.crimson }}>{r.round_number}</Text>
                       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -272,6 +303,15 @@ export default function TournamentDetail() {
                         </View>
                       </View>
                     </View>
+                    {switchedLeader ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: switchColor + '33', borderStyle: 'dashed' }}>
+                        <Image source={{ uri: getCardImageUrl(r.leader_id) }} style={{ width: 26, height: 36, borderRadius: 5, borderWidth: 1.5, borderColor: switchColor }} resizeMode="cover" />
+                        <View>
+                          <Text style={{ fontSize: 8.5, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 0.5, color: colors.faint }}>Switched leader this round</Text>
+                          <Text style={{ fontSize: 12, fontFamily: font.bold, color: switchColor, marginTop: 1 }}>{r.leader_name}</Text>
+                        </View>
+                      </View>
+                    ) : null}
                     {r.notes ? (
                       <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body, marginTop: 7, marginLeft: 30 }}>{r.notes}</Text>
                     ) : null}
@@ -294,21 +334,29 @@ export default function TournamentDetail() {
             ))}
           </Glass>
         )}
+        </View>
 
-        {/* Attached decklist */}
-        {decklist ? (
+        {/* Attached decklists — a tournament can have more than one when the
+            player swapped decks mid-event alongside a leader switch. */}
+        {decklists.length > 0 ? (
           <Glass style={{ padding: 14 }}>
-            <Text style={{ fontSize: 11, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.gold, marginBottom: 10 }}>Decklist</Text>
-            <TouchableOpacity onPress={() => setShowDeck(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Image source={{ uri: getCardImageUrl(decklist.leader_id) }} style={{ width: 40, height: 56, borderRadius: 5 }} resizeMode="cover" />
-              <View style={{ flex: 1 }}>
-                <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{decklist.name}</Text>
-                <Text numberOfLines={1} style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>
-                  {decklist.leader_name} · {(decklist.cards ?? []).reduce((s, c) => s + c.count, 0)} cards
-                </Text>
-              </View>
-              <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>View ›</Text>
-            </TouchableOpacity>
+            <Text style={{ fontSize: 11, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.gold, marginBottom: 10 }}>
+              {decklists.length > 1 ? `Decklists (${decklists.length})` : 'Decklist'}
+            </Text>
+            <View style={{ gap: decklists.length > 1 ? 10 : 0 }}>
+              {decklists.map(dl => (
+                <TouchableOpacity key={dl.id} onPress={() => setShowDeck(dl)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Image source={{ uri: getCardImageUrl(dl.leader_id) }} style={{ width: 40, height: 56, borderRadius: 5 }} resizeMode="cover" />
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 13, fontFamily: font.bold, color: colors.text }}>{dl.name}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: 11, color: colors.muted, marginTop: 2, fontFamily: font.body }}>
+                      {dl.leader_name} · {(dl.cards ?? []).reduce((s, c) => s + c.count, 0)} cards
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.oceanBright }}>View ›</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </Glass>
         ) : null}
 
@@ -320,8 +368,8 @@ export default function TournamentDetail() {
           </Glass>
         ) : null}
 
-        <GlassButton onPress={handleShare} pad={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-          <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>📤 Share Result</Text>
+        <GlassButton onPress={handleShare} disabled={sharing} pad={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+          <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>{sharing ? 'Preparing image...' : '📤 Share Result'}</Text>
         </GlassButton>
 
         {isMine ? (
@@ -339,7 +387,7 @@ export default function TournamentDetail() {
           </View>
         ) : null}
       </ScrollView>
-      {showDeck && <DeckModal deck={decklist} onClose={() => setShowDeck(false)} />}
+      {showDeck && <DeckModal deck={showDeck} onClose={() => setShowDeck(null)} />}
     </>
   )
 }

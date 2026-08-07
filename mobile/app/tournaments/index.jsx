@@ -85,12 +85,13 @@ export default function TournamentsPage() {
   const [showCreate, setShowCreate] = useState(false)
 
   const load = useCallback(async () => {
-    const [{ data }, adminRes] = await Promise.all([
+    const [{ data }, adminRes, creatorRes] = await Promise.all([
       supabase.from('sim_tournaments').select('*, sim_tournament_players(id)').order('created_at', { ascending: false }),
       session ? supabase.from('profiles').select('username').eq('id', session.user.id).single() : Promise.resolve({ data: null }),
+      session ? supabase.from('tournament_creators').select('user_id').eq('user_id', session.user.id).maybeSingle() : Promise.resolve({ data: null }),
     ])
     setTournaments(data ?? [])
-    if (adminRes?.data?.username === 'Cipin') setIsAdmin(true)
+    if (adminRes?.data?.username === 'Cipin' || creatorRes?.data) setIsAdmin(true)
     setLoading(false)
   }, [session])
 
