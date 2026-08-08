@@ -1,18 +1,18 @@
 // Tournament detail — modeled on the web share card (TournamentModal):
 // zoomed leader-art hero, round table with dice/order/result columns,
 // and a Going 1st / Going 2nd / Dice Won stats strip. Liquid Glass cards.
-import { useState, useEffect, useRef } from 'react'
-import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import { useLocalSearchParams, router, Stack } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { getCardImageUrl } from '../../lib/optcgapi'
-import { captureAndShare } from '../../lib/shareImage'
 import { colors, font, radius } from '../../theme'
 import { Glass, GlassButton } from '../../components/glass'
 import { LEADER_COLORS, baseCardId } from '../../components/forms'
 import DeckModal from '../../components/DeckModal'
+import TournamentShareOverlay from '../../components/TournamentShareOverlay'
 
 // Drop descriptive parentheticals like "(Alternate Art)" but keep card
 // numbers like "(041)".
@@ -97,8 +97,7 @@ export default function TournamentDetail() {
   const [showDeck, setShowDeck] = useState(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
-  const [sharing, setSharing] = useState(false)
-  const shareRef = useRef(null)
+  const [showShare, setShowShare] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -119,37 +118,6 @@ export default function TournamentDetail() {
     }
     load()
   }, [id])
-
-  async function shareAsText() {
-    const rounds = (t.tournament_rounds ?? []).slice().sort((a, b) => a.round_number - b.round_number)
-    const lines = [
-      `⚓ ${t.name} — ${t.date}`,
-      `${cleanName(t.leader_name)} · #${t.placement}${t.player_count ? ` of ${t.player_count}` : ''}`,
-      `Record: ${t.wins}W-${t.losses}L${t.wins + t.losses > 0 ? ` (${Math.round(t.wins / (t.wins + t.losses) * 100)}%)` : ''}`,
-      '',
-      ...rounds.map(r => `R${r.round_number}: ${r.result === 'win' ? 'W' : 'L'} vs ${cleanName(r.opponent_leader_name) || '?'}${r.went_first !== null ? ` (${r.went_first ? '1st' : '2nd'})` : ''}`),
-      '',
-      'Tracked with PirateTracker 🏴‍☠️',
-    ]
-    try { await Share.share({ message: lines.join('\n') }) } catch {}
-  }
-
-  async function handleShare() {
-    if (sharing) return
-    setSharing(true)
-    try {
-      await captureAndShare(shareRef, {
-        fileName: `${(t.name ?? 'tournament').replace(/[^\w\- ]+/g, '').trim() || 'tournament'}.png`,
-        title: t.name,
-        text: 'Check out my tournament result on PirateTracker!',
-      })
-    } catch {
-      // Image capture failed for any reason (e.g. no share provider) — a
-      // plain text share still gets the result out.
-      await shareAsText()
-    }
-    setSharing(false)
-  }
 
   function confirmDelete() {
     Alert.alert('Delete tournament', `Delete "${t.name}" and all its rounds? This cannot be undone.`, [
@@ -224,14 +192,8 @@ export default function TournamentDetail() {
       <Stack.Screen options={screenOpts} />
       <ScrollView style={{ flex: 1, backgroundColor: colors.abyss }} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}>
 
-        {/* Everything inside this wrapper is what gets captured for the share
-            image (mirrors the web ShareOverlay's cropped "screenshot zone")
-            — decklist/notes/edit/delete stay outside it. collapsable={false}
-            keeps Android from flattening the view out of the native tree,
-            which would make it uncapturable. */}
-        <View ref={shareRef} collapsable={false} style={{ gap: 12 }}>
-          {/* Hero */}
-          <LeaderHero t={t} leaderColor={leaderColor} />
+        {/* Hero */}
+        <LeaderHero t={t} leaderColor={leaderColor} />
 
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             <Pill text={`#${t.placement}${t.player_count ? ` of ${t.player_count}` : ''}`} color={colors.gold} />
@@ -334,7 +296,6 @@ export default function TournamentDetail() {
             ))}
           </Glass>
         )}
-        </View>
 
         {/* Attached decklists — a tournament can have more than one when the
             player swapped decks mid-event alongside a leader switch. */}
@@ -368,8 +329,8 @@ export default function TournamentDetail() {
           </Glass>
         ) : null}
 
-        <GlassButton onPress={handleShare} disabled={sharing} pad={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-          <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>{sharing ? 'Preparing image...' : '📤 Share Result'}</Text>
+        <GlassButton onPress={() => setShowShare(true)} pad={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+          <Text style={{ fontSize: 13, fontFamily: font.semi, color: colors.oceanBright }}>📤 Share Result</Text>
         </GlassButton>
 
         {isMine ? (
@@ -388,6 +349,7 @@ export default function TournamentDetail() {
         ) : null}
       </ScrollView>
       {showDeck && <DeckModal deck={showDeck} onClose={() => setShowDeck(null)} />}
+      {showShare && <TournamentShareOverlay tournament={t} onClose={() => setShowShare(false)} />}
     </>
   )
 }
