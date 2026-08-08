@@ -10,29 +10,9 @@ import { useState, useRef } from 'react'
 import { Modal, View, Text, TouchableOpacity, ScrollView, Image } from 'react-native'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { captureAndShare } from '../lib/shareImage'
+import { computeDeckStats } from '../lib/deckStats'
 import { colors, font, radius } from '../theme'
 import { LEADER_COLORS } from './forms'
-
-function computeDeckStats(cards) {
-  const costBuckets = {}
-  let charCount = 0, eventCount = 0, stageCount = 0
-  const colorCounts = {}
-  for (const c of cards) {
-    if (c.cost != null) {
-      const bucket = Math.min(c.cost, 10)
-      costBuckets[bucket] = (costBuckets[bucket] ?? 0) + c.count
-    }
-    if (c.type === 'Character') charCount += c.count
-    else if (c.type === 'Event') eventCount += c.count
-    else if (c.type === 'Stage') stageCount += c.count
-    if (c.color) {
-      for (const col of c.color.split(/[\s/]+/).filter(Boolean)) {
-        colorCounts[col] = (colorCounts[col] ?? 0) + c.count
-      }
-    }
-  }
-  return { costBuckets, charCount, eventCount, stageCount, colorCounts }
-}
 
 export default function DeckShareOverlay({ deck, onClose }) {
   const [sharing, setSharing] = useState(false)
