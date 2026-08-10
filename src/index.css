@@ -183,6 +183,29 @@ input[type=number] { -moz-appearance: textfield; }
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+@keyframes trophyPop {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.92); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes trophyShine {
+  0%   { transform: translateX(-120%) rotate(20deg); }
+  100% { transform: translateX(220%) rotate(20deg); }
+}
+@keyframes trophyGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(200,162,74,0.3), 0 0 18px rgba(200,162,74,0.10); }
+  50%       { box-shadow: 0 0 0 1px rgba(200,162,74,0.45), 0 0 30px rgba(200,162,74,0.22); }
+}
+
+/* Trophy Cabinet — each card pops in on a stagger via inline animation-delay. */
+.gl-trophy-card { animation: trophyPop 0.5s var(--ease) backwards; }
+.gl-trophy-shine {
+  position: absolute; top: 0; left: 0; width: 40%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.16), transparent);
+  animation: trophyShine 2.6s ease-in-out infinite;
+  animation-delay: 1s;
+  pointer-events: none;
+}
 
 /* Page content gets a gentle entrance.
    NOTE: fill-mode is `backwards` (not `both`/`forwards`) on purpose — fadeInUp

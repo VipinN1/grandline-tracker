@@ -14,6 +14,7 @@ import Friends from './pages/Friends'
 import Profile from './pages/Profile'
 import UserProfilePage from './pages/UserProfilePage'
 import TournamentsPage from './pages/TournamentsPage'
+import TrophyCabinet from './pages/TrophyCabinet'
 import TournamentDetailPage from './pages/TournamentDetailPage'
 import Community from './pages/Community'
 import Marketplace from './pages/Marketplace'
@@ -107,6 +108,7 @@ export default function App() {
           <Route path="/decklists/:id" element={<DecklistPage session={session} />} />
           <Route path="/creators" element={<CreatorsDirectory session={session} />} />
           <Route path="/creators/:username" element={<CreatorPage session={session} />} />
+          <Route path="/trophies/:username" element={<TrophyCabinet session={session} />} />
           <Route path="/friends" element={<ProtectedRoute session={session}><Friends session={session} /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute session={session}><Profile session={session} /></ProtectedRoute>} />
           <Route path="/profile/:userId" element={<UserProfilePage session={session} />} />

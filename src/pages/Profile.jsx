@@ -203,6 +203,7 @@ export default function Profile({ session }) {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <button onClick={() => setEditingProfile(true)} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'linear-gradient(135deg, #2f7da3, #1b4a66)', color: '#fff', border: '1px solid rgba(140,176,208,0.2)', cursor: 'pointer', fontFamily: 'inherit' }}>Edit Profile</button>
+              <button onClick={() => navigate(`/trophies/${username}`)} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(59,178,126,0.1)', color: '#3bb27e', border: '1px solid rgba(59,178,126,0.25)', cursor: 'pointer', fontFamily: 'inherit' }}>🏆 Trophy Cabinet</button>
               <button onClick={() => navigate(`/creators/${username}`)} style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: 'rgba(200,162,74,0.1)', color: '#dcb35e', border: '1px solid rgba(200,162,74,0.25)', cursor: 'pointer', fontFamily: 'inherit' }}>🎬 Creator Page</button>
             </div>
           </div>

@@ -55,7 +55,14 @@
       "Bash(node --input-type=module -e ' *)",
       "Skill(run)",
       "Bash(find *)",
-      "Bash(git cherry-pick *)"
+      "Bash(git cherry-pick *)",
+      "Bash(xargs -I{} echo {})",
+      "Bash(timeout 8 npx vite --port 5183)",
+      "Read(//tmp/**)",
+      "Bash(lsof -ti:5183)",
+      "Bash(xargs kill -9)",
+      "Bash(rm -f .env.local .env.local.qa)",
+      "Bash(rm -f src/pages/_TrophyPreview.jsx)"
     ]
   }
 }

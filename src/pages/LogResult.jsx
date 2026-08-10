@@ -297,6 +297,7 @@ function PastTournamentForm({ session, editTournament = null }) {
   const [notes, setNotes] = useState(editTournament?.notes ?? '')
   const [deckName, setDeckName] = useState(editTournament?.deck_name ?? '')
   const [isPractice, setIsPractice] = useState(editTournament?.is_practice ?? false)
+  const [tier, setTier] = useState(editTournament?.tier ?? 'locals')
 
   const [stores, setStores] = useState([])
   const [series, setSeries] = useState([])
@@ -446,6 +447,7 @@ function PastTournamentForm({ session, editTournament = null }) {
       store_id: selectedStore?.id ?? null,
       series_id: selectedSeries?.id ?? null,
       is_practice: isPractice,
+      tier,
     }
 
     let tournamentId
@@ -572,6 +574,26 @@ function PastTournamentForm({ session, editTournament = null }) {
               <div>
                 <label style={labelStyle}>Final Placement</label>
                 <input type="number" placeholder="e.g. 1" value={placement} onChange={e => setPlacement(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Event Tier</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[
+                    { value: 'locals', label: '🏅 Locals', color: '#3bb27e' },
+                    { value: 'regional', label: '🥈 Regional', color: '#52a9cd' },
+                    { value: 'major', label: '🏆 Major', color: '#dcb35e' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setTier(opt.value)}
+                      style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: `1px solid ${tier === opt.value ? opt.color : 'rgba(140,176,208,0.07)'}`, background: tier === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: tier === opt.value ? opt.color : '#9db2c6', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Powers your Trophy Cabinet — locals wins are tallied, Regional/Major results become individual trophies.</div>
               </div>
               <div>
                 <label style={labelStyle}>Match Type</label>
