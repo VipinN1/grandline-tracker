@@ -30,7 +30,7 @@ function placementColor(n) {
 // captureAndShare(). Trimmed to the top 6 Regional/Major results so the
 // image stays a reasonable, readable size — the live page shows the rest.
 const TrophyCabinetShareCard = forwardRef(function TrophyCabinetShareCard(
-  { profile, localsWins, localsEvents, prereleaseWins, bigResults, bestFinish, totalEvents },
+  { profile, localsWins, localsEvents, legacyLocalsWins, prereleaseWins, bigResults, bestFinish, totalEvents },
   ref
 ) {
   if (!profile) return null
@@ -79,7 +79,10 @@ const TrophyCabinetShareCard = forwardRef(function TrophyCabinetShareCard(
         <div style={{ fontSize: 44 }}>🏅</div>
         <div>
           <div style={{ fontSize: 34, fontWeight: 700, fontFamily: '"Space Mono", "Courier New", monospace', color: '#3bb27e', lineHeight: 1 }}>{localsWins}</div>
-          <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 4 }}>Locals Wins · {localsEvents} events played</div>
+          <div style={{ fontSize: 12, color: '#9db2c6', marginTop: 4 }}>
+            Locals Wins · {localsEvents} events played
+            {legacyLocalsWins > 0 && ` · ${legacyLocalsWins} before tracking`}
+          </div>
         </div>
       </div>
 

@@ -53,11 +53,63 @@ function useCountUp(target, duration = 900) {
   return value
 }
 
-function StatTile({ label, value, accent }) {
+function StatTile({ label, value, accent, onEdit }) {
   return (
-    <div style={{ ...card, padding: '16px 18px', textAlign: 'center' }}>
+    <div style={{ ...card, padding: '16px 18px', textAlign: 'center', position: 'relative' }}>
+      {onEdit && (
+        <button
+          onClick={onEdit}
+          title="Set wins from before PirateTracker"
+          style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 6, border: `1px solid ${colors.line}`, background: 'rgba(140,176,208,0.06)', color: colors.muted, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >✎</button>
+      )}
       <div style={{ fontSize: 32, fontWeight: 700, color: accent ?? colors.text, fontFamily: font.mono, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.7px', color: colors.muted, marginTop: 8 }}>{label}</div>
+    </div>
+  )
+}
+
+// Owner-only: self-report a count of past locals wins that happened before
+// they started logging on PirateTracker (or just never got logged
+// individually). Purely additive to the tally — see db/profile_legacy_wins.sql.
+function LegacyWinsModal({ initialValue, onClose, onSave }) {
+  const [value, setValue] = useState(String(initialValue ?? 0))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSave() {
+    const n = parseInt(value, 10)
+    if (isNaN(n) || n < 0) return setError('Enter a whole number of 0 or more')
+    setSaving(true)
+    const err = await onSave(n)
+    setSaving(false)
+    if (err) return setError('Failed to save. Please try again.')
+    onClose()
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: `1px solid ${colors.line}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, marginBottom: 4 }}>Locals Wins Before PirateTracker</div>
+        <div style={{ fontSize: 12, color: colors.muted, marginBottom: 18, lineHeight: 1.5 }}>
+          Add wins from before you started tracking (or ones you never logged individually). This adds straight onto your Locals Wins tally — it doesn't create tournament entries or affect your win rate or event count.
+        </div>
+        <input
+          autoFocus
+          type="number"
+          min="0"
+          step="1"
+          value={value}
+          onChange={e => { setValue(e.target.value); setError('') }}
+          onKeyDown={e => { if (e.key === 'Escape') onClose(); if (e.key === 'Enter') handleSave() }}
+          style={{ width: '100%', background: colors.surface3, border: `1px solid ${colors.lineStrong}`, borderRadius: radius.sm, padding: '10px 13px', color: colors.text, fontSize: 16, fontFamily: font.mono, outline: 'none', boxSizing: 'border-box' }}
+        />
+        {error && <div style={{ fontSize: 12, color: colors.crimson, marginTop: 10 }}>{error}</div>}
+        <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+          <button onClick={onClose} style={{ ...btnGhost, flex: 1 }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary, flex: 1, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving...' : 'Save'}</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -119,6 +171,7 @@ export default function TrophyCabinet({ session }) {
   const [sharing, setSharing] = useState(false)
   const [shareError, setShareError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [editingLegacy, setEditingLegacy] = useState(false)
 
   const shareRef = useRef(null)
 
@@ -167,6 +220,12 @@ export default function TrophyCabinet({ session }) {
     } catch { /* clipboard unavailable */ }
   }
 
+  async function saveLegacyWins(n) {
+    const { error } = await supabase.from('profiles').update({ legacy_locals_wins: n }).eq('id', session.user.id)
+    if (!error) setProfile(prev => ({ ...prev, legacy_locals_wins: n }))
+    return error
+  }
+
   // Derived from state that's always defined (even before load finishes), so
   // this — and the useCountUp hook below — can run unconditionally ahead of
   // the loading/notFound early returns, keeping hook order stable.
@@ -181,7 +240,9 @@ export default function TrophyCabinet({ session }) {
     .sort((a, b) => (TIER_META[a.tier].rank - TIER_META[b.tier].rank) || (a.placement - b.placement) || new Date(b.date) - new Date(a.date))
   const podiumBig = bigResults.filter(t => t.placement <= 3).length
   const bestFinish = ranked.length > 0 ? Math.min(...ranked.map(t => t.placement)) : null
-  const localsWinCount = useCountUp(localsWinsList.length)
+  const legacyLocalsWins = profile?.legacy_locals_wins ?? 0
+  const totalLocalsWins = localsWinsList.length + legacyLocalsWins
+  const localsWinCount = useCountUp(totalLocalsWins)
   const prereleaseWinCount = useCountUp(prereleaseWinsList.length)
 
   if (loading) {
@@ -230,7 +291,7 @@ export default function TrophyCabinet({ session }) {
 
       {/* Stat row */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: 10, marginBottom: 22 }}>
-        <StatTile label="Locals Wins" value={`🏅 ${localsWinCount}`} accent={colors.emerald} />
+        <StatTile label="Locals Wins" value={`🏅 ${localsWinCount}`} accent={colors.emerald} onEdit={isOwner ? () => setEditingLegacy(true) : undefined} />
         <StatTile label="Pre-Release Wins" value={`🎁 ${prereleaseWinCount}`} accent={colors.orange} />
         <StatTile label="Podium Finishes" value={podiumBig} accent={colors.gold} />
         <StatTile label="Best Finish" value={bestFinish ? placementLabel(bestFinish) : '—'} />
@@ -278,9 +339,15 @@ export default function TrophyCabinet({ session }) {
 
       {/* Locals wall */}
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.emerald, marginBottom: 12 }}>🏅 Locals Wins ({localsWinsList.length} of {localsEvents.length} events)</div>
-        {localsWinsList.length === 0 ? (
-          <div style={{ fontSize: 13, color: colors.faint, padding: '4px 0' }}>No locals wins logged yet — first place at a locals adds a badge here.</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.emerald }}>🏅 Locals Wins ({totalLocalsWins} total)</div>
+          <div style={{ fontSize: 11, color: colors.faint }}>{localsWinsList.length} logged of {localsEvents.length} events{legacyLocalsWins > 0 ? ` · ${legacyLocalsWins} before tracking` : ''}</div>
+        </div>
+        {localsWinsList.length === 0 && legacyLocalsWins === 0 ? (
+          <div style={{ fontSize: 13, color: colors.faint, padding: '4px 0' }}>
+            No locals wins logged yet — first place at a locals adds a badge here.
+            {isOwner && <>{' '}Had wins before joining PirateTracker? <button onClick={() => setEditingLegacy(true)} style={{ background: 'none', border: 'none', color: colors.oceanBright, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, padding: 0 }}>Add them here</button>.</>}
+          </div>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {localsWinsList.map((t, i) => (
@@ -295,6 +362,17 @@ export default function TrophyCabinet({ session }) {
                 <span style={{ fontSize: 12, fontWeight: 600, color: colors.text, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
               </div>
             ))}
+            {legacyLocalsWins > 0 && (
+              <div
+                className="gl-trophy-card"
+                onClick={() => isOwner && setEditingLegacy(true)}
+                title="Self-reported wins from before PirateTracker"
+                style={{ animationDelay: `${Math.min(localsWinsList.length, 16) * 40}ms`, cursor: isOwner ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(59,178,126,0.04)', border: `1px dashed rgba(59,178,126,0.3)`, borderRadius: radius.pill, padding: '6px 12px 6px 8px' }}
+              >
+                <span style={{ fontSize: 14 }}>🏅</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: colors.textSoft }}>+{legacyLocalsWins} before tracking</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -315,8 +393,9 @@ export default function TrophyCabinet({ session }) {
       <TrophyCabinetShareCard
         ref={shareRef}
         profile={profile}
-        localsWins={localsWinsList.length}
+        localsWins={totalLocalsWins}
         localsEvents={localsEvents.length}
+        legacyLocalsWins={legacyLocalsWins}
         prereleaseWins={prereleaseWinsList.length}
         bigResults={bigResults}
         bestFinish={bestFinish}
@@ -330,6 +409,14 @@ export default function TrophyCabinet({ session }) {
           isMobile={isMobile}
           onEdit={isOwner ? t => navigate('/log', { state: { editTournament: t } }) : undefined}
           onDelete={isOwner ? () => { setTournaments(prev => prev.filter(x => x.id !== selectedTournament.id)); setSelectedTournament(null) } : false}
+        />
+      )}
+
+      {editingLegacy && (
+        <LegacyWinsModal
+          initialValue={legacyLocalsWins}
+          onClose={() => setEditingLegacy(false)}
+          onSave={saveLegacyWins}
         />
       )}
     </div>
