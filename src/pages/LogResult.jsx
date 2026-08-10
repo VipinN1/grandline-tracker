@@ -577,9 +577,10 @@ function PastTournamentForm({ session, editTournament = null }) {
               </div>
               <div>
                 <label style={labelStyle}>Event Tier</label>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
                   {[
                     { value: 'locals', label: '🏅 Locals', color: '#3bb27e' },
+                    { value: 'prerelease', label: '🎁 Pre-Release', color: '#e6b84f' },
                     { value: 'regional', label: '🥈 Regional', color: '#52a9cd' },
                     { value: 'major', label: '🏆 Major', color: '#dcb35e' },
                   ].map(opt => (
@@ -587,13 +588,13 @@ function PastTournamentForm({ session, editTournament = null }) {
                       key={opt.value}
                       type="button"
                       onClick={() => setTier(opt.value)}
-                      style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: `1px solid ${tier === opt.value ? opt.color : 'rgba(140,176,208,0.07)'}`, background: tier === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: tier === opt.value ? opt.color : '#9db2c6', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${tier === opt.value ? opt.color : 'rgba(140,176,208,0.07)'}`, background: tier === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: tier === opt.value ? opt.color : '#9db2c6', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
                     >
                       {opt.label}
                     </button>
                   ))}
                 </div>
-                <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Powers your Trophy Cabinet — locals wins are tallied, Regional/Major results become individual trophies.</div>
+                <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Powers your Trophy Cabinet — Locals and Pre-Release wins are each tallied separately, Regional/Major results become individual trophies.</div>
               </div>
               <div>
                 <label style={labelStyle}>Match Type</label>

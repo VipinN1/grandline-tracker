@@ -30,7 +30,7 @@ function placementColor(n) {
 // captureAndShare(). Trimmed to the top 6 Regional/Major results so the
 // image stays a reasonable, readable size — the live page shows the rest.
 const TrophyCabinetShareCard = forwardRef(function TrophyCabinetShareCard(
-  { profile, localsWins, localsEvents, bigResults, bestFinish, totalEvents },
+  { profile, localsWins, localsEvents, prereleaseWins, bigResults, bestFinish, totalEvents },
   ref
 ) {
   if (!profile) return null
@@ -84,8 +84,9 @@ const TrophyCabinetShareCard = forwardRef(function TrophyCabinetShareCard(
       </div>
 
       {/* Secondary stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 22 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 22 }}>
         {[
+          { label: 'Pre-Release Wins', value: `🎁 ${prereleaseWins ?? 0}` },
           { label: 'Best Finish', value: bestFinish ? placementLabel(bestFinish) : '—' },
           { label: 'Total Events', value: totalEvents ?? 0 },
         ].map(s => (

@@ -9,9 +9,10 @@ import TrophyCabinetShareCard from '../components/TrophyCabinetShareCard'
 import { colors, radius, shadow, font, card, btnPrimary, btnGhost } from '../theme'
 
 const TIER_META = {
-  major:    { label: 'Major',    icon: '🏆', color: colors.gold, rank: 0 },
-  regional: { label: 'Regional', icon: '🥈', color: colors.oceanBright, rank: 1 },
-  locals:   { label: 'Locals',   icon: '🏅', color: colors.emerald, rank: 2 },
+  major:      { label: 'Major',       icon: '🏆', color: colors.gold, rank: 0 },
+  regional:   { label: 'Regional',    icon: '🥈', color: colors.oceanBright, rank: 1 },
+  prerelease: { label: 'Pre-Release', icon: '🎁', color: colors.orange, rank: 2 },
+  locals:     { label: 'Locals',      icon: '🏅', color: colors.emerald, rank: 3 },
 }
 
 function cleanName(name) {
@@ -172,6 +173,8 @@ export default function TrophyCabinet({ session }) {
   const ranked = tournaments.filter(t => !t.is_practice)
   const localsWinsList = ranked.filter(t => (t.tier ?? 'locals') === 'locals' && t.placement === 1)
   const localsEvents = ranked.filter(t => (t.tier ?? 'locals') === 'locals')
+  const prereleaseWinsList = ranked.filter(t => t.tier === 'prerelease' && t.placement === 1)
+  const prereleaseEvents = ranked.filter(t => t.tier === 'prerelease')
   const bigResults = ranked
     .filter(t => t.tier === 'regional' || t.tier === 'major')
     .slice()
@@ -179,6 +182,7 @@ export default function TrophyCabinet({ session }) {
   const podiumBig = bigResults.filter(t => t.placement <= 3).length
   const bestFinish = ranked.length > 0 ? Math.min(...ranked.map(t => t.placement)) : null
   const localsWinCount = useCountUp(localsWinsList.length)
+  const prereleaseWinCount = useCountUp(prereleaseWinsList.length)
 
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}><div style={{ fontSize: 13, color: colors.muted }}>Charting the case…</div></div>
@@ -219,14 +223,15 @@ export default function TrophyCabinet({ session }) {
         {shareError && <div style={{ fontSize: 12, color: colors.crimson, marginTop: 12 }}>{shareError}</div>}
         {isOwner && (
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${colors.line}`, fontSize: 12, color: colors.faint }}>
-            Set an event's tier (Locals / Regional / Major) from <Link to="/log" style={{ color: colors.oceanBright, fontWeight: 600 }}>Log Result</Link> — Regional and Major podiums show up here as trophies, Locals wins are tallied above.
+            Set an event's tier (Locals / Pre-Release / Regional / Major) from <Link to="/log" style={{ color: colors.oceanBright, fontWeight: 600 }}>Log Result</Link> — Regional and Major podiums show up here as trophies, Locals and Pre-Release wins are each tallied separately above.
           </div>
         )}
       </div>
 
       {/* Stat row */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 22 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: 10, marginBottom: 22 }}>
         <StatTile label="Locals Wins" value={`🏅 ${localsWinCount}`} accent={colors.emerald} />
+        <StatTile label="Pre-Release Wins" value={`🎁 ${prereleaseWinCount}`} accent={colors.orange} />
         <StatTile label="Podium Finishes" value={podiumBig} accent={colors.gold} />
         <StatTile label="Best Finish" value={bestFinish ? placementLabel(bestFinish) : '—'} />
         <StatTile label="Total Events" value={ranked.length} />
@@ -244,6 +249,29 @@ export default function TrophyCabinet({ session }) {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
             {bigResults.map((t, i) => <TrophyCard key={t.id} t={t} index={i} onOpen={setSelectedTournament} />)}
+          </div>
+        )}
+      </div>
+
+      {/* Pre-release wall — its own category, separate from Locals */}
+      <div style={{ marginBottom: 26 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.orange, marginBottom: 12 }}>🎁 Pre-Release Wins ({prereleaseWinsList.length} of {prereleaseEvents.length} events)</div>
+        {prereleaseWinsList.length === 0 ? (
+          <div style={{ fontSize: 13, color: colors.faint, padding: '4px 0' }}>No pre-release wins logged yet — first place at a pre-release adds a badge here.</div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {prereleaseWinsList.map((t, i) => (
+              <div
+                key={t.id}
+                className="gl-trophy-card"
+                onClick={() => setSelectedTournament(t)}
+                title={`${t.name} · ${t.date}`}
+                style={{ animationDelay: `${Math.min(i, 16) * 40}ms`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(224,138,60,0.08)', border: '1px solid rgba(224,138,60,0.3)', borderRadius: radius.pill, padding: '6px 12px 6px 8px' }}
+              >
+                <span style={{ fontSize: 14 }}>🎁</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: colors.text, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -289,6 +317,7 @@ export default function TrophyCabinet({ session }) {
         profile={profile}
         localsWins={localsWinsList.length}
         localsEvents={localsEvents.length}
+        prereleaseWins={prereleaseWinsList.length}
         bigResults={bigResults}
         bestFinish={bestFinish}
         totalEvents={ranked.length}
