@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 import { useWindowSize } from './hooks/useWindowSize'
 import Navbar from './components/Navbar'
 import FloatingCards from './components/FloatingCards'
+import MobileAppPromo from './components/MobileAppPromo'
 import Dashboard from './pages/Dashboard'
 import LogResult from './pages/LogResult'
 import Decklists from './pages/Decklists'
@@ -44,6 +45,7 @@ function AppLayout({ session, isMobile }) {
   return (
     <div style={{ minHeight: '100vh', color: '#e9f1f8', fontFamily: "'Inter', system-ui, sans-serif", position: 'relative' }}>
       <FloatingCards />
+      <MobileAppPromo />
       <div style={{ position: 'relative', zIndex: 10 }}>
         <Navbar session={session} />
         <main style={{ maxWidth: 1040, margin: '0 auto', padding: isMobile ? '20px 16px 48px' : 'clamp(24px, 4vw, 40px) clamp(16px, 4vw, 28px) 64px' }}>
