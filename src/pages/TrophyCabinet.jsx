@@ -399,15 +399,17 @@ function LegacyTrophyModal({ initial, defaultTier, onClose, onSave, onDelete }) 
   )
 }
 
-function TrophyCard({ t, index, onOpen }) {
+function TrophyCard({ t, index, onOpen, isOwner }) {
   const meta = TIER_META[t.tier] ?? TIER_META.regional
   const podium = t.placement <= 3
   const pMeta = placementMeta(t.placement)
+  const canSetArt = isOwner && t.is_legacy && !t.leader_id
 
   return (
     <div
       className="gl-trophy-card"
       onClick={() => onOpen(t)}
+      title={canSetArt ? 'Click to set card art' : undefined}
       style={{
         animationDelay: `${Math.min(index, 12) * 70}ms`,
         position: 'relative', overflow: 'hidden', cursor: 'pointer',
@@ -431,8 +433,11 @@ function TrophyCard({ t, index, onOpen }) {
           onError={e => { e.target.style.visibility = 'hidden' }}
         />
       ) : (
-        <div style={{ width: 52, height: 72, borderRadius: 6, flexShrink: 0, background: 'rgba(140,176,208,0.06)', border: `1px solid ${colors.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: colors.faint }}>
+        <div style={{ position: 'relative', width: 52, height: 72, borderRadius: 6, flexShrink: 0, background: 'rgba(140,176,208,0.06)', border: `1px solid ${colors.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: colors.faint }}>
           {t.leader_name ? cleanName(t.leader_name).slice(0, 1) : '?'}
+          {canSetArt && (
+            <div style={{ position: 'absolute', bottom: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: colors.deep, border: `1px solid ${colors.lineStrong}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, lineHeight: 1 }}>📷</div>
+          )}
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -800,6 +805,7 @@ export default function TrophyCabinet({ session }) {
                 key={t.id}
                 t={t}
                 index={i}
+                isOwner={isOwner}
                 onOpen={tourney => {
                   if (tourney.is_legacy) { if (isOwner) setEditingLegacyTrophy(tourney); return }
                   setSelectedTournament(tourney)
@@ -870,6 +876,7 @@ export default function TrophyCabinet({ session }) {
         localsEvents={localsEvents.length}
         legacyLocalsWins={legacyLocalsWins}
         prereleaseWins={totalPrereleaseWins}
+        podiumFinishes={podiumBig}
         bigResults={bigResults}
         bestFinish={bestFinish}
         totalEvents={ranked.length}
