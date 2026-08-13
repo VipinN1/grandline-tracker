@@ -473,8 +473,11 @@ function EmptyCase({ message, isOwner, actions = [] }) {
 // TrophyCard, since a Locals/Pre-Release win history can run into the dozens.
 // When the win has a known leader, its card art fills the badge as a zoomed,
 // top-anchored background (portrait art lives up there) with a bottom scrim
-// so the name/date stay legible over whatever's underneath.
-function TrophyBadge({ t, index, onOpen }) {
+// so the name/date stay legible over whatever's underneath. Without one (a
+// freshly-split legacy square, say), it centers everything instead of
+// leaving the top-left-icon/bottom-caption layout's middle empty, plus an
+// owner-only nudge toward setting art — same idea as GhostBadge.
+function TrophyBadge({ t, index, onOpen, isOwner }) {
   const meta = TIER_META[t.tier] ?? TIER_META.locals
   const artUrl = t.leader_id ? getCardImageUrl(t.leader_id) : null
   return (
@@ -488,30 +491,39 @@ function TrophyBadge({ t, index, onOpen }) {
         height: 108,
         border: `1px ${t.is_legacy ? 'dashed' : 'solid'} ${meta.color}40`,
         borderRadius: radius.md,
-        background: artUrl ? colors.deep : `linear-gradient(180deg, ${meta.color}1c, ${meta.color}0a)`,
+        background: artUrl
+          ? colors.deep
+          : `radial-gradient(120% 90% at 50% 0%, ${meta.color}22 0%, ${meta.color}0c 55%, transparent 100%), linear-gradient(180deg, ${colors.surface} 0%, ${colors.deep} 100%)`,
         transition: transition.fast,
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = meta.color + '80' }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = meta.color + '40' }}
     >
-      {artUrl && (
-        <div
-          style={{
-            position: 'absolute', inset: 0,
-            backgroundImage: `url(${artUrl})`,
-            backgroundSize: 'cover', backgroundPosition: 'top center',
-            transform: 'scale(1.7)', transformOrigin: 'top center',
-          }}
-        />
+      {artUrl ? (
+        <>
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(${artUrl})`,
+              backgroundSize: 'cover', backgroundPosition: 'top center',
+              transform: 'scale(1.7)', transformOrigin: 'top center',
+            }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(6,16,27,0.05) 0%, rgba(6,16,27,0.35) 45%, rgba(6,16,27,0.94) 100%)` }} />
+          <div style={{ position: 'absolute', top: 6, left: 6, width: 20, height: 20, borderRadius: '50%', background: 'rgba(6,16,27,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, lineHeight: 1 }}>{meta.icon}</div>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '6px 8px 8px', textAlign: 'center' }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{t.date}</div>
+          </div>
+        </>
+      ) : (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '10px 10px 8px', textAlign: 'center' }}>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: meta.color + '22', border: `1px solid ${meta.color}45`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, lineHeight: 1, marginBottom: 2 }}>{meta.icon}</div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.text, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+          <div style={{ fontSize: 9, color: colors.faint }}>{t.date}</div>
+          {isOwner && <div style={{ fontSize: 8.5, color: meta.color, marginTop: 1 }}>tap to add photo</div>}
+        </div>
       )}
-      {artUrl && (
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(6,16,27,0.05) 0%, rgba(6,16,27,0.35) 45%, rgba(6,16,27,0.94) 100%)` }} />
-      )}
-      <div style={{ position: 'absolute', top: 6, left: 6, width: 20, height: 20, borderRadius: '50%', background: 'rgba(6,16,27,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, lineHeight: 1 }}>{meta.icon}</div>
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '6px 8px 8px', textAlign: 'center' }}>
-        <div style={{ fontSize: 10.5, fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{t.date}</div>
-      </div>
     </div>
   )
 }
@@ -821,6 +833,7 @@ export default function TrophyCabinet({ session }) {
                 key={t.id}
                 t={t}
                 index={i}
+                isOwner={isOwner}
                 onOpen={tourney => {
                   if (tourney.is_legacy) { if (isOwner) setEditingLegacyTrophy(tourney); return }
                   setSelectedTournament(tourney)
