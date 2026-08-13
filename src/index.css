@@ -189,9 +189,14 @@ input[type=number] { -moz-appearance: textfield; }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes trophyShine {
-  0%, 76%  { transform: translateX(-160%) rotate(20deg); }
-  94%      { transform: translateX(220%) rotate(20deg); }
-  100%     { transform: translateX(220%) rotate(20deg); }
+  /* translateX() is a % of the shine element's OWN (narrow) width, not the
+     card's — small values like -160%/220% only covered ~60% of the card,
+     which is why the streak used to stop short of both edges. Using values
+     this large guarantees it clears the full card width (plus rotation
+     spread) on both sides before doubling back. */
+  0%, 76%  { transform: translateX(-500%) rotate(20deg); }
+  94%      { transform: translateX(500%) rotate(20deg); }
+  100%     { transform: translateX(500%) rotate(20deg); }
 }
 @keyframes trophyGlow {
   0%, 100% { box-shadow: 0 0 0 1px rgba(200,162,74,0.3), 0 0 18px rgba(200,162,74,0.10); }
@@ -201,7 +206,12 @@ input[type=number] { -moz-appearance: textfield; }
 /* Trophy Cabinet — each card pops in on a stagger via inline animation-delay. */
 .gl-trophy-card { animation: trophyPop 0.5s var(--ease) backwards; }
 .gl-trophy-shine {
-  position: absolute; top: 0; left: 0; width: 26%; height: 100%;
+  /* top+bottom (not height:100%) so the box's height is pinned exactly to
+     the card regardless of the card's own height being auto/content-driven —
+     height:100% on an absolutely-positioned child of an auto-height parent
+     doesn't reliably resolve, which is why the streak used to float short of
+     the card's top/bottom edges instead of running the full height. */
+  position: absolute; top: 0; bottom: 0; left: 0; width: 26%;
   background: linear-gradient(105deg,
     transparent 0%,
     transparent 38%,
