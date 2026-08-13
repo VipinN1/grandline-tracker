@@ -158,13 +158,18 @@ export default function Profile({ session }) {
   // vs "Shanks (001)") are tracked as one leader, not two — `leaderId` keeps
   // one representative full id per group for rendering the card art.
   const leaderCounts = ranked.reduce((acc, t) => {
-    const leadersHere = new Map([[baseId(t.leader_id), { name: t.leader_name, color: t.leader_color, leaderId: t.leader_id }]])
+    // A blank self-reported entry (e.g. a Trophy Wall square with no card
+    // set yet) has no leader_id at all — skip it rather than bucketing it
+    // under a nameless "leader" (which used to crash downstream reads of
+    // .name, since cleanName(null) is falsy too and fell through to null).
+    const leadersHere = new Map()
+    if (t.leader_id) leadersHere.set(baseId(t.leader_id), { name: t.leader_name, color: t.leader_color, leaderId: t.leader_id })
     for (const r of (t.tournament_rounds ?? [])) {
       const key = r.leader_id ? baseId(r.leader_id) : null
       if (key && !leadersHere.has(key)) leadersHere.set(key, { name: r.leader_name, color: r.leader_color, leaderId: r.leader_id })
     }
     for (const [key, info] of leadersHere) {
-      if (!acc[key]) acc[key] = { name: cleanName(info.name) || info.name, color: info.color, leaderId: info.leaderId, count: 0 }
+      if (!acc[key]) acc[key] = { name: cleanName(info.name) || info.name || 'Unknown Leader', color: info.color, leaderId: info.leaderId, count: 0 }
       acc[key].count++
     }
     return acc
@@ -317,7 +322,12 @@ export default function Profile({ session }) {
       {activeTab === 'leaders' && tournaments.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
           {Object.entries(leaderCounts).map(([key, data]) => {
-            const leaderTournaments = ranked.filter(t => baseId(t.leader_id) === key || (t.tournament_rounds ?? []).some(r => baseId(r.leader_id) === key))
+            // r.leader_id must be truthy to count as a match — a round with
+            // no leader override (the common case: most rounds just use the
+            // tournament's main leader) has baseId(null) === '', which used
+            // to coincidentally match a blank/"Unknown Leader" bucket's key
+            // and pull in nearly every tournament with round data.
+            const leaderTournaments = ranked.filter(t => baseId(t.leader_id) === key || (t.tournament_rounds ?? []).some(r => r.leader_id && baseId(r.leader_id) === key))
             return (
               <div key={key} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ position: 'relative', height: isMobile ? 100 : 140 }}>

@@ -301,7 +301,12 @@ export default function UserProfilePage({ session }) {
       {activeTab === 'leaders' && tournaments.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
           {Object.entries(leaderCounts).map(([key, data]) => {
-            const leaderTournaments = ranked.filter(t => baseId(t.leader_id) === key || (t.tournament_rounds ?? []).some(r => baseId(r.leader_id) === key))
+            // r.leader_id must be truthy to count as a match — a round with
+            // no leader override (the common case: most rounds just use the
+            // tournament's main leader) has baseId(null) === '', which used
+            // to coincidentally match a blank/"Unknown Leader" bucket's key
+            // and pull in nearly every tournament with round data.
+            const leaderTournaments = ranked.filter(t => baseId(t.leader_id) === key || (t.tournament_rounds ?? []).some(r => r.leader_id && baseId(r.leader_id) === key))
             return (
               <div key={key} style={{ background: 'rgba(140,176,208,0.05)', border: '1px solid rgba(140,176,208,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(140,176,208,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ position: 'relative', height: isMobile ? 100 : 140 }}>
