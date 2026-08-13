@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { getCardImageUrl } from '../lib/optcgapi'
+import { getCardImageUrl, getCard, searchLeaders } from '../lib/optcgapi'
 import { captureAndShare } from '../lib/shareImage'
 import { useWindowSize } from '../hooks/useWindowSize'
 import TournamentModal from '../components/TournamentModal'
@@ -90,20 +90,91 @@ function StatStrip({ items, isMobile }) {
   )
 }
 
+// Small debounced leader search, used inline in LegacyCountModal — a trimmed
+// copy of LogResult's LeaderSearchInput (that one's local to LogResult.jsx,
+// not shared) since all that's needed here is "pick a card, get its id back".
+function MiniLeaderSearch({ onSelect }) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [searching, setSearching] = useState(false)
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const debounceRef = useRef(null)
+
+  useEffect(() => {
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function handleChange(e) {
+    const val = e.target.value
+    setQuery(val); setOpen(true)
+    clearTimeout(debounceRef.current)
+    if (val.length < 2) { setResults([]); return }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true)
+      try { setResults((await searchLeaders(val)).slice(0, 30)) }
+      catch { setResults([]) }
+      setSearching(false)
+    }, 350)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <input
+        type="text"
+        placeholder="Search leader..."
+        value={query}
+        onChange={handleChange}
+        onFocus={() => query.length >= 2 && setOpen(true)}
+        style={{ width: '100%', background: colors.surface3, border: `1px solid ${colors.lineStrong}`, borderRadius: radius.sm, padding: '9px 12px', color: colors.text, fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+      />
+      {open && query.length >= 2 && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: '#161b27', border: `1px solid ${colors.lineStrong}`, borderRadius: radius.sm, marginTop: 4, boxShadow: shadow.lg, maxHeight: 220, overflowY: 'auto' }}>
+          {searching ? <div style={{ padding: '10px 12px', fontSize: 12, color: colors.muted }}>Searching…</div>
+            : results.length === 0 ? <div style={{ padding: '10px 12px', fontSize: 12, color: colors.faint }}>No leaders found</div>
+            : results.map(c => (
+              <div key={c.card_image_id ?? c.card_set_id} onClick={() => { onSelect(c); setQuery(''); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${colors.line}` }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(140,176,208,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <img src={getCardImageUrl(c)} alt={c.card_name} style={{ width: 26, height: 36, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: colors.text }}>{c.card_name}</div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Owner-only: self-report a count of past Locals/Pre-Release wins that
 // happened before they started logging on PirateTracker (or just never got
 // logged individually). Purely additive to the tally — see
-// db/profile_legacy_wins.sql and db/legacy_results.sql.
-function LegacyCountModal({ title, description, initialValue, onClose, onSave }) {
+// db/profile_legacy_wins.sql and db/legacy_results.sql. Optionally paired
+// with a representative leader card (db/legacy_leader.sql) shown as that
+// tally's Trophy Wall badge art, since there's no per-event leader to draw on.
+function LegacyCountModal({ title, description, initialValue, initialLeaderId, onClose, onSave }) {
   const [value, setValue] = useState(String(initialValue ?? 0))
+  const [leader, setLeader] = useState(null)
+  const [leaderLoading, setLeaderLoading] = useState(!!initialLeaderId)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!initialLeaderId) return
+    let cancelled = false
+    getCard(initialLeaderId)
+      .then(c => { if (!cancelled && c) setLeader(c) })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLeaderLoading(false) })
+    return () => { cancelled = true }
+  }, [initialLeaderId])
 
   async function handleSave() {
     const n = parseInt(value, 10)
     if (isNaN(n) || n < 0) return setError('Enter a whole number of 0 or more')
     setSaving(true)
-    const err = await onSave(n)
+    const leaderId = leader ? (leader.card_image_id ?? leader.card_set_id ?? null) : null
+    const err = await onSave(n, leaderId)
     setSaving(false)
     if (err) return setError('Failed to save. Please try again.')
     onClose()
@@ -124,6 +195,22 @@ function LegacyCountModal({ title, description, initialValue, onClose, onSave })
           onKeyDown={e => { if (e.key === 'Escape') onClose(); if (e.key === 'Enter') handleSave() }}
           style={{ width: '100%', background: colors.surface3, border: `1px solid ${colors.lineStrong}`, borderRadius: radius.sm, padding: '10px 13px', color: colors.text, fontSize: 16, fontFamily: font.mono, outline: 'none', boxSizing: 'border-box' }}
         />
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: colors.muted, marginBottom: 6 }}>
+            Representative Leader <span style={{ color: colors.faint, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional — shown as this square's art)</span>
+          </div>
+          {leaderLoading ? (
+            <div style={{ fontSize: 12, color: colors.faint, padding: '9px 0' }}>Loading current leader…</div>
+          ) : leader ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: colors.surface3, border: `1px solid ${colors.lineStrong}`, borderRadius: radius.sm, padding: '8px 12px' }}>
+              <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leader.card_name}</div>
+              <button onClick={() => setLeader(null)} style={{ background: 'none', border: 'none', color: colors.muted, cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+            </div>
+          ) : (
+            <MiniLeaderSearch onSelect={setLeader} />
+          )}
+        </div>
         {error && <div style={{ fontSize: 12, color: colors.crimson, marginTop: 10 }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
           <button onClick={onClose} style={{ ...btnGhost, flex: 1 }}>Cancel</button>
@@ -344,23 +431,39 @@ function TrophyBadge({ t, index, onOpen }) {
 }
 
 // Matching ghost badge for a tally of self-reported wins with no individual
-// tournament row behind them.
-function GhostBadge({ label, icon, onClick, isOwner }) {
+// tournament row behind them — still gets leader art if a representative
+// leader was set (db/legacy_leader.sql), same zoomed treatment as TrophyBadge,
+// just kept dashed so it still reads as "one square standing in for several".
+function GhostBadge({ label, icon, leaderId, onClick, isOwner }) {
+  const artUrl = leaderId ? getCardImageUrl(leaderId) : null
   return (
     <div
       onClick={onClick}
       title="Self-reported wins from before PirateTracker"
       style={{
-        height: 108,
+        position: 'relative', overflow: 'hidden', height: 108,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
         padding: '12px 8px 10px', textAlign: 'center', cursor: isOwner ? 'pointer' : 'default',
-        background: 'rgba(140,176,208,0.03)',
-        border: `1px dashed ${colors.line}`,
+        background: artUrl ? colors.deep : 'rgba(140,176,208,0.03)',
+        border: `1px dashed ${colors.lineStrong}`,
         borderRadius: radius.md,
       }}
     >
-      <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
-      <span style={{ fontSize: 10.5, fontWeight: 700, color: colors.textSoft }}>{label}</span>
+      {artUrl && (
+        <div
+          style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `url(${artUrl})`,
+            backgroundSize: 'cover', backgroundPosition: 'top center',
+            transform: 'scale(1.7)', transformOrigin: 'top center',
+          }}
+        />
+      )}
+      {artUrl && (
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(6,16,27,0.1) 0%, rgba(6,16,27,0.4) 45%, rgba(6,16,27,0.94) 100%)` }} />
+      )}
+      <span style={{ position: 'relative', fontSize: 20, lineHeight: 1 }}>{icon}</span>
+      <span style={{ position: 'relative', fontSize: 10.5, fontWeight: 700, color: artUrl ? '#fff' : colors.textSoft, textShadow: artUrl ? '0 1px 3px rgba(0,0,0,0.6)' : undefined }}>{label}</span>
     </div>
   )
 }
@@ -428,10 +531,11 @@ export default function TrophyCabinet({ session }) {
     } catch { /* clipboard unavailable */ }
   }
 
-  async function saveLegacyCount(tier, n) {
-    const column = tier === 'prerelease' ? 'legacy_prerelease_wins' : 'legacy_locals_wins'
-    const { error } = await supabase.from('profiles').update({ [column]: n }).eq('id', session.user.id)
-    if (!error) setProfile(prev => ({ ...prev, [column]: n }))
+  async function saveLegacyCount(tier, n, leaderId) {
+    const countCol = tier === 'prerelease' ? 'legacy_prerelease_wins' : 'legacy_locals_wins'
+    const leaderCol = tier === 'prerelease' ? 'legacy_prerelease_leader_id' : 'legacy_locals_leader_id'
+    const { error } = await supabase.from('profiles').update({ [countCol]: n, [leaderCol]: leaderId ?? null }).eq('id', session.user.id)
+    if (!error) setProfile(prev => ({ ...prev, [countCol]: n, [leaderCol]: leaderId ?? null }))
     return error
   }
 
@@ -591,10 +695,10 @@ export default function TrophyCabinet({ session }) {
               <TrophyBadge key={t.id} t={t} index={i} onOpen={() => setSelectedTournament(t)} />
             ))}
             {legacyLocalsWins > 0 && (
-              <GhostBadge icon="🏅" label={`+${legacyLocalsWins} before tracking`} isOwner={isOwner} onClick={() => isOwner && setEditingLegacyTier('locals')} />
+              <GhostBadge icon="🏅" label={`+${legacyLocalsWins} before tracking`} leaderId={profile.legacy_locals_leader_id} isOwner={isOwner} onClick={() => isOwner && setEditingLegacyTier('locals')} />
             )}
             {legacyPrereleaseWins > 0 && (
-              <GhostBadge icon="🎁" label={`+${legacyPrereleaseWins} before tracking`} isOwner={isOwner} onClick={() => isOwner && setEditingLegacyTier('prerelease')} />
+              <GhostBadge icon="🎁" label={`+${legacyPrereleaseWins} before tracking`} leaderId={profile.legacy_prerelease_leader_id} isOwner={isOwner} onClick={() => isOwner && setEditingLegacyTier('prerelease')} />
             )}
           </div>
         )}
@@ -640,8 +744,9 @@ export default function TrophyCabinet({ session }) {
           title={editingLegacyTier === 'prerelease' ? 'Pre-Release Wins Before PirateTracker' : 'Locals Wins Before PirateTracker'}
           description={`Add wins from before you started tracking (or ones you never logged individually). This adds straight onto your ${editingLegacyTier === 'prerelease' ? 'Pre-Release' : 'Locals'} Wins tally — it doesn't create tournament entries or affect your win rate or event count.`}
           initialValue={editingLegacyTier === 'prerelease' ? legacyPrereleaseWins : legacyLocalsWins}
+          initialLeaderId={editingLegacyTier === 'prerelease' ? profile.legacy_prerelease_leader_id : profile.legacy_locals_leader_id}
           onClose={() => setEditingLegacyTier(null)}
-          onSave={n => saveLegacyCount(editingLegacyTier, n)}
+          onSave={(n, leaderId) => saveLegacyCount(editingLegacyTier, n, leaderId)}
         />
       )}
 
