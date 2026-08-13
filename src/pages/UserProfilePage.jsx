@@ -147,13 +147,19 @@ export default function UserProfilePage({ session }) {
   // vs "Shanks (001)") are tracked as one leader, not two — `leaderId` keeps
   // one representative full id per group for rendering the card art.
   const leaderCounts = ranked.reduce((acc, t) => {
-    const leadersHere = new Map([[baseId(t.leader_id), { name: t.leader_name, color: t.leader_color, leaderId: t.leader_id }]])
+    // A blank self-reported entry (e.g. a Trophy Wall square someone hasn't
+    // set art for yet) has no leader_id at all — skip it here rather than
+    // bucketing it under a nameless "leader", and than crashing downstream
+    // when info.name is null (cleanName(null) is falsy too, so `|| info.name`
+    // used to fall through to null instead of a real string).
+    const leadersHere = new Map()
+    if (t.leader_id) leadersHere.set(baseId(t.leader_id), { name: t.leader_name, color: t.leader_color, leaderId: t.leader_id })
     for (const r of (t.tournament_rounds ?? [])) {
       const key = r.leader_id ? baseId(r.leader_id) : null
       if (key && !leadersHere.has(key)) leadersHere.set(key, { name: r.leader_name, color: r.leader_color, leaderId: r.leader_id })
     }
     for (const [key, info] of leadersHere) {
-      if (!acc[key]) acc[key] = { name: cleanName(info.name) || info.name, color: info.color, leaderId: info.leaderId, count: 0 }
+      if (!acc[key]) acc[key] = { name: cleanName(info.name) || info.name || 'Unknown Leader', color: info.color, leaderId: info.leaderId, count: 0 }
       acc[key].count++
     }
     return acc

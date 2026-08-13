@@ -147,13 +147,21 @@ export default function Dashboard({ session }) {
         const key = baseId(leaderId)
         if (!acc[key]) {
           const primaryColor = (leaderColor ?? '').split(/[\s/]+/).map(c => COLORS[c.trim()]).find(Boolean) ?? FALLBACK
-          const displayName = cleanName(leaderName) || leaderName
+          // leaderName can be null for a blank self-reported entry (an
+          // unfilled Trophy Wall square with no card set yet) — fall back to
+          // a label instead of leaving fullName null, which crashes every
+          // .replace()/.fullName read downstream in this chart.
+          const displayName = cleanName(leaderName) || leaderName || 'Unknown Leader'
           acc[key] = { name: displayName, fullName: displayName, leaderColor, color: primaryColor, count: 0, wins: 0, losses: 0 }
         }
         return key
       }
 
       const rounds = t.tournament_rounds ?? []
+      // A blank self-reported entry (no leader picked yet, no rounds) has
+      // nothing to attribute — skip it rather than piling it into a stray
+      // "Unknown Leader" slice.
+      if (!t.leader_id && rounds.length === 0) return acc
       const mainKey = ensureLeader(t.leader_id, t.leader_name, t.leader_color)
       const leadersInTournament = new Set([mainKey])
 
