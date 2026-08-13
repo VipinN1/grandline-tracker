@@ -68,7 +68,18 @@
       "Bash(node --input-type=module -e ' *)",
       "Skill(run)",
       "Bash(npx eas-cli *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(find *)",
+      "Bash(git cherry-pick *)",
+      "Bash(xargs -I{} echo {})",
+      "Bash(timeout 8 npx vite --port 5183)",
+      "Read(//tmp/**)",
+      "Bash(lsof -ti:5183)",
+      "Bash(xargs kill -9)",
+      "Bash(rm -f .env.local .env.local.qa)",
+      "Bash(rm -f src/pages/_TrophyPreview.jsx)",
+      "Bash(grep -v \"LogResult.jsx:47\\\\|LogResult.jsx:350\\\\|no-useless-escape\\\\|Cannot access variable\\\\|react-hooks/immutability\\\\|missing dependency\\\\|react-hooks/exhaustive-deps\\\\|^$\\\\|Unnecessary escape\\\\|loadStoresAndSeries\\\\|350 |\\\\|352 |\\\\|353 |\\\\|354 |\\\\|368 |\\\\|369 |\\\\|370 |\\\\|371 |\\\\|372 |\")",
+      "Bash(git pull *)"
     ]
   }
 }

@@ -35,6 +35,18 @@ function placementLabel(n) {
 // dot-by-dot; a tooltip follows the active dot (web parity: date,
 // "Nth of N players", tournament name — plus location on mobile).
 const TOOLTIP_W = 200
+const TARGET_Y_TICKS = 4
+
+// Round a raw step up to a "nice" 1/2/5×10^n value so the axis always shows
+// a handful of readable ticks, whether the max placement is 8 (a local) or
+// 300+ (a big tournament) — mirrors recharts' automatic tick spacing on web.
+function niceStep(rough) {
+  if (!Number.isFinite(rough) || rough <= 0) return 1
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)))
+  const norm = rough / mag
+  const niceNorm = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10
+  return niceNorm * mag
+}
 
 export function PlacementTrendChart({ data, height = 190 }) {
   const [width, setWidth] = useState(0)
@@ -45,9 +57,10 @@ export function PlacementTrendChart({ data, height = 190 }) {
   const PAD_T = 12
   const PAD_B = 26
 
-  const maxP = Math.max(4, Math.ceil(Math.max(...data.map(d => d.placement)) / 4) * 4)
+  const maxP = Math.max(4, Math.max(...data.map(d => d.placement)))
+  const step = niceStep(maxP / TARGET_Y_TICKS)
   const yTicks = []
-  for (let v = 4; v <= maxP; v += 4) yTicks.push(v)
+  for (let v = step; v <= maxP; v += step) yTicks.push(v)
 
   const plotW = width - PAD_L - PAD_R
   const plotH = height - PAD_T - PAD_B
