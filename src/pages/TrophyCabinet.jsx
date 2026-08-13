@@ -256,6 +256,27 @@ function TrophyCard({ t, index, onOpen }) {
   )
 }
 
+// Ghost placeholder matching TrophyCard's shape, standing in for a tally of
+// self-reported wins that don't have an individual tournament row.
+function LegacyGhostCard({ label, icon, onClick, isOwner }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        cursor: isOwner ? 'pointer' : 'default',
+        background: 'rgba(140,176,208,0.03)',
+        border: `1px dashed ${colors.line}`,
+        borderRadius: radius.lg,
+        padding: 14,
+        display: 'flex', gap: 12, alignItems: 'center',
+      }}
+    >
+      <div style={{ width: 52, height: 72, borderRadius: 6, flexShrink: 0, background: 'rgba(140,176,208,0.05)', border: `1px solid ${colors.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{icon}</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: colors.textSoft }}>{label}</div>
+    </div>
+  )
+}
+
 export default function TrophyCabinet({ session }) {
   const { username } = useParams()
   const navigate = useNavigate()
@@ -425,7 +446,7 @@ export default function TrophyCabinet({ session }) {
       {/* The big case */}
       <div style={{ marginBottom: 26 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.gold }}>🏆 The Case — Regionals & Majors</div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.gold }}>🏆 The Case — Regional Performance</div>
           {isOwner && <button onClick={() => setEditingLegacyTrophy(true)} style={{ ...btnGhost, fontSize: 12, padding: '6px 12px' }}>+ Add Past Result</button>}
         </div>
         {bigResults.length === 0 ? (
@@ -456,41 +477,30 @@ export default function TrophyCabinet({ session }) {
         )}
       </div>
 
-      {/* Pre-release wall — its own category, separate from Locals */}
+      {/* Pre-release wall — its own category, separate from Locals, styled to
+          match the Regionals/Majors case since these are all 1st-place wins. */}
       <div style={{ marginBottom: 26 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.orange }}>🎁 Pre-Release Wins ({totalPrereleaseWins} total)</div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.orange }}>🎁 The Case — Pre-Release Trophies ({totalPrereleaseWins} total)</div>
           <div style={{ fontSize: 11, color: colors.faint }}>{prereleaseWinsList.length} logged of {prereleaseEvents.length} events{legacyPrereleaseWins > 0 ? ` · ${legacyPrereleaseWins} before tracking` : ''}</div>
         </div>
         {prereleaseWinsList.length === 0 && legacyPrereleaseWins === 0 ? (
           <div style={{ fontSize: 13, color: colors.faint, padding: '4px 0' }}>
-            No pre-release wins logged yet — first place at a pre-release adds a badge here.
+            No pre-release wins logged yet — first place at a pre-release adds a trophy here.
             {isOwner && <>{' '}Had wins before joining PirateTracker? <button onClick={() => setEditingLegacyTier('prerelease')} style={{ background: 'none', border: 'none', color: colors.oceanBright, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, padding: 0 }}>Add them here</button>.</>}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
             {prereleaseWinsList.map((t, i) => (
-              <div
-                key={t.id}
-                className="gl-trophy-card"
-                onClick={() => setSelectedTournament(t)}
-                title={`${t.name} · ${t.date}`}
-                style={{ animationDelay: `${Math.min(i, 16) * 40}ms`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(224,138,60,0.08)', border: '1px solid rgba(224,138,60,0.3)', borderRadius: radius.pill, padding: '6px 12px 6px 8px' }}
-              >
-                <span style={{ fontSize: 14 }}>🎁</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: colors.text, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
-              </div>
+              <TrophyCard key={t.id} t={t} index={i} onOpen={() => setSelectedTournament(t)} />
             ))}
             {legacyPrereleaseWins > 0 && (
-              <div
-                className="gl-trophy-card"
+              <LegacyGhostCard
+                icon="🎁"
+                label={`+${legacyPrereleaseWins} win${legacyPrereleaseWins === 1 ? '' : 's'} before tracking`}
+                isOwner={isOwner}
                 onClick={() => isOwner && setEditingLegacyTier('prerelease')}
-                title="Self-reported wins from before PirateTracker"
-                style={{ animationDelay: `${Math.min(prereleaseWinsList.length, 16) * 40}ms`, cursor: isOwner ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(224,138,60,0.04)', border: `1px dashed rgba(224,138,60,0.3)`, borderRadius: radius.pill, padding: '6px 12px 6px 8px' }}
-              >
-                <span style={{ fontSize: 14 }}>🎁</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: colors.textSoft }}>+{legacyPrereleaseWins} before tracking</span>
-              </div>
+              />
             )}
           </div>
         )}

@@ -189,8 +189,9 @@ input[type=number] { -moz-appearance: textfield; }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes trophyShine {
-  0%   { transform: translateX(-120%) rotate(20deg); }
-  100% { transform: translateX(220%) rotate(20deg); }
+  0%, 76%  { transform: translateX(-160%) rotate(20deg); }
+  94%      { transform: translateX(220%) rotate(20deg); }
+  100%     { transform: translateX(220%) rotate(20deg); }
 }
 @keyframes trophyGlow {
   0%, 100% { box-shadow: 0 0 0 1px rgba(200,162,74,0.3), 0 0 18px rgba(200,162,74,0.10); }
@@ -200,11 +201,19 @@ input[type=number] { -moz-appearance: textfield; }
 /* Trophy Cabinet — each card pops in on a stagger via inline animation-delay. */
 .gl-trophy-card { animation: trophyPop 0.5s var(--ease) backwards; }
 .gl-trophy-shine {
-  position: absolute; top: 0; left: 0; width: 40%; height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.16), transparent);
-  animation: trophyShine 2.6s ease-in-out infinite;
-  animation-delay: 1s;
+  position: absolute; top: 0; left: 0; width: 26%; height: 100%;
+  background: linear-gradient(105deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255,244,214,0.06) 45%,
+    rgba(255,248,224,0.6) 50%,
+    rgba(255,244,214,0.06) 55%,
+    transparent 62%,
+    transparent 100%);
+  animation: trophyShine 5.5s cubic-bezier(0.33, 1, 0.4, 1) infinite;
+  animation-delay: 0.5s;
   pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 /* Page content gets a gentle entrance.
