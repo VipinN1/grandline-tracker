@@ -203,8 +203,9 @@ input[type=number] { -moz-appearance: textfield; }
   50%       { box-shadow: 0 0 0 1px rgba(200,162,74,0.45), 0 0 30px rgba(200,162,74,0.22); }
 }
 
-/* Trophy Cabinet — each card pops in on a stagger via inline animation-delay. */
+/* Trophy Cabinet — each card/badge pops in on a stagger via inline animation-delay. */
 .gl-trophy-card { animation: trophyPop 0.5s var(--ease) backwards; }
+.gl-badge-pop { animation: trophyPop 0.4s var(--ease) backwards; }
 .gl-trophy-shine {
   /* top+bottom (not height:100%) so the box's height is pinned exactly to
      the card regardless of the card's own height being auto/content-driven —

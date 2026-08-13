@@ -6,7 +6,7 @@ import { captureAndShare } from '../lib/shareImage'
 import { useWindowSize } from '../hooks/useWindowSize'
 import TournamentModal from '../components/TournamentModal'
 import TrophyCabinetShareCard from '../components/TrophyCabinetShareCard'
-import { colors, radius, shadow, font, card, btnPrimary, btnGhost } from '../theme'
+import { colors, radius, shadow, font, card, btnPrimary, btnGhost, transition } from '../theme'
 
 const TIER_META = {
   major:      { label: 'Major',       icon: '🏆', color: colors.gold, rank: 0 },
@@ -53,18 +53,39 @@ function useCountUp(target, duration = 900) {
   return value
 }
 
-function StatTile({ label, value, accent, onEdit }) {
+// One joined "manifest strip" instead of five separate stat cards — reads as
+// a single panel divided into columns rather than a row of boxes.
+function StatStrip({ items, isMobile }) {
+  const cols = isMobile ? 2 : items.length
+  const lastRowStart = Math.floor((items.length - 1) / cols) * cols
   return (
-    <div style={{ ...card, padding: '16px 18px', textAlign: 'center', position: 'relative' }}>
-      {onEdit && (
-        <button
-          onClick={onEdit}
-          title="Set wins from before PirateTracker"
-          style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 6, border: `1px solid ${colors.line}`, background: 'rgba(140,176,208,0.06)', color: colors.muted, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >✎</button>
-      )}
-      <div style={{ fontSize: 32, fontWeight: 700, color: accent ?? colors.text, fontFamily: font.mono, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.7px', color: colors.muted, marginTop: 8 }}>{label}</div>
+    <div style={{ ...card, display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, marginBottom: 22, overflow: 'hidden' }}>
+      {items.map((it, i) => {
+        const isLastCol = (i + 1) % cols === 0 || i === items.length - 1
+        const isLastRow = i >= lastRowStart
+        const spanRemainder = i === items.length - 1 ? (cols - (items.length % cols)) % cols : 0
+        return (
+          <div
+            key={it.label}
+            style={{
+              position: 'relative', textAlign: 'center', padding: '16px 12px',
+              gridColumn: spanRemainder ? `span ${spanRemainder + 1}` : undefined,
+              borderRight: isLastCol ? 'none' : `1px solid ${colors.line}`,
+              borderBottom: isLastRow ? 'none' : `1px solid ${colors.line}`,
+            }}
+          >
+            {it.onEdit && (
+              <button
+                onClick={it.onEdit}
+                title="Set wins from before PirateTracker"
+                style={{ position: 'absolute', top: 8, right: 8, width: 20, height: 20, borderRadius: 6, border: `1px solid ${colors.line}`, background: 'rgba(140,176,208,0.06)', color: colors.muted, fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >✎</button>
+            )}
+            <div style={{ fontSize: 26, fontWeight: 700, color: it.accent ?? colors.text, fontFamily: font.mono, letterSpacing: '-0.5px', lineHeight: 1 }}>{it.value}</div>
+            <div style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: colors.muted, marginTop: 8 }}>{it.label}</div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -257,8 +278,8 @@ function TrophyCard({ t, index, onOpen }) {
 }
 
 // Empty state for a case with nothing in it yet — matches "The Case —
-// Regional Performance"'s look so all three sections read as one system.
-function EmptyCase({ message, isOwner, onAddPastWins, addLabel }) {
+// Regional Performance"'s look so both sections read as one system.
+function EmptyCase({ message, isOwner, actions = [] }) {
   return (
     <div style={{ ...card, padding: 30, textAlign: 'center', color: colors.faint }}>
       <div style={{ fontSize: 28, marginBottom: 10 }}>🗝️</div>
@@ -266,30 +287,60 @@ function EmptyCase({ message, isOwner, onAddPastWins, addLabel }) {
       {isOwner && (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 14, flexWrap: 'wrap' }}>
           <Link to="/log" style={{ ...btnGhost, display: 'inline-block', textDecoration: 'none' }}>Log an Event</Link>
-          <button onClick={onAddPastWins} style={{ ...btnGhost, textDecoration: 'none' }}>{addLabel}</button>
+          {actions.map(a => (
+            <button key={a.label} onClick={a.onClick} style={{ ...btnGhost, textDecoration: 'none' }}>{a.label}</button>
+          ))}
         </div>
       )}
     </div>
   )
 }
 
-// Ghost placeholder matching TrophyCard's shape, standing in for a tally of
-// self-reported wins that don't have an individual tournament row.
-function LegacyGhostCard({ label, icon, onClick, isOwner }) {
+// Compact badge for the Trophy Wall — a single icon + name instead of a full
+// TrophyCard, since a Locals/Pre-Release win history can run into the dozens.
+function TrophyBadge({ t, index, onOpen }) {
+  const meta = TIER_META[t.tier] ?? TIER_META.locals
+  return (
+    <div
+      className="gl-badge-pop"
+      onClick={() => onOpen(t)}
+      title={`${t.name} · ${t.date}`}
+      style={{
+        animationDelay: `${Math.min(index, 24) * 25}ms`,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+        padding: '12px 8px 10px', textAlign: 'center', cursor: 'pointer',
+        background: `linear-gradient(180deg, ${meta.color}1c, ${meta.color}0a)`,
+        border: `1px solid ${meta.color}40`,
+        borderRadius: radius.md,
+        transition: transition.fast,
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = meta.color + '80' }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = meta.color + '40' }}
+    >
+      <span style={{ fontSize: 20, lineHeight: 1 }}>{meta.icon}</span>
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: colors.text, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+      <span style={{ fontSize: 9, color: colors.faint }}>{t.date}</span>
+    </div>
+  )
+}
+
+// Matching ghost badge for a tally of self-reported wins with no individual
+// tournament row behind them.
+function GhostBadge({ label, icon, onClick, isOwner }) {
   return (
     <div
       onClick={onClick}
+      title="Self-reported wins from before PirateTracker"
       style={{
-        cursor: isOwner ? 'pointer' : 'default',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+        padding: '12px 8px 10px', textAlign: 'center', cursor: isOwner ? 'pointer' : 'default',
         background: 'rgba(140,176,208,0.03)',
         border: `1px dashed ${colors.line}`,
-        borderRadius: radius.lg,
-        padding: 14,
-        display: 'flex', gap: 12, alignItems: 'center',
+        borderRadius: radius.md,
       }}
     >
-      <div style={{ width: 52, height: 72, borderRadius: 6, flexShrink: 0, background: 'rgba(140,176,208,0.05)', border: `1px solid ${colors.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{icon}</div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: colors.textSoft }}>{label}</div>
+      <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: colors.textSoft }}>{label}</span>
     </div>
   )
 }
@@ -406,6 +457,12 @@ export default function TrophyCabinet({ session }) {
   const totalPrereleaseWins = prereleaseWinsList.length + legacyPrereleaseWins
   const localsWinCount = useCountUp(totalLocalsWins)
   const prereleaseWinCount = useCountUp(totalPrereleaseWins)
+  // Locals + Pre-Release wins share one "Trophy Wall" of compact badges,
+  // interleaved by date rather than shown as two separate card grids.
+  const wallItems = [...localsWinsList, ...prereleaseWinsList].sort((a, b) => new Date(b.date) - new Date(a.date))
+  const wallLoggedCount = localsWinsList.length + prereleaseWinsList.length
+  const wallEventCount = localsEvents.length + prereleaseEvents.length
+  const wallLegacyCount = legacyLocalsWins + legacyPrereleaseWins
 
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}><div style={{ fontSize: 13, color: colors.muted }}>Charting the case…</div></div>
@@ -451,32 +508,30 @@ export default function TrophyCabinet({ session }) {
         )}
       </div>
 
-      {/* Stat row */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: 10, marginBottom: 22 }}>
-        <StatTile label="Locals Wins" value={`🏅 ${localsWinCount}`} accent={colors.emerald} onEdit={isOwner ? () => setEditingLegacyTier('locals') : undefined} />
-        <StatTile label="Pre-Release Wins" value={`🎁 ${prereleaseWinCount}`} accent={colors.orange} onEdit={isOwner ? () => setEditingLegacyTier('prerelease') : undefined} />
-        <StatTile label="Podium Finishes" value={podiumBig} accent={colors.gold} />
-        <StatTile label="Best Finish" value={bestFinish ? placementLabel(bestFinish) : '—'} />
-        <StatTile label="Total Events" value={ranked.length} />
-      </div>
+      {/* Manifest strip — one joined panel instead of five stat cards */}
+      <StatStrip
+        isMobile={isMobile}
+        items={[
+          { label: 'Locals Wins', value: `🏅 ${localsWinCount}`, accent: colors.emerald, onEdit: isOwner ? () => setEditingLegacyTier('locals') : undefined },
+          { label: 'Pre-Release Wins', value: `🎁 ${prereleaseWinCount}`, accent: colors.orange, onEdit: isOwner ? () => setEditingLegacyTier('prerelease') : undefined },
+          { label: 'Podium Finishes', value: podiumBig, accent: colors.gold },
+          { label: 'Best Finish', value: bestFinish ? placementLabel(bestFinish) : '—' },
+          { label: 'Total Events', value: ranked.length },
+        ]}
+      />
 
-      {/* The big case */}
+      {/* Featured — the rare stuff (Regional/Major) still earns a full plaque */}
       <div style={{ marginBottom: 26 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.gold }}>🏆 The Case — Regional Performance</div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.gold }}>★ Featured — Regional Performance</div>
           {isOwner && <button onClick={() => setEditingLegacyTrophy(true)} style={{ ...btnGhost, fontSize: 12, padding: '6px 12px' }}>+ Add Past Result</button>}
         </div>
         {bigResults.length === 0 ? (
-          <div style={{ ...card, padding: 30, textAlign: 'center', color: colors.faint }}>
-            <div style={{ fontSize: 28, marginBottom: 10 }}>🗝️</div>
-            <div style={{ fontSize: 13 }}>No Regional or Major podiums logged yet.</div>
-            {isOwner && (
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 14, flexWrap: 'wrap' }}>
-                <Link to="/log" style={{ ...btnGhost, display: 'inline-block', textDecoration: 'none' }}>Log an Event</Link>
-                <button onClick={() => setEditingLegacyTrophy(true)} style={{ ...btnGhost, textDecoration: 'none' }}>Add a Past Result</button>
-              </div>
-            )}
-          </div>
+          <EmptyCase
+            message="No Regional or Major podiums logged yet."
+            isOwner={isOwner}
+            actions={[{ label: 'Add a Past Result', onClick: () => setEditingLegacyTrophy(true) }]}
+          />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
             {bigResults.map((t, i) => (
@@ -494,62 +549,32 @@ export default function TrophyCabinet({ session }) {
         )}
       </div>
 
-      {/* Pre-release wall — its own category, separate from Locals, styled to
-          match the Regionals/Majors case since these are all 1st-place wins. */}
-      <div style={{ marginBottom: 26 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.orange }}>🎁 The Case — Pre-Release Trophies ({totalPrereleaseWins} total)</div>
-          <div style={{ fontSize: 11, color: colors.faint }}>{prereleaseWinsList.length} logged of {prereleaseEvents.length} events{legacyPrereleaseWins > 0 ? ` · ${legacyPrereleaseWins} before tracking` : ''}</div>
-        </div>
-        {prereleaseWinsList.length === 0 && legacyPrereleaseWins === 0 ? (
-          <EmptyCase
-            message="No pre-release wins logged yet."
-            isOwner={isOwner}
-            addLabel="Add Past Wins"
-            onAddPastWins={() => setEditingLegacyTier('prerelease')}
-          />
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
-            {prereleaseWinsList.map((t, i) => (
-              <TrophyCard key={t.id} t={t} index={i} onOpen={() => setSelectedTournament(t)} />
-            ))}
-            {legacyPrereleaseWins > 0 && (
-              <LegacyGhostCard
-                icon="🎁"
-                label={`+${legacyPrereleaseWins} win${legacyPrereleaseWins === 1 ? '' : 's'} before tracking`}
-                isOwner={isOwner}
-                onClick={() => isOwner && setEditingLegacyTier('prerelease')}
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Locals wall */}
+      {/* Trophy Wall — every Locals/Pre-Release win as one compact badge each,
+          instead of two more full-card grids. */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.emerald }}>🏅 Locals Wins ({totalLocalsWins} total)</div>
-          <div style={{ fontSize: 11, color: colors.faint }}>{localsWinsList.length} logged of {localsEvents.length} events{legacyLocalsWins > 0 ? ` · ${legacyLocalsWins} before tracking` : ''}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.text }}>🏆 Trophy Wall — {totalLocalsWins + totalPrereleaseWins} wins</div>
+          <div style={{ fontSize: 11, color: colors.faint }}>{wallLoggedCount} logged of {wallEventCount} events{wallLegacyCount > 0 ? ` · ${wallLegacyCount} before tracking` : ''}</div>
         </div>
-        {localsWinsList.length === 0 && legacyLocalsWins === 0 ? (
+        {wallItems.length === 0 && wallLegacyCount === 0 ? (
           <EmptyCase
-            message="No locals wins logged yet."
+            message="No Locals or Pre-Release wins logged yet."
             isOwner={isOwner}
-            addLabel="Add Past Wins"
-            onAddPastWins={() => setEditingLegacyTier('locals')}
+            actions={[
+              { label: 'Add Locals Wins', onClick: () => setEditingLegacyTier('locals') },
+              { label: 'Add Pre-Release Wins', onClick: () => setEditingLegacyTier('prerelease') },
+            ]}
           />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
-            {localsWinsList.map((t, i) => (
-              <TrophyCard key={t.id} t={t} index={i} onOpen={() => setSelectedTournament(t)} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
+            {wallItems.map((t, i) => (
+              <TrophyBadge key={t.id} t={t} index={i} onOpen={() => setSelectedTournament(t)} />
             ))}
             {legacyLocalsWins > 0 && (
-              <LegacyGhostCard
-                icon="🏅"
-                label={`+${legacyLocalsWins} win${legacyLocalsWins === 1 ? '' : 's'} before tracking`}
-                isOwner={isOwner}
-                onClick={() => isOwner && setEditingLegacyTier('locals')}
-              />
+              <GhostBadge icon="🏅" label={`+${legacyLocalsWins} before tracking`} isOwner={isOwner} onClick={() => isOwner && setEditingLegacyTier('locals')} />
+            )}
+            {legacyPrereleaseWins > 0 && (
+              <GhostBadge icon="🎁" label={`+${legacyPrereleaseWins} before tracking`} isOwner={isOwner} onClick={() => isOwner && setEditingLegacyTier('prerelease')} />
             )}
           </div>
         )}
