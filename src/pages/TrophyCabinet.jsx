@@ -753,15 +753,25 @@ export default function TrophyCabinet({ session }) {
       {/* Header */}
       <div style={{ ...card, padding: isMobile ? 18 : 26, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', gap: 16, flexWrap: 'wrap' }}>
-          <div style={{ width: 60, height: 60, borderRadius: '50%', background: `linear-gradient(135deg, ${colors.oceanDeep}, ${colors.ocean})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, fontWeight: 700, color: colors.parchment, flexShrink: 0, overflow: 'hidden', border: `2px solid ${colors.goldLine}` }}>
-            {profile.avatar_url ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+          {/* Avatar + name bundled into one flex-basis:100% item on mobile —
+              `flex: 1` alone has flex-basis:0, so the wrap algorithm judges
+              "does this line fit?" using the *buttons'* content width only,
+              ignoring how much text the name/meta block actually needs; that
+              let the buttons win a spot on the same line as the name and
+              starve it down to a sliver (one word per line). Forcing this
+              bundle to claim the full row on mobile makes the buttons wrap
+              to their own line for real, instead of fighting over space. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: isMobile ? '1 1 100%' : '1 1 auto', minWidth: 0 }}>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: `linear-gradient(135deg, ${colors.oceanDeep}, ${colors.ocean})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, fontWeight: 700, color: colors.parchment, flexShrink: 0, overflow: 'hidden', border: `2px solid ${colors.goldLine}` }}>
+              {profile.avatar_url ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.6px', color: colors.gold, marginBottom: 2 }}>Trophy Cabinet</div>
+              <div style={{ fontSize: isMobile ? 19 : 22, fontWeight: 700, color: colors.text, fontFamily: font.display }}>{profile.username}</div>
+              <div style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{ranked.length} events logged{memberSince ? ` · Since ${memberSince}` : ''}</div>
+            </div>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.6px', color: colors.gold, marginBottom: 2 }}>Trophy Cabinet</div>
-            <div style={{ fontSize: isMobile ? 19 : 22, fontWeight: 700, color: colors.text, fontFamily: font.display }}>{profile.username}</div>
-            <div style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{ranked.length} events logged{memberSince ? ` · Since ${memberSince}` : ''}</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: isMobile ? 4 : 0 }}>
             <button onClick={handleCopyLink} style={btnGhost}>{copied ? '✓ Copied' : '🔗 Copy Link'}</button>
             <button onClick={handleShare} disabled={sharing} style={{ ...btnPrimary, opacity: sharing ? 0.6 : 1 }}>{sharing ? 'Rendering…' : '↗ Share Image'}</button>
           </div>
