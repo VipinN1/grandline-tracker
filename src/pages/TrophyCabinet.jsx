@@ -152,11 +152,13 @@ function MiniLeaderSearch({ onSelect }) {
 // db/profile_legacy_wins.sql and db/legacy_results.sql. Optionally paired
 // with a representative leader card (db/legacy_leader.sql) shown as that
 // tally's Trophy Wall badge art, since there's no per-event leader to draw on.
-function LegacyCountModal({ title, description, initialValue, initialLeaderId, onClose, onSave }) {
+function LegacyCountModal({ title, description, initialValue, initialLeaderId, onClose, onSave, onSplit }) {
   const [value, setValue] = useState(String(initialValue ?? 0))
   const [leader, setLeader] = useState(null)
   const [leaderLoading, setLeaderLoading] = useState(!!initialLeaderId)
   const [saving, setSaving] = useState(false)
+  const [splitting, setSplitting] = useState(false)
+  const [confirmSplit, setConfirmSplit] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -180,11 +182,45 @@ function LegacyCountModal({ title, description, initialValue, initialLeaderId, o
     onClose()
   }
 
+  async function handleSplit() {
+    setSplitting(true)
+    const err = await onSplit()
+    setSplitting(false)
+    if (err) return setError('Failed to split. Please try again.')
+    onClose()
+  }
+
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: `1px solid ${colors.line}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, marginBottom: 4 }}>{title}</div>
         <div style={{ fontSize: 12, color: colors.muted, marginBottom: 18, lineHeight: 1.5 }}>{description}</div>
+
+        {initialValue > 0 && onSplit && (
+          <div style={{ background: 'rgba(200,162,74,0.08)', border: `1px solid ${colors.goldLine}`, borderRadius: radius.sm, padding: 14, marginBottom: 18 }}>
+            {!confirmSplit ? (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700, color: colors.text, marginBottom: 4 }}>Want these as separate squares instead?</div>
+                <div style={{ fontSize: 11.5, color: colors.muted, lineHeight: 1.5, marginBottom: 10 }}>
+                  Turns this single "+{initialValue} before tracking" tile into {initialValue} individual Trophy Wall squares, each with its own card art you can set.
+                </div>
+                <button onClick={() => setConfirmSplit(true)} style={{ ...btnGhost, width: '100%', borderColor: colors.goldLine, color: colors.gold }}>Split into {initialValue} squares</button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700, color: colors.text, marginBottom: 4 }}>Create {initialValue} individual squares?</div>
+                <div style={{ fontSize: 11.5, color: colors.muted, lineHeight: 1.5, marginBottom: 10 }}>
+                  This replaces the single tile above — the count resets to 0 and {initialValue} blank squares appear on the Trophy Wall for you to fill in (date, name, card art) one at a time.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setConfirmSplit(false)} disabled={splitting} style={{ ...btnGhost, flex: 1 }}>Back</button>
+                  <button onClick={handleSplit} disabled={splitting} style={{ ...btnPrimary, flex: 1, opacity: splitting ? 0.6 : 1 }}>{splitting ? 'Splitting…' : 'Confirm split'}</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <input
           autoFocus
           type="number"
@@ -601,6 +637,33 @@ export default function TrophyCabinet({ session }) {
     return error
   }
 
+  // Turns the single "+N before tracking" tally into N individual is_legacy
+  // tournament rows (tier locals/prerelease, placement 1, blank name/art) —
+  // each then renders as its own real Trophy Wall square via wallItems,
+  // editable/deletable/settable-with-art one at a time exactly like any
+  // other legacy entry. The aggregate count + its representative leader are
+  // zeroed out afterward since the individual rows now carry that weight.
+  async function splitLegacyCount(tier) {
+    const n = tier === 'prerelease' ? legacyPrereleaseWins : legacyLocalsWins
+    if (n <= 0) return null
+    const fallbackDate = profile?.created_at ? new Date(profile.created_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
+    const label = tier === 'prerelease' ? 'Pre-Release win before tracking' : 'Locals win before tracking'
+    const rows = Array.from({ length: n }, () => ({
+      tier, placement: 1, name: label, date: fallbackDate, deck_name: label,
+      user_id: session.user.id, is_legacy: true, is_practice: false, wins: 0, losses: 0,
+      leader_id: null, leader_name: null, leader_color: null,
+    }))
+    const { data, error } = await supabase.from('tournaments').insert(rows).select()
+    if (error) return error
+    setTournaments(prev => [...data.map(d => ({ ...d, tournament_rounds: [] })), ...prev])
+
+    const countCol = tier === 'prerelease' ? 'legacy_prerelease_wins' : 'legacy_locals_wins'
+    const leaderCol = tier === 'prerelease' ? 'legacy_prerelease_leader_id' : 'legacy_locals_leader_id'
+    const { error: countErr } = await supabase.from('profiles').update({ [countCol]: 0, [leaderCol]: null }).eq('id', session.user.id)
+    if (!countErr) setProfile(prev => ({ ...prev, [countCol]: 0, [leaderCol]: null }))
+    return countErr
+  }
+
   async function saveLegacyTrophy({ tier, placement, name, date, leader_id, leader_name, leader_color }) {
     const isEditing = editingLegacyTrophy?.id
     // deck_name mirrors the event name — every other insert path (Log Result)
@@ -817,6 +880,7 @@ export default function TrophyCabinet({ session }) {
           initialLeaderId={editingLegacyTier === 'prerelease' ? profile.legacy_prerelease_leader_id : profile.legacy_locals_leader_id}
           onClose={() => setEditingLegacyTier(null)}
           onSave={(n, leaderId) => saveLegacyCount(editingLegacyTier, n, leaderId)}
+          onSplit={() => splitLegacyCount(editingLegacyTier)}
         />
       )}
 
