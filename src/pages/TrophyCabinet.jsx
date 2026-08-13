@@ -256,6 +256,23 @@ function TrophyCard({ t, index, onOpen }) {
   )
 }
 
+// Empty state for a case with nothing in it yet — matches "The Case —
+// Regional Performance"'s look so all three sections read as one system.
+function EmptyCase({ message, isOwner, onAddPastWins, addLabel }) {
+  return (
+    <div style={{ ...card, padding: 30, textAlign: 'center', color: colors.faint }}>
+      <div style={{ fontSize: 28, marginBottom: 10 }}>🗝️</div>
+      <div style={{ fontSize: 13 }}>{message}</div>
+      {isOwner && (
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 14, flexWrap: 'wrap' }}>
+          <Link to="/log" style={{ ...btnGhost, display: 'inline-block', textDecoration: 'none' }}>Log an Event</Link>
+          <button onClick={onAddPastWins} style={{ ...btnGhost, textDecoration: 'none' }}>{addLabel}</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Ghost placeholder matching TrophyCard's shape, standing in for a tally of
 // self-reported wins that don't have an individual tournament row.
 function LegacyGhostCard({ label, icon, onClick, isOwner }) {
@@ -485,10 +502,12 @@ export default function TrophyCabinet({ session }) {
           <div style={{ fontSize: 11, color: colors.faint }}>{prereleaseWinsList.length} logged of {prereleaseEvents.length} events{legacyPrereleaseWins > 0 ? ` · ${legacyPrereleaseWins} before tracking` : ''}</div>
         </div>
         {prereleaseWinsList.length === 0 && legacyPrereleaseWins === 0 ? (
-          <div style={{ fontSize: 13, color: colors.faint, padding: '4px 0' }}>
-            No pre-release wins logged yet — first place at a pre-release adds a trophy here.
-            {isOwner && <>{' '}Had wins before joining PirateTracker? <button onClick={() => setEditingLegacyTier('prerelease')} style={{ background: 'none', border: 'none', color: colors.oceanBright, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, padding: 0 }}>Add them here</button>.</>}
-          </div>
+          <EmptyCase
+            message="No pre-release wins logged yet."
+            isOwner={isOwner}
+            addLabel="Add Past Wins"
+            onAddPastWins={() => setEditingLegacyTier('prerelease')}
+          />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
             {prereleaseWinsList.map((t, i) => (
@@ -513,10 +532,12 @@ export default function TrophyCabinet({ session }) {
           <div style={{ fontSize: 11, color: colors.faint }}>{localsWinsList.length} logged of {localsEvents.length} events{legacyLocalsWins > 0 ? ` · ${legacyLocalsWins} before tracking` : ''}</div>
         </div>
         {localsWinsList.length === 0 && legacyLocalsWins === 0 ? (
-          <div style={{ fontSize: 13, color: colors.faint, padding: '4px 0' }}>
-            No locals wins logged yet — first place at a locals adds a badge here.
-            {isOwner && <>{' '}Had wins before joining PirateTracker? <button onClick={() => setEditingLegacyTier('locals')} style={{ background: 'none', border: 'none', color: colors.oceanBright, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, padding: 0 }}>Add them here</button>.</>}
-          </div>
+          <EmptyCase
+            message="No locals wins logged yet."
+            isOwner={isOwner}
+            addLabel="Add Past Wins"
+            onAddPastWins={() => setEditingLegacyTier('locals')}
+          />
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {localsWinsList.map((t, i) => (
