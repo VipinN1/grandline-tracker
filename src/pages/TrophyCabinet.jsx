@@ -298,8 +298,12 @@ function EmptyCase({ message, isOwner, actions = [] }) {
 
 // Compact badge for the Trophy Wall — a single icon + name instead of a full
 // TrophyCard, since a Locals/Pre-Release win history can run into the dozens.
+// When the win has a known leader, its card art fills the badge as a zoomed,
+// top-anchored background (portrait art lives up there) with a bottom scrim
+// so the name/date stay legible over whatever's underneath.
 function TrophyBadge({ t, index, onOpen }) {
   const meta = TIER_META[t.tier] ?? TIER_META.locals
+  const artUrl = t.leader_id ? getCardImageUrl(t.leader_id) : null
   return (
     <div
       className="gl-badge-pop"
@@ -307,19 +311,34 @@ function TrophyBadge({ t, index, onOpen }) {
       title={`${t.name} · ${t.date}`}
       style={{
         animationDelay: `${Math.min(index, 24) * 25}ms`,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-        padding: '12px 8px 10px', textAlign: 'center', cursor: 'pointer',
-        background: `linear-gradient(180deg, ${meta.color}1c, ${meta.color}0a)`,
+        position: 'relative', overflow: 'hidden', cursor: 'pointer',
+        height: 108,
         border: `1px solid ${meta.color}40`,
         borderRadius: radius.md,
+        background: artUrl ? colors.deep : `linear-gradient(180deg, ${meta.color}1c, ${meta.color}0a)`,
         transition: transition.fast,
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = meta.color + '80' }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = meta.color + '40' }}
     >
-      <span style={{ fontSize: 20, lineHeight: 1 }}>{meta.icon}</span>
-      <span style={{ fontSize: 10.5, fontWeight: 700, color: colors.text, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
-      <span style={{ fontSize: 9, color: colors.faint }}>{t.date}</span>
+      {artUrl && (
+        <div
+          style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `url(${artUrl})`,
+            backgroundSize: 'cover', backgroundPosition: 'top center',
+            transform: 'scale(1.7)', transformOrigin: 'top center',
+          }}
+        />
+      )}
+      {artUrl && (
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(6,16,27,0.05) 0%, rgba(6,16,27,0.35) 45%, rgba(6,16,27,0.94) 100%)` }} />
+      )}
+      <div style={{ position: 'absolute', top: 6, left: 6, width: 20, height: 20, borderRadius: '50%', background: 'rgba(6,16,27,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, lineHeight: 1 }}>{meta.icon}</div>
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '6px 8px 8px', textAlign: 'center' }}>
+        <div style={{ fontSize: 10.5, fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{t.date}</div>
+      </div>
     </div>
   )
 }
@@ -332,7 +351,8 @@ function GhostBadge({ label, icon, onClick, isOwner }) {
       onClick={onClick}
       title="Self-reported wins from before PirateTracker"
       style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+        height: 108,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
         padding: '12px 8px 10px', textAlign: 'center', cursor: isOwner ? 'pointer' : 'default',
         background: 'rgba(140,176,208,0.03)',
         border: `1px dashed ${colors.line}`,
