@@ -539,29 +539,17 @@ export default function TrophyCabinet({ session }) {
             onAddPastWins={() => setEditingLegacyTier('locals')}
           />
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
             {localsWinsList.map((t, i) => (
-              <div
-                key={t.id}
-                className="gl-trophy-card"
-                onClick={() => setSelectedTournament(t)}
-                title={`${t.name} · ${t.date}`}
-                style={{ animationDelay: `${Math.min(i, 16) * 40}ms`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(59,178,126,0.08)', border: '1px solid rgba(59,178,126,0.3)', borderRadius: radius.pill, padding: '6px 12px 6px 8px' }}
-              >
-                <span style={{ fontSize: 14 }}>🏅</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: colors.text, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
-              </div>
+              <TrophyCard key={t.id} t={t} index={i} onOpen={() => setSelectedTournament(t)} />
             ))}
             {legacyLocalsWins > 0 && (
-              <div
-                className="gl-trophy-card"
+              <LegacyGhostCard
+                icon="🏅"
+                label={`+${legacyLocalsWins} win${legacyLocalsWins === 1 ? '' : 's'} before tracking`}
+                isOwner={isOwner}
                 onClick={() => isOwner && setEditingLegacyTier('locals')}
-                title="Self-reported wins from before PirateTracker"
-                style={{ animationDelay: `${Math.min(localsWinsList.length, 16) * 40}ms`, cursor: isOwner ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(59,178,126,0.04)', border: `1px dashed rgba(59,178,126,0.3)`, borderRadius: radius.pill, padding: '6px 12px 6px 8px' }}
-              >
-                <span style={{ fontSize: 14 }}>🏅</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: colors.textSoft }}>+{legacyLocalsWins} before tracking</span>
-              </div>
+              />
             )}
           </div>
         )}
