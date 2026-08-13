@@ -575,32 +575,34 @@ function PastTournamentForm({ session, editTournament = null }) {
                 <label style={labelStyle}>Final Placement</label>
                 <input type="number" placeholder="e.g. 1" value={placement} onChange={e => setPlacement(e.target.value)} style={inputStyle} />
               </div>
-              <div>
-                <label style={labelStyle}>Event Tier</label>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
-                  {[
-                    { value: 'locals', label: '🏅 Locals', color: '#3bb27e' },
-                    { value: 'prerelease', label: '🎁 Pre-Release', color: '#e6b84f' },
-                    { value: 'regional', label: '🥈 Regional', color: '#52a9cd' },
-                    { value: 'major', label: '🏆 Major', color: '#dcb35e' },
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setTier(opt.value)}
-                      style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${tier === opt.value ? opt.color : 'rgba(140,176,208,0.07)'}`, background: tier === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: tier === opt.value ? opt.color : '#9db2c6', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              {!isPractice && (
+                <div>
+                  <label style={labelStyle}>Event Tier</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
+                    {[
+                      { value: 'locals', label: '🏅 Locals', color: '#3bb27e' },
+                      { value: 'prerelease', label: '🎁 Pre-Release', color: '#e6b84f' },
+                      { value: 'regional', label: '🥈 Regional', color: '#52a9cd' },
+                      { value: 'major', label: '🏆 Major', color: '#dcb35e' },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setTier(opt.value)}
+                        style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${tier === opt.value ? opt.color : 'rgba(140,176,208,0.07)'}`, background: tier === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: tier === opt.value ? opt.color : '#9db2c6', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Powers your Trophy Cabinet — Locals and Pre-Release wins are each tallied separately, Regional/Major results become individual trophies.</div>
                 </div>
-                <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Powers your Trophy Cabinet — Locals and Pre-Release wins are each tallied separately, Regional/Major results become individual trophies.</div>
-              </div>
+              )}
               <div>
                 <label style={labelStyle}>Match Type</label>
                 <button
                   type="button"
-                  onClick={() => setIsPractice(p => !p)}
+                  onClick={() => setIsPractice(p => { const next = !p; if (next) setTier('locals'); return next })}
                   style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${isPractice ? 'rgba(82,169,205,0.5)' : 'rgba(140,176,208,0.12)'}`, background: isPractice ? 'rgba(82,169,205,0.12)' : 'rgba(140,176,208,0.03)', color: isPractice ? '#52a9cd' : '#9db2c6', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
                 >
                   <span style={{ width: 36, height: 20, borderRadius: 10, background: isPractice ? '#52a9cd' : 'rgba(140,176,208,0.2)', position: 'relative', flexShrink: 0, transition: 'background 0.15s' }}>
@@ -608,7 +610,7 @@ function PastTournamentForm({ session, editTournament = null }) {
                   </span>
                   <span style={{ flex: 1 }}>Mark as Practice</span>
                 </button>
-                <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Practice games are saved to your history but excluded from win rate, bounty and all global stats.</div>
+                <div style={{ fontSize: 11, color: '#67809a', marginTop: 6 }}>Practice games are saved to your history but excluded from win rate, bounty, tier/trophy tracking and all global stats.</div>
               </div>
             </div>
           </div>
