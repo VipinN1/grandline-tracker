@@ -222,25 +222,55 @@ function LegacyCountModal({ title, description, initialValue, initialLeaderId, o
 }
 
 const LEGACY_TROPHY_TIERS = [
+  { value: 'locals', label: '🏅 Locals', color: colors.emerald },
+  { value: 'prerelease', label: '🎁 Pre-Release', color: colors.orange },
   { value: 'regional', label: '🥈 Regional', color: colors.oceanBright },
   { value: 'major', label: '🏆 Major', color: colors.gold },
 ]
 
-// Owner-only: backfill a single Regional/Major result that happened before
-// (or wasn't logged on) PirateTracker. Unlike Locals/Pre-Release these show
-// up as individual trophy cards, so a real placement (1st, 148th, whatever)
-// is needed rather than a simple count — this creates/edits an ordinary
-// `tournaments` row flagged `is_legacy`, with no rounds required.
-function LegacyTrophyModal({ initial, onClose, onSave, onDelete }) {
+// Mirrors LogResult.jsx's getLeaderStorageId (not shared/exported from there)
+// — prefers the variant-specific image id so art matches the exact card art.
+function getLeaderStorageId(c) {
+  if (c?.card_image_id) return c.card_image_id
+  if (c?.card_image) {
+    const m = c.card_image.match(/Card_Images\/(.+?)\.jpg/i)
+    if (m?.[1]) return m[1]
+  }
+  return c?.card_set_id ?? ''
+}
+
+// Owner-only: backfill a single result — any tier — that happened before (or
+// wasn't logged on) PirateTracker. Creates/edits an ordinary `tournaments`
+// row flagged `is_legacy`, with no rounds required — this is what gives every
+// individual past win its own Trophy Wall/Case square (rather than a single
+// aggregate count), each with its own real leader art via the card picker.
+function LegacyTrophyModal({ initial, defaultTier, onClose, onSave, onDelete }) {
   const isEditing = !!initial?.id
-  const [tier, setTier] = useState(initial?.tier ?? 'regional')
-  const [placement, setPlacement] = useState(initial?.placement != null ? String(initial.placement) : '')
+  const [tier, setTier] = useState(initial?.tier ?? defaultTier ?? 'regional')
+  const [placement, setPlacement] = useState(initial?.placement != null ? String(initial.placement) : (tier === 'locals' || tier === 'prerelease' ? '1' : ''))
   const [name, setName] = useState(initial?.name ?? '')
   const [date, setDate] = useState(initial?.date ?? '')
-  const [leaderName, setLeaderName] = useState(initial?.leader_name ?? '')
+  const [leader, setLeader] = useState(null)
+  const [legacyLeaderName, setLegacyLeaderName] = useState(initial?.leader_id ? '' : (initial?.leader_name ?? '')) // old free-text-only entries
+  const [leaderLoading, setLeaderLoading] = useState(!!initial?.leader_id)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!initial?.leader_id) return
+    let cancelled = false
+    getCard(initial.leader_id)
+      .then(c => { if (!cancelled && c) setLeader(c) })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLeaderLoading(false) })
+    return () => { cancelled = true }
+  }, [initial?.leader_id])
+
+  function handleTierChange(v) {
+    setTier(v)
+    if ((v === 'locals' || v === 'prerelease') && !placement) setPlacement('1')
+  }
 
   async function handleSave() {
     const p = parseInt(placement, 10)
@@ -248,7 +278,12 @@ function LegacyTrophyModal({ initial, onClose, onSave, onDelete }) {
     if (!name.trim()) return setError('Give the event a name')
     if (!date) return setError('Date is required')
     setSaving(true)
-    const err = await onSave({ tier, placement: p, name: name.trim(), date, leader_name: leaderName.trim() || null })
+    const err = await onSave({
+      tier, placement: p, name: name.trim(), date,
+      leader_id: leader ? getLeaderStorageId(leader) : null,
+      leader_name: leader ? leader.card_name : (legacyLeaderName.trim() || null),
+      leader_color: leader ? leader.card_color : null,
+    })
     setSaving(false)
     if (err) return setError('Failed to save. Please try again.')
     onClose()
@@ -270,14 +305,14 @@ function LegacyTrophyModal({ initial, onClose, onSave, onDelete }) {
       <div onClick={e => e.stopPropagation()} style={{ background: '#161b27', border: `1px solid ${colors.line}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto' }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, marginBottom: 4 }}>{isEditing ? 'Edit Past Result' : 'Add a Past Result'}</div>
         <div style={{ fontSize: 12, color: colors.muted, marginBottom: 18, lineHeight: 1.5 }}>
-          For a Regional or Major that happened before (or wasn't logged on) PirateTracker. No round-by-round detail needed — just the placement.
+          For a result that happened before (or wasn't logged on) PirateTracker — gets its own square with real card art, same as anything logged normally. No round-by-round detail needed, just the placement.
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <label style={labelStyle}>Tier</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
               {LEGACY_TROPHY_TIERS.map(opt => (
-                <button key={opt.value} type="button" onClick={() => setTier(opt.value)} style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: `1px solid ${tier === opt.value ? opt.color : colors.line}`, background: tier === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: tier === opt.value ? opt.color : colors.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <button key={opt.value} type="button" onClick={() => handleTierChange(opt.value)} style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${tier === opt.value ? opt.color : colors.line}`, background: tier === opt.value ? opt.color + '22' : 'rgba(140,176,208,0.03)', color: tier === opt.value ? opt.color : colors.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {opt.label}
                 </button>
               ))}
@@ -298,8 +333,23 @@ function LegacyTrophyModal({ initial, onClose, onSave, onDelete }) {
             <input type="text" placeholder="e.g. 2022 East Coast Regional" value={name} onChange={e => setName(e.target.value)} style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>Leader <span style={{ color: colors.faint, fontWeight: 400 }}>(optional)</span></label>
-            <input type="text" placeholder="e.g. Monkey.D.Luffy" value={leaderName} onChange={e => setLeaderName(e.target.value)} style={inputStyle} />
+            <label style={labelStyle}>Leader <span style={{ color: colors.faint, fontWeight: 400 }}>(optional — sets this square's art)</span></label>
+            {leaderLoading ? (
+              <div style={{ fontSize: 12, color: colors.faint, padding: '9px 0' }}>Loading current leader…</div>
+            ) : leader ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: colors.surface3, border: `1px solid ${colors.lineStrong}`, borderRadius: radius.sm, padding: '8px 12px' }}>
+                <img src={getCardImageUrl(leader)} alt={leader.card_name} style={{ width: 28, height: 38, objectFit: 'cover', objectPosition: 'top', borderRadius: 4, flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{leader.card_name}</div>
+                <button onClick={() => setLeader(null)} style={{ background: 'none', border: 'none', color: colors.muted, cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+              </div>
+            ) : (
+              <>
+                <MiniLeaderSearch onSelect={setLeader} />
+                {legacyLeaderName && (
+                  <div style={{ fontSize: 11, color: colors.faint, marginTop: 6 }}>Currently just a name, no art: "{legacyLeaderName}" — search above to attach a real card.</div>
+                )}
+              </>
+            )}
           </div>
         </div>
         {error && <div style={{ fontSize: 12, color: colors.crimson, marginTop: 12 }}>{error}</div>}
@@ -400,7 +450,7 @@ function TrophyBadge({ t, index, onOpen }) {
         animationDelay: `${Math.min(index, 24) * 25}ms`,
         position: 'relative', overflow: 'hidden', cursor: 'pointer',
         height: 108,
-        border: `1px solid ${meta.color}40`,
+        border: `1px ${t.is_legacy ? 'dashed' : 'solid'} ${meta.color}40`,
         borderRadius: radius.md,
         background: artUrl ? colors.deep : `linear-gradient(180deg, ${meta.color}1c, ${meta.color}0a)`,
         transition: transition.fast,
@@ -434,12 +484,16 @@ function TrophyBadge({ t, index, onOpen }) {
 // tournament row behind them — still gets leader art if a representative
 // leader was set (db/legacy_leader.sql), same zoomed treatment as TrophyBadge,
 // just kept dashed so it still reads as "one square standing in for several".
+// Clicking it (owner only) opens the same LegacyCountModal used to set the
+// count in the first place, which is also where that leader gets picked —
+// the camera hint below just makes that discoverable, since a plain icon+
+// text square gives no clue it's interactive.
 function GhostBadge({ label, icon, leaderId, onClick, isOwner }) {
   const artUrl = leaderId ? getCardImageUrl(leaderId) : null
   return (
     <div
       onClick={onClick}
-      title="Self-reported wins from before PirateTracker"
+      title={isOwner ? 'Click to set a background photo' : 'Self-reported wins from before PirateTracker'}
       style={{
         position: 'relative', overflow: 'hidden', height: 108,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
@@ -462,8 +516,16 @@ function GhostBadge({ label, icon, leaderId, onClick, isOwner }) {
       {artUrl && (
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(6,16,27,0.1) 0%, rgba(6,16,27,0.4) 45%, rgba(6,16,27,0.94) 100%)` }} />
       )}
+      {isOwner && (
+        <div style={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: 6, background: 'rgba(6,16,27,0.6)', border: `1px solid ${colors.lineStrong}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>
+          📷
+        </div>
+      )}
       <span style={{ position: 'relative', fontSize: 20, lineHeight: 1 }}>{icon}</span>
       <span style={{ position: 'relative', fontSize: 10.5, fontWeight: 700, color: artUrl ? '#fff' : colors.textSoft, textShadow: artUrl ? '0 1px 3px rgba(0,0,0,0.6)' : undefined }}>{label}</span>
+      {isOwner && !artUrl && (
+        <span style={{ position: 'relative', fontSize: 9, color: colors.faint }}>tap to add photo</span>
+      )}
     </div>
   )
 }
@@ -482,7 +544,7 @@ export default function TrophyCabinet({ session }) {
   const [shareError, setShareError] = useState('')
   const [copied, setCopied] = useState(false)
   const [editingLegacyTier, setEditingLegacyTier] = useState(null) // 'locals' | 'prerelease' | null
-  const [editingLegacyTrophy, setEditingLegacyTrophy] = useState(null) // true (new) | tournament row (edit) | null
+  const [editingLegacyTrophy, setEditingLegacyTrophy] = useState(null) // { defaultTier } (new) | tournament row (edit) | null
 
   const shareRef = useRef(null)
 
@@ -539,11 +601,11 @@ export default function TrophyCabinet({ session }) {
     return error
   }
 
-  async function saveLegacyTrophy({ tier, placement, name, date, leader_name }) {
+  async function saveLegacyTrophy({ tier, placement, name, date, leader_id, leader_name, leader_color }) {
     const isEditing = editingLegacyTrophy?.id
     // deck_name mirrors the event name — every other insert path (Log Result)
     // always sets it, so this plays it safe in case the column is required.
-    const payload = { tier, placement, name, date, leader_name, deck_name: name, user_id: session.user.id, is_legacy: true, is_practice: false, wins: 0, losses: 0 }
+    const payload = { tier, placement, name, date, leader_id, leader_name, leader_color, deck_name: name, user_id: session.user.id, is_legacy: true, is_practice: false, wins: 0, losses: 0 }
     if (isEditing) {
       const { data, error } = await supabase.from('tournaments').update(payload).eq('id', editingLegacyTrophy.id).select().single()
       if (!error) setTournaments(prev => prev.map(t => t.id === data.id ? { ...t, ...data } : t))
@@ -648,13 +710,13 @@ export default function TrophyCabinet({ session }) {
       <div style={{ marginBottom: 26 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.gold }}>★ Featured — Regional Performance</div>
-          {isOwner && <button onClick={() => setEditingLegacyTrophy(true)} style={{ ...btnGhost, fontSize: 12, padding: '6px 12px' }}>+ Add Past Result</button>}
+          {isOwner && <button onClick={() => setEditingLegacyTrophy({ defaultTier: 'regional' })} style={{ ...btnGhost, fontSize: 12, padding: '6px 12px' }}>+ Add Past Result</button>}
         </div>
         {bigResults.length === 0 ? (
           <EmptyCase
             message="No Regional or Major podiums logged yet."
             isOwner={isOwner}
-            actions={[{ label: 'Add a Past Result', onClick: () => setEditingLegacyTrophy(true) }]}
+            actions={[{ label: 'Add a Past Result', onClick: () => setEditingLegacyTrophy({ defaultTier: 'regional' }) }]}
           />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
@@ -676,23 +738,31 @@ export default function TrophyCabinet({ session }) {
       {/* Trophy Wall — every Locals/Pre-Release win as one compact badge each,
           instead of two more full-card grids. */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.text }}>🏆 Trophy Wall — {totalLocalsWins + totalPrereleaseWins} wins</div>
-          <div style={{ fontSize: 11, color: colors.faint }}>{wallLoggedCount} logged of {wallEventCount} events{wallLegacyCount > 0 ? ` · ${wallLegacyCount} before tracking` : ''}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: colors.text }}>🏆 Trophy Wall — {totalLocalsWins + totalPrereleaseWins} wins</div>
+            <div style={{ fontSize: 11, color: colors.faint }}>{wallLoggedCount} logged of {wallEventCount} events{wallLegacyCount > 0 ? ` · ${wallLegacyCount} before tracking` : ''}</div>
+          </div>
+          {isOwner && <button onClick={() => setEditingLegacyTrophy({ defaultTier: 'locals' })} style={{ ...btnGhost, fontSize: 12, padding: '6px 12px' }}>+ Add Past Win</button>}
         </div>
         {wallItems.length === 0 && wallLegacyCount === 0 ? (
           <EmptyCase
             message="No Locals or Pre-Release wins logged yet."
             isOwner={isOwner}
-            actions={[
-              { label: 'Add Locals Wins', onClick: () => setEditingLegacyTier('locals') },
-              { label: 'Add Pre-Release Wins', onClick: () => setEditingLegacyTier('prerelease') },
-            ]}
+            actions={[{ label: 'Add a Past Win', onClick: () => setEditingLegacyTrophy({ defaultTier: 'locals' }) }]}
           />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 8 }}>
             {wallItems.map((t, i) => (
-              <TrophyBadge key={t.id} t={t} index={i} onOpen={() => setSelectedTournament(t)} />
+              <TrophyBadge
+                key={t.id}
+                t={t}
+                index={i}
+                onOpen={tourney => {
+                  if (tourney.is_legacy) { if (isOwner) setEditingLegacyTrophy(tourney); return }
+                  setSelectedTournament(tourney)
+                }}
+              />
             ))}
             {legacyLocalsWins > 0 && (
               <GhostBadge icon="🏅" label={`+${legacyLocalsWins} before tracking`} leaderId={profile.legacy_locals_leader_id} isOwner={isOwner} onClick={() => isOwner && setEditingLegacyTier('locals')} />
@@ -752,7 +822,8 @@ export default function TrophyCabinet({ session }) {
 
       {editingLegacyTrophy && (
         <LegacyTrophyModal
-          initial={editingLegacyTrophy === true ? null : editingLegacyTrophy}
+          initial={editingLegacyTrophy.id ? editingLegacyTrophy : null}
+          defaultTier={editingLegacyTrophy.defaultTier}
           onClose={() => setEditingLegacyTrophy(null)}
           onSave={saveLegacyTrophy}
           onDelete={deleteLegacyTrophy}
