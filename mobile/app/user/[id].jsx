@@ -10,9 +10,10 @@ import { supabase } from '../../lib/supabase'
 import { useSession } from '../../lib/auth'
 import { getCardImageUrl } from '../../lib/optcgapi'
 import { colors, font, radius, card } from '../../theme'
-import { LEADER_COLORS } from '../../components/forms'
+import { LEADER_COLORS, baseCardId } from '../../components/forms'
 import { Avatar } from '../../components/ProfileCard'
 import { Glass, GlassButton, GlassPills } from '../../components/glass'
+import { computeTopStores } from '../../lib/homeStores'
 
 function placementLabel(n) {
   if (n === 1) return '1st'
@@ -136,20 +137,30 @@ export default function UserProfilePage() {
   // Leaders played (ranked only), with their tournaments grouped underneath.
   // A tournament counts toward every leader that appeared in it — its main
   // leader plus any leader swapped in for individual rounds.
+  // Grouped by base card id, so an alt-art print of a leader is folded into
+  // the same group as its base-art print rather than counted separately.
   const leaderGroups = Object.values(ranked.reduce((acc, t) => {
     const leadersHere = new Map([[t.leader_id, { name: t.leader_name, color: t.leader_color }]])
     for (const r of (t.tournament_rounds ?? [])) {
       if (r.leader_id && !leadersHere.has(r.leader_id)) leadersHere.set(r.leader_id, { name: r.leader_name, color: r.leader_color })
     }
+    const keysHere = new Set()
     for (const [leaderId, info] of leadersHere) {
       if (!leaderId) continue
-      if (!acc[leaderId]) acc[leaderId] = { id: leaderId, name: info.name, color: info.color, tournaments: [] }
-      acc[leaderId].tournaments.push(t)
+      const key = baseCardId(leaderId)
+      if (!acc[key]) acc[key] = { id: leaderId, name: info.name, color: info.color, tournaments: [] }
+      // A tournament may surface the same base leader twice (e.g. base art
+      // as the main leader, alt art swapped in for one round) — only count
+      // it once per leader group.
+      if (!keysHere.has(key)) { acc[key].tournaments.push(t); keysHere.add(key) }
     }
     return acc
   }, {})).sort((a, b) => b.tournaments.length - a.tournaments.length)
 
   const favLeader = leaderGroups[0] ?? null
+  // Manually picked list wins if set, otherwise the top 3 stores this
+  // player logs locals-tier events at.
+  const homeStores = profile.home_stores?.length > 0 ? profile.home_stores : computeTopStores(ranked)
   // Web shows fav leader as text on other users' profiles (last word of the
   // cleaned name) — intentional inconsistency with the own-profile image tile.
   const favLeaderText = favLeader ? (cleanName(favLeader.name).split(' ').pop() ?? '—') : '—'
@@ -226,6 +237,19 @@ export default function UserProfilePage() {
               {profile.bio ? (
                 <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(140,176,208,0.05)' }}>
                   <Text style={{ fontSize: 13, color: colors.text, lineHeight: 20, fontFamily: font.body }}>{profile.bio}</Text>
+                </View>
+              ) : null}
+
+              {homeStores.length > 0 ? (
+                <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(140,176,208,0.05)' }}>
+                  <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.faint, marginBottom: 8 }}>Home Locals</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {homeStores.map(s => (
+                      <View key={s.id ?? s.name} style={{ paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(140,176,208,0.08)', borderWidth: 1, borderColor: colors.lineStrong }}>
+                        <Text style={{ fontSize: 11.5, fontFamily: font.semi, color: colors.oceanBright }}>📍 {s.name}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               ) : null}
 

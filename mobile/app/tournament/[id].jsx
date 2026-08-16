@@ -226,8 +226,9 @@ export default function TournamentDetail() {
               </View>
 
               {rounds.map(r => {
-                const isWin = r.result === 'win'
-                const oppColor = LEADER_COLORS[r.opponent_leader_color] ?? '#94a3b8'
+                const isBye = r.result === 'bye'
+                const isWin = r.result === 'win' || isBye
+                const oppColor = isBye ? colors.oceanBright : (LEADER_COLORS[r.opponent_leader_color] ?? '#94a3b8')
                 const switchedLeader = r.leader_id && r.leader_id !== t.leader_id
                 const switchColor = LEADER_COLORS[r.leader_color] ?? colors.muted
                 return (
@@ -235,9 +236,9 @@ export default function TournamentDetail() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Text style={{ width: 20, textAlign: 'center', fontSize: 14, fontFamily: font.mono, color: isWin ? colors.emerald : colors.crimson }}>{r.round_number}</Text>
                       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <OpponentThumb leaderId={r.opponent_leader_id} color={oppColor} />
+                        {isBye ? null : <OpponentThumb leaderId={r.opponent_leader_id} color={oppColor} />}
                         <Text numberOfLines={2} style={{ flex: 1, fontSize: 13.5, fontFamily: font.semi, color: oppColor }}>
-                          {cleanName(r.opponent_leader_name) || 'Unknown'}
+                          {isBye ? 'Bye' : (cleanName(r.opponent_leader_name) || 'Unknown')}
                         </Text>
                       </View>
                       <View style={{ width: 52, alignItems: 'center' }}>
@@ -260,8 +261,8 @@ export default function TournamentDetail() {
                         )}
                       </View>
                       <View style={{ width: 34, alignItems: 'center' }}>
-                        <View style={{ width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: isWin ? 'rgba(59,178,126,0.2)' : 'rgba(210,74,58,0.2)' }}>
-                          <Text style={{ fontSize: 15, fontFamily: font.bold, color: isWin ? colors.emerald : colors.crimson }}>{isWin ? '✓' : '✕'}</Text>
+                        <View style={{ width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: isBye ? 'rgba(82,169,205,0.2)' : isWin ? 'rgba(59,178,126,0.2)' : 'rgba(210,74,58,0.2)' }}>
+                          <Text style={{ fontSize: isBye ? 9 : 15, fontFamily: font.bold, color: isBye ? colors.oceanBright : isWin ? colors.emerald : colors.crimson }}>{isBye ? 'BYE' : isWin ? '✓' : '✕'}</Text>
                         </View>
                       </View>
                     </View>

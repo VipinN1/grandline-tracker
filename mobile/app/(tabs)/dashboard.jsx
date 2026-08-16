@@ -11,6 +11,7 @@ import { useSession } from '../../lib/auth'
 import { colors, font, radius, pageHeader } from '../../theme'
 import { Glass, GlassButton } from '../../components/glass'
 import { PlacementTrendChart, LeaderDonut, LeaderDot, WinRateBar, leaderColorList } from '../../components/charts'
+import { baseCardId } from '../../components/forms'
 
 const TOP_LEADERS_LIMIT = 3
 
@@ -110,38 +111,42 @@ export default function Dashboard() {
     location: t.location,
   }))
 
+  // Grouped by base card id, so an alt-art print of a leader is folded into
+  // the same group as its base-art print rather than counted separately.
   const leaderUsage = Object.values(
     tournaments.reduce((acc, t) => {
       function ensureLeader(leaderId, leaderName, leaderColor) {
-        if (!acc[leaderId]) {
+        const key = baseCardId(leaderId)
+        if (!acc[key]) {
           const primary = leaderColorList(leaderColor)[0] ?? colors.ocean
-          acc[leaderId] = { id: leaderId, fullName: leaderName, leaderColor, color: primary, count: 0, wins: 0, losses: 0 }
+          acc[key] = { id: leaderId, fullName: leaderName, leaderColor, color: primary, count: 0, wins: 0, losses: 0 }
         }
+        return key
       }
 
       const rounds = t.tournament_rounds ?? []
-      const leadersInTournament = new Set([t.leader_id])
-      ensureLeader(t.leader_id, t.leader_name, t.leader_color)
+      const mainKey = ensureLeader(t.leader_id, t.leader_name, t.leader_color)
+      const leadersInTournament = new Set([mainKey])
 
       // Rounds played under a different leader (a mid-event deck swap) count
       // as that leader's own event/win/loss, not the tournament's main leader.
       for (const r of rounds) {
-        if (r.leader_id && r.leader_id !== t.leader_id) {
-          leadersInTournament.add(r.leader_id)
-          ensureLeader(r.leader_id, r.leader_name, r.leader_color)
+        let effectiveKey = mainKey
+        if (r.leader_id) {
+          effectiveKey = ensureLeader(r.leader_id, r.leader_name, r.leader_color)
+          leadersInTournament.add(effectiveKey)
         }
-        const effectiveId = r.leader_id || t.leader_id
-        if (r.result === 'win') acc[effectiveId].wins++
-        else if (r.result === 'loss') acc[effectiveId].losses++
+        if (r.result === 'win' || r.result === 'bye') acc[effectiveKey].wins++
+        else if (r.result === 'loss') acc[effectiveKey].losses++
       }
 
       // No round data recorded — fall back to the tournament's aggregate record.
       if (rounds.length === 0) {
-        acc[t.leader_id].wins += t.wins
-        acc[t.leader_id].losses += t.losses
+        acc[mainKey].wins += t.wins
+        acc[mainKey].losses += t.losses
       }
 
-      for (const leaderId of leadersInTournament) acc[leaderId].count++
+      for (const key of leadersInTournament) acc[key].count++
       return acc
     }, {})
   ).map(l => ({ ...l, wr: l.wins + l.losses > 0 ? Math.round((l.wins / (l.wins + l.losses)) * 100) : 0 }))

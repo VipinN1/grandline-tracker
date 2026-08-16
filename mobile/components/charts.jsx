@@ -37,16 +37,7 @@ function placementLabel(n) {
 const TOOLTIP_W = 200
 const TARGET_Y_TICKS = 4
 
-// Round a raw step up to a "nice" 1/2/5×10^n value so the axis always shows
-// a handful of readable ticks, whether the max placement is 8 (a local) or
-// 300+ (a big tournament) — mirrors recharts' automatic tick spacing on web.
-function niceStep(rough) {
-  if (!Number.isFinite(rough) || rough <= 0) return 1
-  const mag = Math.pow(10, Math.floor(Math.log10(rough)))
-  const norm = rough / mag
-  const niceNorm = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10
-  return niceNorm * mag
-}
+function log2(x) { return Math.log(x) / Math.LN2 }
 
 export function PlacementTrendChart({ data, height = 190 }) {
   const [width, setWidth] = useState(0)
@@ -58,17 +49,35 @@ export function PlacementTrendChart({ data, height = 190 }) {
   const PAD_B = 26
 
   const maxP = Math.max(4, Math.max(...data.map(d => d.placement)))
-  const step = niceStep(maxP / TARGET_Y_TICKS)
+
+  // Placement gets a log2 "bracket" scale rather than linear, so one big
+  // outlier (e.g. a 300-player regional finished 84th) doesn't stretch the
+  // whole axis and squash every normal top-8 locals result into an
+  // unreadable sliver near the top. Ticks land on power-of-2 bracket values
+  // (Top 4 / 8 / 16 / 32...), which also reads naturally for tournament
+  // placements — and the doubling-stride loop guarantees at most
+  // TARGET_Y_TICKS labels no matter how large the outlier is.
+  const maxExp = Math.max(1, Math.ceil(log2(maxP)))
+  let expStride = 1
+  while (Math.floor(maxExp / expStride) > TARGET_Y_TICKS) expStride++
   const yTicks = []
-  for (let v = step; v <= maxP; v += step) yTicks.push(v)
+  for (let e = expStride; e <= maxExp; e += expStride) yTicks.push(Math.pow(2, e))
 
   const plotW = width - PAD_L - PAD_R
   const plotH = height - PAD_T - PAD_B
   const xAt = i => PAD_L + (data.length === 1 ? plotW / 2 : (i / (data.length - 1)) * plotW)
-  const yAt = p => PAD_T + ((p - 1) / (maxP - 1)) * plotH
+  const yAt = p => PAD_T + (log2(Math.max(1, p)) / log2(maxP)) * plotH
 
   const labelStep = Math.max(1, Math.ceil(data.length / 6))
-  const labeled = data.map((_, i) => i % labelStep === 0 || i === data.length - 1)
+  const labeled = data.map((_, i) => i % labelStep === 0)
+  // Force-label the most recent event too, unless it would land right on
+  // top of the previous label and collide.
+  const lastIdx = data.length - 1
+  let prevLabeledIdx = -Infinity
+  for (let i = 0; i < lastIdx; i++) if (labeled[i]) prevLabeledIdx = i
+  if (lastIdx >= 0 && !labeled[lastIdx] && lastIdx - prevLabeledIdx >= Math.max(2, Math.ceil(labelStep / 2))) {
+    labeled[lastIdx] = true
+  }
 
   // Snap a touch x-position to the nearest dot.
   function scrubTo(x) {

@@ -162,6 +162,13 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
   const [hydrated, setHydrated] = useState(false)
 
   const roundNumber = rounds.length + 1
+  const isBye = result === 'bye'
+
+  // A bye has no opponent — selecting it clears the opponent-specific fields.
+  function handleResultChange(val) {
+    setResult(val)
+    if (val === 'bye') { setOppLeader(null); setWonDice(null); setWentFirst(null) }
+  }
 
   // Restore an in-progress draft once per tournament.
   useEffect(() => {
@@ -220,26 +227,36 @@ function RoundLogger({ tournament, rounds, onRoundLogged }) {
     <View style={panel}>
       <Text style={{ fontSize: 14, fontFamily: font.bold, color: colors.text, marginBottom: 16 }}>Round {roundNumber}</Text>
       <View style={{ gap: 14 }}>
-        <LeaderSearchInput
-          label="Opponent's Leader"
-          placeholder="Search opponent's leader..."
-          onSelect={setOppLeader}
-          selected={oppLeader}
-          onClear={() => setOppLeader(null)}
-        />
-        <RoundLeaderOverride value={myLeader} onChange={setMyLeader} />
-        <ToggleGroup label="Dice Roll" value={wonDice} onChange={setWonDice} options={[
-          { value: true, label: '🎲 Won', color: colors.emerald },
-          { value: false, label: '🎲 Lost', color: colors.crimson },
-        ]} />
-        <ToggleGroup label="Going" value={wentFirst} onChange={setWentFirst} options={[
-          { value: true, label: '1st', color: colors.gold },
-          { value: false, label: '2nd', color: colors.oceanBright },
-        ]} />
-        <ToggleGroup label="Result" value={result} onChange={setResult} options={[
+        {!isBye && (
+          <>
+            <LeaderSearchInput
+              label="Opponent's Leader"
+              placeholder="Search opponent's leader..."
+              onSelect={setOppLeader}
+              selected={oppLeader}
+              onClear={() => setOppLeader(null)}
+            />
+            <RoundLeaderOverride value={myLeader} onChange={setMyLeader} />
+            <ToggleGroup label="Dice Roll" value={wonDice} onChange={setWonDice} options={[
+              { value: true, label: '🎲 Won', color: colors.emerald },
+              { value: false, label: '🎲 Lost', color: colors.crimson },
+            ]} />
+            <ToggleGroup label="Going" value={wentFirst} onChange={setWentFirst} options={[
+              { value: true, label: '1st', color: colors.gold },
+              { value: false, label: '2nd', color: colors.oceanBright },
+            ]} />
+          </>
+        )}
+        <ToggleGroup label="Result" value={result} onChange={handleResultChange} options={[
           { value: 'win', label: '✓ Win', color: colors.emerald },
           { value: 'loss', label: '✗ Loss', color: colors.crimson },
+          { value: 'bye', label: '⤳ Bye', color: colors.oceanBright },
         ]} />
+        {isBye && (
+          <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body }}>
+            No opponent this round — counts as a free win in your record.
+          </Text>
+        )}
         <View>
           <FieldLabel>Notes (optional)</FieldLabel>
           <TextInput
@@ -280,8 +297,8 @@ function RoundHistory({ rounds, mainLeaderId }) {
               {r.opponent_leader_id ? (
                 <Image source={{ uri: getCardImageUrl(r.opponent_leader_id) }} style={{ width: 24, height: 33, borderRadius: 3 }} resizeMode="cover" />
               ) : null}
-              <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: LEADER_COLORS[r.opponent_leader_color] ?? colors.muted, fontFamily: font.body }}>
-                {r.opponent_leader_name ?? 'Unknown leader'}
+              <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: r.result === 'bye' ? colors.oceanBright : (LEADER_COLORS[r.opponent_leader_color] ?? colors.muted), fontFamily: font.body }}>
+                {r.result === 'bye' ? 'Bye' : (r.opponent_leader_name ?? 'Unknown leader')}
               </Text>
               {r.won_dice_roll !== null ? (
                 <Text style={{ fontSize: 11, color: r.won_dice_roll ? colors.emerald : colors.crimson, fontFamily: font.body }}>
@@ -293,8 +310,8 @@ function RoundHistory({ rounds, mainLeaderId }) {
                   {r.went_first ? '1st' : '2nd'}
                 </Text>
               ) : null}
-              <Text style={{ fontSize: 13, fontFamily: font.bold, color: r.result === 'win' ? colors.emerald : colors.crimson, minWidth: 18, textAlign: 'right' }}>
-                {r.result === 'win' ? 'W' : 'L'}
+              <Text style={{ fontSize: 13, fontFamily: font.bold, color: r.result === 'loss' ? colors.crimson : r.result === 'bye' ? colors.oceanBright : colors.emerald, minWidth: 28, textAlign: 'right' }}>
+                {r.result === 'bye' ? 'BYE' : r.result === 'win' ? 'W' : 'L'}
               </Text>
             </View>
             {r.notes ? <Text style={{ fontSize: 11, color: colors.muted, marginTop: 6, fontStyle: 'italic', fontFamily: font.body }}>{r.notes}</Text> : null}
@@ -333,7 +350,7 @@ function ActiveTournament({ tournament, session, onFinish }) {
     load()
   }, [tournament.id])
 
-  const wins = rounds.filter(r => r.result === 'win').length
+  const wins = rounds.filter(r => r.result === 'win' || r.result === 'bye').length
   const losses = rounds.filter(r => r.result === 'loss').length
   const winRate = rounds.length > 0 ? Math.round((wins / rounds.length) * 100) : 0
   const wentFirstWins = rounds.filter(r => r.went_first === true && r.result === 'win').length

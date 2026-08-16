@@ -144,56 +144,62 @@ export default function TournamentShareOverlay({ tournament: t, onClose }) {
                 </View>
 
                 {rounds.map(r => {
-                  const oppColor = LEADER_COLORS[r.opponent_leader_color] ?? '#94a3b8'
-                  const isWin = r.result === 'win'
+                  const isBye = r.result === 'bye'
+                  const oppColor = isBye ? colors.oceanBright : (LEADER_COLORS[r.opponent_leader_color] ?? '#94a3b8')
+                  const isWin = r.result === 'win' || isBye
                   const switchedLeader = r.leader_id && r.leader_id !== t.leader_id
                   const switchColor = LEADER_COLORS[r.leader_color] ?? color
                   return (
-                    <View key={r.id} style={{ position: 'relative', flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: 7, marginTop: 5, backgroundColor: isWin ? 'rgba(59,178,126,0.06)' : 'rgba(210,74,58,0.06)' }}>
-                      <Text style={{ width: 22, textAlign: 'center', fontSize: 12, fontFamily: font.mono, color: isWin ? colors.emerald : colors.crimson }}>{r.round_number}</Text>
+                    <View key={r.id} style={{ marginTop: 5, borderRadius: 7, backgroundColor: isWin ? 'rgba(59,178,126,0.06)' : 'rgba(210,74,58,0.06)' }}>
+                      <View style={{ position: 'relative', flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8 }}>
+                        <Text style={{ width: 22, textAlign: 'center', fontSize: 12, fontFamily: font.mono, color: isWin ? colors.emerald : colors.crimson }}>{r.round_number}</Text>
 
-                      {switchedLeader ? (
-                        <Image
-                          source={{ uri: getCardImageUrl(r.leader_id) }}
-                          style={{ position: 'absolute', top: -5, left: 10, width: 17, height: 23, borderRadius: 4, borderWidth: 1.5, borderColor: switchColor, zIndex: 2 }}
-                          resizeMode="cover"
-                        />
-                      ) : null}
+                        {switchedLeader ? (
+                          <Image
+                            source={{ uri: getCardImageUrl(r.leader_id) }}
+                            style={{ position: 'absolute', top: -5, left: 10, width: 17, height: 23, borderRadius: 4, borderWidth: 1.5, borderColor: switchColor, zIndex: 2 }}
+                            resizeMode="cover"
+                          />
+                        ) : null}
 
-                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        {r.opponent_leader_id ? (
-                          <Image source={{ uri: getCardImageUrl(r.opponent_leader_id) }} style={{ width: 40, height: 56, borderRadius: 5, borderWidth: 1.5, borderColor: oppColor + '66' }} resizeMode="cover" />
-                        ) : (
-                          <View style={{ width: 40, height: 56, borderRadius: 5, backgroundColor: 'rgba(140,176,208,0.05)' }} />
-                        )}
-                        <Text numberOfLines={1} style={{ flex: 1, fontSize: 12.5, fontFamily: font.semi, color: oppColor }}>{cleanName(r.opponent_leader_name) || 'Unknown'}</Text>
-                      </View>
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          {r.opponent_leader_id ? (
+                            <Image source={{ uri: getCardImageUrl(r.opponent_leader_id) }} style={{ width: 40, height: 56, borderRadius: 5, borderWidth: 1.5, borderColor: oppColor + '66' }} resizeMode="cover" />
+                          ) : (
+                            <View style={{ width: 40, height: 56, borderRadius: 5, backgroundColor: 'rgba(140,176,208,0.05)' }} />
+                          )}
+                          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12.5, fontFamily: font.semi, color: oppColor }}>{isBye ? 'Bye' : (cleanName(r.opponent_leader_name) || 'Unknown')}</Text>
+                        </View>
 
-                      <View style={{ width: 38, alignItems: 'center' }}>
-                        {r.won_dice_roll === null ? (
-                          <Text style={{ color: '#3a526a', fontSize: 13 }}>—</Text>
-                        ) : (
-                          <View style={{ paddingVertical: 2, paddingHorizontal: 6, borderRadius: 5, backgroundColor: r.won_dice_roll ? 'rgba(59,178,126,0.16)' : 'rgba(210,74,58,0.16)' }}>
-                            <Text style={{ fontSize: 9, fontFamily: font.mono, color: r.won_dice_roll ? colors.emerald : colors.crimson }}>🎲{r.won_dice_roll ? 'W' : 'L'}</Text>
+                        <View style={{ width: 38, alignItems: 'center' }}>
+                          {r.won_dice_roll === null ? (
+                            <Text style={{ color: '#3a526a', fontSize: 13 }}>—</Text>
+                          ) : (
+                            <View style={{ paddingVertical: 2, paddingHorizontal: 6, borderRadius: 5, backgroundColor: r.won_dice_roll ? 'rgba(59,178,126,0.16)' : 'rgba(210,74,58,0.16)' }}>
+                              <Text style={{ fontSize: 9, fontFamily: font.mono, color: r.won_dice_roll ? colors.emerald : colors.crimson }}>🎲{r.won_dice_roll ? 'W' : 'L'}</Text>
+                            </View>
+                          )}
+                        </View>
+
+                        <View style={{ width: 38, alignItems: 'center' }}>
+                          {r.went_first === null ? (
+                            <Text style={{ color: '#3a526a', fontSize: 13 }}>—</Text>
+                          ) : (
+                            <View style={{ width: 20, height: 20, borderRadius: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: r.went_first ? 'rgba(200,162,74,0.16)' : 'rgba(82,169,205,0.16)' }}>
+                              <Text style={{ fontSize: 10, fontFamily: font.mono, color: r.went_first ? colors.gold : colors.oceanBright }}>{r.went_first ? '1' : '2'}</Text>
+                            </View>
+                          )}
+                        </View>
+
+                        <View style={{ width: 30, alignItems: 'center' }}>
+                          <View style={{ width: 22, height: 22, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: isBye ? 'rgba(82,169,205,0.18)' : isWin ? 'rgba(59,178,126,0.18)' : 'rgba(210,74,58,0.18)' }}>
+                            <Text style={{ fontSize: isBye ? 6.5 : 12, fontFamily: font.bold, color: isBye ? colors.oceanBright : isWin ? colors.emerald : colors.crimson }}>{isBye ? 'BYE' : isWin ? '✓' : '✕'}</Text>
                           </View>
-                        )}
-                      </View>
-
-                      <View style={{ width: 38, alignItems: 'center' }}>
-                        {r.went_first === null ? (
-                          <Text style={{ color: '#3a526a', fontSize: 13 }}>—</Text>
-                        ) : (
-                          <View style={{ width: 20, height: 20, borderRadius: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: r.went_first ? 'rgba(200,162,74,0.16)' : 'rgba(82,169,205,0.16)' }}>
-                            <Text style={{ fontSize: 10, fontFamily: font.mono, color: r.went_first ? colors.gold : colors.oceanBright }}>{r.went_first ? '1' : '2'}</Text>
-                          </View>
-                        )}
-                      </View>
-
-                      <View style={{ width: 30, alignItems: 'center' }}>
-                        <View style={{ width: 22, height: 22, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: isWin ? 'rgba(59,178,126,0.18)' : 'rgba(210,74,58,0.18)' }}>
-                          <Text style={{ fontSize: 12, fontFamily: font.bold, color: isWin ? colors.emerald : colors.crimson }}>{isWin ? '✓' : '✕'}</Text>
                         </View>
                       </View>
+                      {r.notes ? (
+                        <Text style={{ fontSize: 11, color: colors.faint, fontStyle: 'italic', fontFamily: font.body, paddingHorizontal: 8, paddingLeft: 40, paddingBottom: 8, marginTop: -2 }}>{r.notes}</Text>
+                      ) : null}
                     </View>
                   )
                 })}

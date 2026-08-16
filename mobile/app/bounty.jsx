@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/auth'
 import { getCardImageUrl } from '../lib/optcgapi'
 import { colors, font, radius, card } from '../theme'
-import { LEADER_COLORS } from '../components/forms'
+import { LEADER_COLORS, baseCardId } from '../components/forms'
 import ProfileCard, { Avatar } from '../components/ProfileCard'
 
 function formatBounty(n) {
@@ -93,8 +93,9 @@ export default function BountyBoard() {
   const playMap = {}
   tournaments.filter(t => t.date >= monthAgoStr).forEach(t => {
     if (!t.leader_id) return
-    if (!playMap[t.leader_id]) playMap[t.leader_id] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, count: 0 }
-    playMap[t.leader_id].count++
+    const key = baseCardId(t.leader_id)
+    if (!playMap[key]) playMap[key] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, count: 0 }
+    playMap[key].count++
   })
   const topWeekly = Object.values(playMap).sort((a, b) => b.count - a.count).slice(0, 5)
   const maxWeeklyCount = topWeekly[0]?.count ?? 1
@@ -104,8 +105,9 @@ export default function BountyBoard() {
   const leaderAgg = {}
   tournaments.forEach(t => {
     if (!t.leader_id) return
-    if (!leaderAgg[t.leader_id]) leaderAgg[t.leader_id] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, appearances: 0, wins: 0, losses: 0 }
-    const l = leaderAgg[t.leader_id]
+    const key = baseCardId(t.leader_id)
+    if (!leaderAgg[key]) leaderAgg[key] = { id: t.leader_id, name: t.leader_name, color: t.leader_color, appearances: 0, wins: 0, losses: 0 }
+    const l = leaderAgg[key]
     l.appearances++
     l.wins += t.wins
     l.losses += t.losses
@@ -134,7 +136,10 @@ export default function BountyBoard() {
     p.wins += t.wins
     p.losses += t.losses
     p.tournaments++
-    if (t.leader_id) p.leaders[t.leader_id] = (p.leaders[t.leader_id] || 0) + 1
+    if (t.leader_id) {
+      const key = baseCardId(t.leader_id)
+      p.leaders[key] = (p.leaders[key] || 0) + 1
+    }
   })
 
   // Sim tournament results (same rates: win +100K, loss −50K, champion +1M).

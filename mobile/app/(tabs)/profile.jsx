@@ -12,8 +12,10 @@ import { useSession } from '../../lib/auth'
 import { getCardImageUrl } from '../../lib/optcgapi'
 import { pickAndUploadImage } from '../../lib/upload'
 import { colors, font, radius, pageHeader } from '../../theme'
-import { fieldInput, FieldLabel, LEADER_COLORS } from '../../components/forms'
+import { fieldInput, FieldLabel, LEADER_COLORS, baseCardId } from '../../components/forms'
 import { Glass, GlassButton, GlassPills } from '../../components/glass'
+import HomeStoresModal from '../../components/HomeStoresModal'
+import { computeTopStores } from '../../lib/homeStores'
 
 function cleanLeaderName(name) {
   if (!name) return ''
@@ -102,6 +104,7 @@ export default function Profile() {
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
+  const [editingStores, setEditingStores] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [tab, setTab] = useState('history')
 
@@ -155,15 +158,22 @@ export default function Profile() {
   // powers both the hero backdrop / fav leader and the Leaders Played tab.
   // A tournament counts toward every leader that appeared in it — its main
   // leader plus any leader swapped in for individual rounds.
+  // Grouped by base card id, so an alt-art print of a leader is folded into
+  // the same group as its base-art print rather than counted separately.
   const leaderGroups = Object.values(ranked.reduce((acc, t) => {
     const leadersHere = new Map([[t.leader_id, { name: t.leader_name, color: t.leader_color }]])
     for (const r of (t.tournament_rounds ?? [])) {
       if (r.leader_id && !leadersHere.has(r.leader_id)) leadersHere.set(r.leader_id, { name: r.leader_name, color: r.leader_color })
     }
+    const keysHere = new Set()
     for (const [id, info] of leadersHere) {
       if (!id) continue
-      if (!acc[id]) acc[id] = { id, name: info.name, color: info.color, tournaments: [] }
-      acc[id].tournaments.push(t)
+      const key = baseCardId(id)
+      if (!acc[key]) acc[key] = { id, name: info.name, color: info.color, tournaments: [] }
+      // A tournament may surface the same base leader twice (e.g. base art
+      // as the main leader, alt art swapped in for one round) — only count
+      // it once per leader group.
+      if (!keysHere.has(key)) { acc[key].tournaments.push(t); keysHere.add(key) }
     }
     return acc
   }, {})).sort((a, b) => b.tournaments.length - a.tournaments.length)
@@ -172,6 +182,11 @@ export default function Profile() {
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : ''
+
+  // "Home Locals" — a manually picked list wins if set, otherwise falls
+  // back to the top 3 stores this player logs locals-tier events at.
+  const computedTopStores = computeTopStores(ranked)
+  const homeStores = profile?.home_stores?.length > 0 ? profile.home_stores : computedTopStores
 
   const stats = [
     { label: 'Events', value: String(ranked.length), color: colors.text },
@@ -245,6 +260,26 @@ export default function Profile() {
                     {profile.bio}
                   </Text>
                 ) : null}
+
+                <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(140,176,208,0.05)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1, color: colors.faint }}>Home Locals</Text>
+                    <TouchableOpacity onPress={() => setEditingStores(true)} hitSlop={6}>
+                      <Text style={{ fontSize: 11, fontFamily: font.semi, color: colors.oceanBright }}>Edit</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {homeStores.length > 0 ? (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {homeStores.map(s => (
+                        <View key={s.id ?? s.name} style={{ paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(140,176,208,0.08)', borderWidth: 1, borderColor: colors.lineStrong }}>
+                          <Text style={{ fontSize: 11.5, fontFamily: font.semi, color: colors.oceanBright }}>📍 {s.name}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={{ fontSize: 12, color: colors.faint, fontFamily: font.body }}>Log a locals event or set your own to show here.</Text>
+                  )}
+                </View>
 
                 <GlassButton onPress={() => setEditing(true)} effect="clear" pad={{ paddingVertical: 9, paddingHorizontal: 18 }} style={{ alignSelf: 'flex-start', marginTop: 14 }}>
                   <Text style={{ fontSize: 12, fontFamily: font.semi, color: colors.text }}>Edit Profile</Text>
@@ -381,6 +416,15 @@ export default function Profile() {
           session={session}
           onClose={() => setEditing(false)}
           onSave={({ username: u, bio, pronouns }) => setProfile(prev => ({ ...prev, username: u, bio, pronouns }))}
+        />
+      )}
+      {editingStores && (
+        <HomeStoresModal
+          session={session}
+          currentStores={profile?.home_stores ?? []}
+          computedStores={computedTopStores}
+          onClose={() => setEditingStores(false)}
+          onSave={value => setProfile(prev => ({ ...prev, home_stores: value }))}
         />
       )}
     </>

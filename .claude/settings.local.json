@@ -78,8 +78,7 @@
       "Bash(xargs kill -9)",
       "Bash(rm -f .env.local .env.local.qa)",
       "Bash(rm -f src/pages/_TrophyPreview.jsx)",
-      "Bash(grep -v \"LogResult.jsx:47\\\\|LogResult.jsx:350\\\\|no-useless-escape\\\\|Cannot access variable\\\\|react-hooks/immutability\\\\|missing dependency\\\\|react-hooks/exhaustive-deps\\\\|^$\\\\|Unnecessary escape\\\\|loadStoresAndSeries\\\\|350 |\\\\|352 |\\\\|353 |\\\\|354 |\\\\|368 |\\\\|369 |\\\\|370 |\\\\|371 |\\\\|372 |\")",
-      "Bash(git pull *)"
+      "Bash(grep -v \"LogResult.jsx:47\\\\|LogResult.jsx:350\\\\|no-useless-escape\\\\|Cannot access variable\\\\|react-hooks/immutability\\\\|missing dependency\\\\|react-hooks/exhaustive-deps\\\\|^$\\\\|Unnecessary escape\\\\|loadStoresAndSeries\\\\|350 |\\\\|352 |\\\\|353 |\\\\|354 |\\\\|368 |\\\\|369 |\\\\|370 |\\\\|371 |\\\\|372 |\")"
     ]
   }
 }

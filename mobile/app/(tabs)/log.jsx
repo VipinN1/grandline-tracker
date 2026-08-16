@@ -90,6 +90,19 @@ function RoundLeaderOverride({ value, onChange }) {
 }
 
 function RoundRow({ round, index, onChange, onRemove }) {
+  const isBye = round.result === 'bye'
+
+  // A bye has no opponent — selecting it clears the opponent-specific
+  // fields so a stale opponent/dice/turn-order doesn't linger in the data.
+  function handleResultChange(val) {
+    onChange(index, 'result', val)
+    if (val === 'bye') {
+      onChange(index, 'oppLeader', null)
+      onChange(index, 'wonDice', null)
+      onChange(index, 'wentFirst', null)
+    }
+  }
+
   return (
     <View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -100,48 +113,59 @@ function RoundRow({ round, index, onChange, onRemove }) {
       </View>
 
       <View style={{ gap: 12 }}>
-        <LeaderSearchInput
-          label="Opponent's Leader"
-          placeholder="Search opponent's leader..."
-          onSelect={card => onChange(index, 'oppLeader', card)}
-          selected={round.oppLeader}
-          onClear={() => onChange(index, 'oppLeader', null)}
-        />
+        {!isBye && (
+          <>
+            <LeaderSearchInput
+              label="Opponent's Leader"
+              placeholder="Search opponent's leader..."
+              onSelect={card => onChange(index, 'oppLeader', card)}
+              selected={round.oppLeader}
+              onClear={() => onChange(index, 'oppLeader', null)}
+            />
 
-        <RoundLeaderOverride
-          value={round.myLeader}
-          onChange={card => onChange(index, 'myLeader', card)}
-        />
+            <RoundLeaderOverride
+              value={round.myLeader}
+              onChange={card => onChange(index, 'myLeader', card)}
+            />
 
-        <ToggleGroup
-          label="Dice Roll"
-          value={round.wonDice}
-          onChange={val => onChange(index, 'wonDice', val)}
-          options={[
-            { value: true, label: '🎲 Won', color: colors.emerald },
-            { value: false, label: '🎲 Lost', color: colors.crimson },
-          ]}
-        />
+            <ToggleGroup
+              label="Dice Roll"
+              value={round.wonDice}
+              onChange={val => onChange(index, 'wonDice', val)}
+              options={[
+                { value: true, label: '🎲 Won', color: colors.emerald },
+                { value: false, label: '🎲 Lost', color: colors.crimson },
+              ]}
+            />
 
-        <ToggleGroup
-          label="Going"
-          value={round.wentFirst}
-          onChange={val => onChange(index, 'wentFirst', val)}
-          options={[
-            { value: true, label: '1st', color: colors.gold },
-            { value: false, label: '2nd', color: colors.oceanBright },
-          ]}
-        />
+            <ToggleGroup
+              label="Going"
+              value={round.wentFirst}
+              onChange={val => onChange(index, 'wentFirst', val)}
+              options={[
+                { value: true, label: '1st', color: colors.gold },
+                { value: false, label: '2nd', color: colors.oceanBright },
+              ]}
+            />
+          </>
+        )}
 
         <ToggleGroup
           label="Result"
           value={round.result}
-          onChange={val => onChange(index, 'result', val)}
+          onChange={handleResultChange}
           options={[
             { value: 'win', label: '✓ Win', color: colors.emerald },
             { value: 'loss', label: '✗ Loss', color: colors.crimson },
+            { value: 'bye', label: '⤳ Bye', color: colors.oceanBright },
           ]}
         />
+
+        {isBye && (
+          <Text style={{ fontSize: 11, color: colors.faint, fontFamily: font.body }}>
+            No opponent this round — counts as a free win in your record.
+          </Text>
+        )}
 
         <View>
           <FieldLabel>Notes (optional)</FieldLabel>
@@ -297,7 +321,7 @@ function PastTournamentForm({ editId, onDoneEditing }) {
     setAttachedDecklists([])
   }
 
-  const wins = rounds.filter(r => r.result === 'win').length
+  const wins = rounds.filter(r => r.result === 'win' || r.result === 'bye').length
   const losses = rounds.filter(r => r.result === 'loss').length
 
   async function handleSubmit() {

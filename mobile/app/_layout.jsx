@@ -52,7 +52,15 @@ export default function RootLayout() {
               headerShown: false,
               contentStyle: { backgroundColor: colors.abyss },
             }}
-          />
+          >
+            {/* The tabs screen has no title of its own (headerShown: false),
+                but iOS still uses a screen's `title` as the *next* screen's
+                back-button label. Left unset it falls back to the route
+                folder name "(tabs)" → "Tabs". Blank it out so pages pushed
+                from any tab (More, a profile, etc.) show a plain chevron
+                instead of that leftover folder name. */}
+            <Stack.Screen name="(tabs)" options={{ title: '' }} />
+          </Stack>
         </BlocksProvider>
       </AuthProvider>
     </ThemeProvider>

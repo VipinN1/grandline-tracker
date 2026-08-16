@@ -14,8 +14,15 @@ import { LEADER_COLORS } from './forms'
 import CardPreview from './CardPreview'
 import DeckShareOverlay from './DeckShareOverlay'
 
+// Target thumbnail width the grid aims for — actual width is derived from
+// the container's *measured* layout width (not the screen width), so the
+// row always divides evenly with no leftover gap on the right.
+const GRID_GAP = 8
+const TARGET_THUMB_W = 84
+
 export default function DeckModal({ deck, onClose, onEdit }) {
   const { width: screenW } = useWindowDimensions()
+  const [gridW, setGridW] = useState(0)
   const [selectedCard, setSelectedCard] = useState(null)
   const [copied, setCopied] = useState(false)
   const [showShare, setShowShare] = useState(false)
@@ -43,7 +50,11 @@ export default function DeckModal({ deck, onClose, onEdit }) {
     ['Stages', cards.filter(c => c.type === 'Stage')],
     ['Other', cards.filter(c => !['Character', 'Event', 'Stage'].includes(c.type))],
   ]
-  const gridThumbW = Math.floor((screenW - 40 - 3 * 8) / 4)
+  // Fall back to a screen-width estimate for the first frame (before
+  // onLayout fires), then switch to the measured width once known.
+  const availW = gridW > 0 ? gridW : screenW - 40
+  const gridCols = Math.max(3, Math.round((availW + GRID_GAP) / (TARGET_THUMB_W + GRID_GAP)))
+  const gridThumbW = Math.floor((availW - (gridCols - 1) * GRID_GAP) / gridCols)
 
   async function copyDecklist() {
     const lines = [`Leader: ${deck.leader_id}`, ...cards.map(c => `${c.count}x${c.id}`)]
@@ -115,7 +126,7 @@ export default function DeckModal({ deck, onClose, onEdit }) {
             <Text style={{ fontSize: 10, fontFamily: font.bold, textTransform: 'uppercase', letterSpacing: 1.2, color: colors.faint, marginBottom: 10 }}>
               All Cards ({cards.length} unique · {totalCards} total) — tap to enlarge
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+            <View onLayout={e => setGridW(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginBottom: 24 }}>
               {cards.map(card => (
                 <TouchableOpacity key={card.id} onPress={() => setSelectedCard(card)} style={{ position: 'relative' }}>
                   <Image source={{ uri: getCardImageUrl(card.id) }} style={{ width: gridThumbW, height: Math.round(gridThumbW * 1.4), borderRadius: 8, borderWidth: 1, borderColor: colors.line }} resizeMode="cover" />
