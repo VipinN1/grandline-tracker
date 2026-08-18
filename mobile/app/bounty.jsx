@@ -52,7 +52,7 @@ export default function BountyBoard() {
       const [{ data }, { data: simTours }, { data: simMatches }] = await Promise.all([
         supabase
           .from('tournaments')
-          .select('id, user_id, name, date, placement, wins, losses, leader_id, leader_name, leader_color, profiles(id, username, avatar_url, location, bio)')
+          .select('id, user_id, name, date, placement, wins, losses, leader_id, leader_name, leader_color, is_legacy, profiles(id, username, avatar_url, location, bio)')
           .eq('is_practice', false)
           .order('date', { ascending: false }),
         supabase.from('sim_tournaments').select('id, winner_id, status'),
@@ -132,7 +132,10 @@ export default function BountyBoard() {
       }
     }
     const p = playerMap[t.user_id]
-    p.bounty += calcTournamentBounty(t.wins, t.losses, t.placement)
+    // Self-reported results from before PirateTracker (Trophy Cabinet's "+ Add Past
+    // Result", web-only) still count toward event totals and win rate, but shouldn't
+    // be able to buy bounty — only wins actually tracked here contribute to bounty.
+    if (!t.is_legacy) p.bounty += calcTournamentBounty(t.wins, t.losses, t.placement)
     p.wins += t.wins
     p.losses += t.losses
     p.tournaments++
